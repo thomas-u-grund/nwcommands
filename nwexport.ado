@@ -53,6 +53,10 @@ program nwexport, rclass
 	}
 	if "`__nwx_order'" != "" capture order `__nwx_order'
 	if `__nwx_rc' exit `__nwx_rc'
+	mata: st_local("__nwx_q", strofreal(any(strpos(`netobj'->get_nodenames(), char(34)))))
+	if `__nwx_q' {
+		di "{txt}{p 0 0 2}(note: double quotes in node names are written as apostrophes){p_end}"
+	}
 	di `"{txt}Saved as file: {it:`fname'`ending'}"'
 end
 
@@ -82,7 +86,11 @@ program _nwexport_pajek
 		sort `__md' `__ord'
 	}
 	gen `_running' = _n
-	keep `nw_nodename' `_running'
+	// labels are written in double quotes, so a double quote inside a label becomes an apostrophe
+	tempvar __lab
+	gen strL `__lab' = subinstr(`nw_nodename', char(34), "'", .)
+	qui compress `__lab'
+	keep `nw_nodename' `_running' `__lab'
 	save `f', replace
 	tempname expfile
 
@@ -91,11 +99,12 @@ program _nwexport_pajek
 	file open `expfile' using "`fname'.net", write `replace'
 	file close `expfile'
 	if "`is2mode'" == "true" {
-		mata: nw_exp_pajek_vertices(st_local("fname") + ".net", "`nw_nodename'", `nodes', `__n1')
+		mata: nw_exp_pajek_vertices(st_local("fname") + ".net", "`__lab'", `nodes', `__n1')
 	}
 	else {
-		mata: nw_exp_pajek_vertices(st_local("fname") + ".net", "`nw_nodename'", `nodes')
+		mata: nw_exp_pajek_vertices(st_local("fname") + ".net", "`__lab'", `nodes')
 	}
+	drop `__lab'
 
 	qui nwtoedge `netname', compress aggregate
 	qui keep if `netname' != 0
@@ -165,7 +174,7 @@ program _nwexport_ucinet
 			di "{err}file `fname'.dl already exists"
 			exit 602
 		}
-		mata: nw_exp_ucinet_rect(st_local("fname") + ".dl", `netobj')
+		mata: nwx_exp_ucinet_rect(st_local("fname") + ".dl", `netobj')
 		exit
 	}
 	
@@ -237,15 +246,19 @@ program _nwexport_gml
 	tempname expfile
 	file open `expfile' using "`fname'.gml", write `replace'
 	file close `expfile'
+	tempvar __lab
+	qui gen strL `__lab' = subinstr(`nw_nodename', char(34), "'", .)
+	qui compress `__lab'
 	if "`is2mode'" == "true" {
 		// the attribute nwmode (1 or 2) of every node keeps the two modes
 		tempvar __md
 		_nwexport_modevar `nw_mode', generate(`__md')
-		mata: nw_exp_gml_nodes(st_local("fname") + ".gml", ("`directed'" == "true"), "`nw_nodename'", `nodes', "`__md'")
+		mata: nw_exp_gml_nodes(st_local("fname") + ".gml", ("`directed'" == "true"), "`__lab'", `nodes', "`__md'")
 	}
 	else {
-		mata: nw_exp_gml_nodes(st_local("fname") + ".gml", ("`directed'" == "true"), "`nw_nodename'", `nodes')
+		mata: nw_exp_gml_nodes(st_local("fname") + ".gml", ("`directed'" == "true"), "`__lab'", `nodes')
 	}
+	drop `__lab'
 
 	// `nw_ego'/`nw_alter' (nwtoedge's own output) are node LABELS, not
 	// numeric positions (confirmed directly the same way
@@ -328,6 +341,10 @@ program _nwexport_edgelist
 		capture confirm variable _value
 		local __tx_v = cond(_rc == 0, "_value", "")
 		keep ego alter `__tx_v' `__tx_cols'
+		foreach __tx_x in ego alter {
+			capture confirm string variable `__tx_x'
+			if _rc == 0 qui replace `__tx_x' = subinstr(`__tx_x', char(34), "'", .)
+		}
 		order ego alter `__tx_v' `__tx_cols'
 		export delimited using "`fname'.txt", delimiter(tab) novarnames `replace'
 		restore
@@ -361,6 +378,8 @@ program _nwexport_edgelist
 		qui replace `nw_ego' = `nw_alter' if `__swap'
 		qui replace `nw_alter' = `__t' if `__swap'
 		keep `nw_ego' `nw_alter' value
+		qui replace `nw_ego' = subinstr(`nw_ego', char(34), "'", .)
+		qui replace `nw_alter' = subinstr(`nw_alter', char(34), "'", .)
 		// the two columns hold the numbers 1 and 2, or the level labels of the network when it has any (then
 		// nwimport restores the labels)
 		if `__haslv' {
@@ -379,6 +398,8 @@ program _nwexport_edgelist
 		exit
 	}
 	keep `nw_ego' `nw_alter' value
+	qui replace `nw_ego' = subinstr(`nw_ego', char(34), "'", .)
+	qui replace `nw_alter' = subinstr(`nw_alter', char(34), "'", .)
 	// a binary network: ego and alter only, read back as binary
 	if "`valued'" == "false" drop value
 	rename `nw_ego' ego
@@ -421,20 +442,56 @@ end
 capture mata: mata drop nwx_insert_lines()
 capture mata: mata drop nwx_exp_pairs()
 capture mata: mata drop nwx_exp_ucinet_head()
+capture mata: mata drop nwx_exp_ucinet_rect()
+capture mata: mata drop nwx_dl_quote()
 capture mata: mata drop nwx_exp_gml_pairs()
 mata:
+// a label of a UCINET file: in double quotes when it holds a blank or a sign that separates labels
+string rowvector nwx_dl_quote(string rowvector names)
+{
+	string rowvector q
+	real scalar i
+
+	q = subinstr(names, char(34), "'")
+	for (i = 1; i <= cols(q); i++) {
+		if (strpos(q[i], " ") | strpos(q[i], ",") | strpos(q[i], ";") | strpos(q[i], "=") | strpos(q[i], char(9))) q[i] = char(34) + q[i] + char(34)
+	}
+	return(q)
+}
+
+// two-mode network: a rectangular full matrix (rows the first mode, columns the second) with row and column labels
+void nwx_exp_ucinet_rect(string scalar fname, pointer(class nw_def scalar) scalar p)
+{
+	real matrix W
+	real colvector i1, i2
+	real scalar fh, i
+	string scalar nl
+	string rowvector nm, md
+
+	nl = char(10)
+	nm = nwx_dl_quote(p->get_nodenames())
+	md = p->get_modes()
+	i1 = selectindex(md' :== "1")
+	i2 = selectindex(md' :== "2")
+	W = editmissing((*p->get_matrix())[i1, i2], 0)
+	(void) _unlink(fname)
+	fh = fopen(fname, "w")
+	fwrite(fh, "dl nr=" + strofreal(rows(i1), "%18.0g") + " nc=" + strofreal(rows(i2), "%18.0g") + nl + "format = fullmatrix" + nl)
+	fwrite(fh, "row labels:" + nl + invtokens(nm[i1'], ",") + nl + "col labels:" + nl + invtokens(nm[i2'], ",") + nl + "data:" + nl)
+	for (i = 1; i <= rows(i1); i++) {
+		fwrite(fh, invtokens(strofreal(W[i, .], "%18.0g")) + nl)
+	}
+	fclose(fh)
+}
+
 void nwx_exp_ucinet_head(string scalar fname, string rowvector names)
 {
 	real scalar fh
 	string scalar nl
 	string rowvector q
-	real scalar i
 
 	nl = char(10)
-	q = names
-	for (i = 1; i <= cols(q); i++) {
-		if (strpos(q[i], " ") | strpos(q[i], ",")) q[i] = char(34) + q[i] + char(34)
-	}
+	q = nwx_dl_quote(names)
 	(void) _unlink(fname)
 	fh = fopen(fname, "w")
 	fwrite(fh, "dl n=" + strofreal(cols(names), "%18.0g") + nl + "format = edgelist1" + nl + "labels:" + nl + invtokens(q, ",") + nl + "data:")

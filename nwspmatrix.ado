@@ -36,6 +36,13 @@ program nwspmatrix, rclass
 	// the spatial-unit ID of observation i names node i
 	capture quietly spset
 	local isset = (`"`r(sp_id)'"' != "")
+	if !`isset' {
+		capture confirm variable _ID, exact
+		if _rc == 0 {
+			di "{err}{p 0 0 2}The data have a variable {bf:_ID} but are not {bf:spset}; {bf:spset} would replace its values. Rename or drop {bf:_ID} first.{p_end}"
+			exit 110
+		}
+	}
 	if "`idvar'" != "" {
 		if `isset' quietly spset `idvar', modify
 		else quietly spset `idvar'

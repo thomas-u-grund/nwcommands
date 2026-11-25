@@ -199,21 +199,23 @@ program nwdyadprob
 		// call stopped with r(483) (network already exists). Remove a
 		// leftover of an earlier failure, run the body under capture, drop
 		// the helper in every case and then pass the error on.
-		capture nwdrop _tempdyad
+		// the helper network has a temporary name: a network of the user is never dropped
+		tempname __nwdptmp
+		capture nwdrop `__nwdptmp'
 		capture noisily {
-		nwset, mat(`mat') name(_tempdyad)
-		nwreplace _tempdyad = _tempdyad * 10
-		nwtoedge _tempdyad, full aggregate
+		nwset, mat(`mat') name(`__nwdptmp')
+		nwreplace `__nwdptmp' = `__nwdptmp' * 10
+		nwtoedge `__nwdptmp', full aggregate
 
 		if "`undirected'" != "" {
-			replace _tempdyad = 0 if `nw_alter' <= `nw_ego'
+			replace `__nwdptmp' = 0 if `nw_alter' <= `nw_ego'
 		}
 
 		local ties = `nodes' * (`nodes' -1) * `density'
 		if "`undirected'" != "" {
 			local ties = `ties' / 2
 		}
-		qui gen _nonzero = (_tempdyad > 0)
+		qui gen _nonzero = (`__nwdptmp' > 0)
 		qui sum _nonzero
 		if `r(sum)' < `ties' {
 			// BUGFIX: was a bare `exit' (no return code) after dropping
@@ -224,11 +226,11 @@ program nwdyadprob
 			// see nwrandom.ado's own header comment on its sibling
 			// "Could not sample tie weights" bug).
 			noi di "{err}Not enough non-zero weights to generate `ties' ties"
-			nwdrop _tempdyad
+			nwdrop `__nwdptmp'
 			error 198
 		}
 		qui drop if `nw_ego' == `nw_alter'
-		_nwgsample `ties' [aweight=_tempdyad], generate(link)
+		_nwgsample `ties' [aweight=`__nwdptmp'], generate(link)
 		// REAL BUG FOUND AND FIXED (docs/ROADMAP.md's own tracked
 		// nwhomophily investigation - "homophily(2) and homophily(-2)
 		// produce identical output"): this used to hand the selected
@@ -269,7 +271,7 @@ program nwdyadprob
 		// leading "n": nwset now gives an unlabelled network the labels
 		// of the rows in the data when the sizes match (e.g. glasgow's
 		// n1, n10, n11, ...), so a label no longer encodes a position.
-		_nwsyntax _tempdyad, max(1) other(td)
+		_nwsyntax `__nwdptmp', max(1) other(td)
 		mata: __nwdp_ego = _nwdp_index(st_sdata(., "`nw_ego'"), `tdnetobj'->get_nodenames())
 		mata: __nwdp_alt = _nwdp_index(st_sdata(., "`nw_alter'"), `tdnetobj'->get_nodenames())
 		mata: __nwdp_link = st_data(., "link")
@@ -280,7 +282,7 @@ program nwdyadprob
 			mata: `__densemat' = (`__densemat' :> 0)
 		}
 		mata: mata drop __nwdp_ego __nwdp_alt __nwdp_link __nwdp_sel __nwdp_i
-		nwdrop _tempdyad
+		nwdrop `__nwdptmp'
 		// the network is declared on the node data, not on the edge list
 		// held while preserved, so that it gets the same node labels as
 		// `_tempdyad' did and the rows are not re-sorted on restore
@@ -289,7 +291,7 @@ program nwdyadprob
 		mata: mata drop `__densemat'
 		}
 		local __nwdp_rc = _rc
-		capture nwdrop _tempdyad
+		capture nwdrop `__nwdptmp'
 		capture mata: mata drop `__densemat'
 		if `__nwdp_rc' != 0 {
 			exit `__nwdp_rc'
@@ -303,7 +305,7 @@ program nwdyadprob
 		nwload, xvars
 	}
 	else {
-		nwload
+		nwload, keepuser
 	}
 
 	capture mata: mata drop `__nwnew'
@@ -324,7 +326,8 @@ real matrix getNetFromProbs(real matrix probs) {
 	net = J(rows(probs), rows(probs), 0)
 	if (rows(probs) == cols(probs)) {
 		nodes = rows(probs)
-		net = (runiform(rows(probs), cols(probs)):<= probs)	
+		// a missing probability is no tie (to Mata a missing value is larger than every number)
+		net = (runiform(rows(probs), cols(probs)):<= editmissing(probs, 0))	
 		_diag(net, 0)
 	}
 	return(net)

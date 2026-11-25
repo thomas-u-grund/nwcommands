@@ -385,7 +385,7 @@ foreach opt in "" "directed" "forcedirected" "directed forcedirected" {
 	clear
 	nwimport `symdta'.dta, type(edgelist) name(symtest) nwclear `opt'
 	nwname symtest
-	local expect = cond(strpos("`opt'", "forcedirected") > 0, "true", "false")
+	local expect = cond(strpos("`opt'", "directed") > 0, "true", "false")
 	assert "`r(directed)'" == "`expect'"
 	assert r(nodes) == 3
 }

@@ -99,7 +99,8 @@ nwset, mat(M) name(e)
 local f "`c(tmpdir)'/my-net"
 nwexport e, type(gml) fname(`f') replace
 nwclear
-nwimport `f'.gml, type(gml)
+* the file says directed, and the network now comes back as directed
+nwimport `f'.gml, type(gml) forceundirected
 nwname my_net
 capture nwname _value
 assert _rc != 0

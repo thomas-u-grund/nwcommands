@@ -20,6 +20,7 @@
 {opt c:ost(#)}
 {opt intrv:alue(netname)}
 {opt intrc:ost(netname)}
+{opt replace}
 {opt force}
 {it:{help nwgeodesic:geodesic_options}}]
 
@@ -31,6 +32,7 @@
 {synopt:{opt c:ost(#)}}cost of connection; default = 1{p_end}
 {synopt:{opt intrv:alue(netname)}}intrinsic value w_ij a node i gives to a connection with node j; default = 1 for every tied pair{p_end}
 {synopt:{opt intrc:ost(netname)}}per-dyad cost y_ij, replacing the constant {it:cost} for direct connections; default = {it:cost} for every tied pair{p_end}
+{synopt:{opt replace}}overwrite the variables {it:_benefit}, {it:_cost} and {it:_util} if they exist (without it the command stops with r(110)){p_end}
 {synopt:{opt force}}Run the command although its matrices would not fit in memory (it stops with r(484) above about 19,300 nodes otherwise){p_end}
 
 
@@ -99,4 +101,4 @@ option {opt force} runs it anyway.
 Jackson, M. and Wolinsky, A. (1996) A Strategic Model of Social and Economic Networks. {it:Journal of Economic Theory}, 71, pp. 44-74.
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

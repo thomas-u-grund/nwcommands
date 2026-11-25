@@ -1,6 +1,22 @@
 
 capture program drop nwcorrelate
 program nwcorrelate
+	// after an error the current network is the one it was before
+	unw_defs
+	local __nwc_cur ""
+	capture mata: st_local("__nwc_cur", `nws'.get_current_name())
+	capture confirm variable _nwinclude, exact
+	local __nwc_hadinc = (_rc == 0)
+	capture noisily _nwcorrelate_main `0'
+	local __nwc_rc = _rc
+	if `__nwc_rc' & !`__nwc_hadinc' capture drop _nwinclude
+	if `__nwc_rc' & "`__nwc_cur'" != "" capture mata: `nws'.make_current_from_name("`__nwc_cur'")
+	if `__nwc_rc' exit `__nwc_rc'
+	capture confirm number 0
+end
+
+capture program drop _nwcorrelate_main
+program _nwcorrelate_main
 	syntax [anything] [, attribute(string) * ]
 
 //(string) attribute(string) name(string) permutations(integer 100) save(string) ]

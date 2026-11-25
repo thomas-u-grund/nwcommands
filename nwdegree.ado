@@ -1,6 +1,14 @@
 
 capture program drop nwdegree
 program nwdegree
+	// when the command stops with an error, the data set is left as it was (preserve restores it)
+	preserve
+	_nwdegree_main `0'
+	restore, not
+end
+
+capture program drop _nwdegree_main
+program _nwdegree_main
 	version 9
 	syntax [anything(name=netname)],[ replace standardize silent isolates alpha(string) BINary TIES(string) GENerate(string) in(string) outputoff out(string) ONEmode RAW ///
 		PLOT CCDF NAME(string asis) SAVing(string asis) EXPort(string asis) *]

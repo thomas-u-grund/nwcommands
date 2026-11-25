@@ -55,6 +55,6 @@ program nwlambda, rclass
 	di "{hline 40}"
 
 	if "`xvars'" != "" {
-		nwload `name'
+		nwload `name', keepuser
 	}
 end

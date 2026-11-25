@@ -13,30 +13,27 @@ program def nwsync
 	// a big network's node-variable list (one name per node) is far longer
 	// than Stata's macro limit (r(920)), and cannot all exist as dataset
 	// variables anyway.
+	// to nwsync, variables are the network's when nwload made them (characteristic [nwload]). Others that have the
+	// names of the nodes (the user's own, e.g. those of nwset varlist) are never dropped or overwritten.
 	mata: st_local("hasvars", strofreal(cols(`netobj'->get_nodesvar()) > 0 ? all(_st_varindex(`netobj'->get_nodesvar()) :!= .) : 0))
+	local __nws_own 0
 	if `hasvars' {
 		mata: st_global("r(vars)", `netobj'->get_nodesvar_string())
+		local __nws_vars "`r(vars)'"
+		if "`fromstata'" == "" {
+			foreach __nws_v of local __nws_vars {
+				local __nws_mark : char `__nws_v'[nwload]
+				if "`__nws_mark'" == "" local ++__nws_own
+			}
+		}
 	}
-	// BUGFIX: used to branch on `_rc' directly with no `else' clause -
-	// on the (very common) path where a network has no Stata-variable
-	// sync to do at all (never `nwload'ed), the failed `capture confirm
-	// variable' above is completely expected/harmless, but its nonzero
-	// `_rc' was left standing as this program's own return code with
-	// nothing to reset it - any caller checking `_rc' right after
-	// calling nwsync (nwsym does exactly this internally, and nwuse.ado
-	// checks it one level further out) saw a spurious failure despite
-	// nwsync having done its job correctly. Captured into a local
-	// first so the branch no longer depends on `_rc''s own value, and
-	// an explicit `exit 0' at the end marks genuine, full success -
-	// safe because any real failure in `nwload'/`drop'/`set_edge' below
-	// would already have interrupted execution before reaching it.
 	if `hasvars' {
 		if "`fromstata'" == "" {
-			drop `r(vars)'
-			nwload `netname'
+			if `__nws_own' == 0 nwload `netname'
+			else di "{txt}{p 0 0 2}(note: variables with the node names of {bf:`netname'} were not made by {bf:nwload}; they are left as they are. {bf:nwload `netname', overwrite} replaces them){p_end}"
 		}
 		else {
-			mata: `netobj'->set_edge(st_data((1::`nodes'), "`r(vars)'"))
+			mata: `netobj'->set_edge(st_data((1::`nodes'), "`__nws_vars'"))
 			if "`istemporal'" == "true" {
 				di "{txt}{p 0 0 2}(warning: network {bf:`netname'} is temporal; {bf:fromstata} changes the aggregated ties only, the times (events, snapshots, intervals) stay as they were and may no longer match the ties.){p_end}"
 			}

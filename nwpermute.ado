@@ -59,6 +59,7 @@ program nwpermute
 		else {
 			mata: `netobj'->permute()
 		}
+		_nwdetemporal `netname'
 	}
 	if "`generate'" != "" {
 		_nwreservedname `"`generate'"'
@@ -94,9 +95,10 @@ program nwpermute
 		if `__pm_exists' nwdrop `generate'
 		unw_defs
 		mata: `nws'.rename("`__pmnet'", "`generate'")
+		_nwdetemporal `generate'
 	}
 	if "`xvars'" != "" {
-		nwload `netname'
+		nwload `netname', keepuser
 	}
 end
 

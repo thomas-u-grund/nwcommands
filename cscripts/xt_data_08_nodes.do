@@ -147,9 +147,10 @@ nwclear
 nwset, mat(J(3,3,1)) name(g3)
 nwset, mat(J(2,2,1)) name(h2)
 gen x = _n
-nwkeep g3 if x > 9
+capture noisily nwkeep g3 if x > 9
+xt_chk `=(_rc == 2000)' "nwkeep with an if that selects no node is refused (r(2000))"
 xt_hasnet g3
-xt_chk `=(!`has')' "nwkeep with an if that selects no node drops the network (code)"
+xt_chk `has' "nwkeep with an if that selects no node keeps the network"
 xt_hasnet h2
 xt_chk `has' "nwkeep ... if: the other network is untouched"
 nwclear

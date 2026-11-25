@@ -99,4 +99,4 @@ forms are {cmd:Oh Dh Th Sh}); at most one symbol per model is allowed, and a sym
 {help nwcompare}, {help nwergm}, {help nwsaom}, {help nwdynam}, {help nwrem}, {help nwalaam}, {help nwlsm}, {help estimates}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

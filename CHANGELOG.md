@@ -6,6 +6,57 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
+## [3.37.2] - 2026-11-25
+
+**Summary.** Fixes for commands that deleted or overwrote data and networks, and for wrong results. Please update.
+
+### Results and behaviour that change (read before you re-run old analyses)
+- `nwdyadprob`: a **missing** probability produced a tie. It is now no tie.
+- `nwmixing, permutations()`: **missing** tie values counted as ties in the p-value. Recompute p-values of networks with missing ties.
+- `nwtoedge`/`nw2toedge, full` on a two-mode network listed each tie twice in the same direction; it now lists both directions.
+- A temporal network whose ties are changed in place (`nwtranspose`, `nwsym`, `nwpermute`, `nwreplace`, `nwrecode`, `nwdichotomize`, `nwreplacemat`), or a new network made so, is no longer temporal; the command says so. Its old times did not fit the new ties.
+- `nwimport`: Pajek arcs and GML `directed 1` stay directed (use `forceundirected` if you want otherwise); self-loops in Pajek, GML, UCINET and edge-list files are kept; commas in node names become blanks.
+- `nwimport` without `clear`/`nwclear` leaves existing data unchanged (node attributes of the file are then not loaded; a note says so).
+- `nwimport, type(matrix)`: names in the header keep their spelling; a file that is not a square number matrix is refused.
+- `nwsync` (also run by `nwsym`, `nwreplace`, `nwreplacemat`) refreshes only the variables that `nwload` made; your own variables with node names are left as they are.
+- `nwload` stops when it would overwrite your variable (option `overwrite` replaces it). Commands that load a network
+  for you (option `xvars` and generators) print a note instead, keep your variables and carry on.
+- `nwutility` needs the new option `replace` to overwrite `_benefit`, `_cost` and `_util`.
+- `nwkeep` with a condition that no node meets stops with r(2000); before, it removed the network. `nwkeep` without a
+  list or condition (for example with an empty local) is refused; before, it dropped all networks but the current one.
+- `nwimport`: option `directed` for matrices and edge lists is followed also when every tie is reciprocated.
+- `nwmovie` refuses `duration()`, `speed()` or `window()` of zero or less and unknown `easing()` names, and writes over
+  an HTML file that it did not create only with `replace`. `fname()` may end in `.html`.
+- `nwuse x, nwappend`: where memory and file differ in a value, the value in memory is kept.
+
+### Fixed: deleted or overwritten data and networks
+- `nwdropnodes`, `nwkeepnodes`, `nwreplacemat` with another number of nodes could change the directed or valued flag of **another** network (ties could then be lost on saving).
+- `nwhierarchy` dropped observations that belonged to no node (since 3.37.0), also on errors, and overwrote a matrix `mymat`.
+- `nwfromedge` removed the data when no row met the condition.
+- `nwdropnodes, attributes()` blanked values in unrelated observations and failed on string variables.
+- `nw2set` with variables dropped the other variables.
+- `nwspmatrix` replaced a variable `_ID` of data that are not `spset`.
+- `nwcollapse` left a working network behind after an error.
+- `nwsave` and `nwuse`: a variable named like a network could overwrite tie values; user variables could be deleted; after `nwuse`, `save, replace` could overwrite the `.nwdta` file; observations without a node were lost; `nwuse` or `nwwebuse` of a missing or broken file with `nwclear` removed networks and data.
+- `nwimport`: a failed or successful import could remove the data in memory.
+- `nwsave` failed for network names of 16 or more characters. Files with such names cannot be read by earlier versions.
+- A failed `nwcollapse` could leave changed data or a working network behind.
+- A failed `nwhierarchy` or `nwcorrelate` could change the current network.
+- A failed `nwdegree` could leave some of its variables; a failed `nwcorrelate, attribute()` left `_nwinclude`.
+- Help: `nwturnover` counts undirected ties once (not twice); `nw2project, stat(newman)` uses tie values.
+- `nwdyadprob` dropped a network of the user called `_tempdyad`.
+- `nwplot, layout(mds)` replaced the estimation results `e()`.
+
+### Fixed
+- Two-mode UCINET files: node names with blanks gave a **different network** on import, without an error. Names are now
+  quoted in the file and read as such. Check two-mode networks imported from such files.
+- Pajek files with blank lines: `nwimport` stopped reading at the first one and reported success, so **ties or whole
+  sections were missing**. Check networks imported from such files. Comment lines (`%`) are skipped too.
+- UCINET files with tabs: ties could be missing without an error.
+- `nwimport`: Excel and semicolon matrix files, numeric node names, decimal commas, edge-list headers, string attributes, UCINET files with `labels embedded:`, labels with commas, `;` or apostrophes, Pajek `*Matrix`; file handles are closed after errors.
+- `nwmovie` for event networks put all node names into the first label.
+- `nwplot, interactive`: missing values in `color()`, `size()` or `symbol()` gave an empty page.
+
 ## [3.37.1] - 2026-11-25
 
 **Summary.** Fixes for commands that destroyed networks or gave wrong results. Please update. The core Mata library and the plugins are unchanged; the model packages need no update.

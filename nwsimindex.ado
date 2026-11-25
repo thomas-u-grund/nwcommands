@@ -74,6 +74,6 @@ program nwsimindex, rclass
 	}
 
 	if "`xvars'" != "" {
-		nwload `name'
+		nwload `name', keepuser
 	}
 end

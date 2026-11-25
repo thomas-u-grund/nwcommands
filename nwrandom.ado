@@ -163,7 +163,7 @@ program nwrandom
 			nwload, xvars
 		}
 		else {
-			nwload
+			nwload, keepuser
 		}
 		mata: st_global("r(netlist)", "`name'")
 		exit
@@ -285,7 +285,7 @@ program nwrandom
 		nwload, xvars
 	}
 	else {
-		nwload
+		nwload, keepuser
 	}
 
 	capture mata: mata drop `__nwnew'

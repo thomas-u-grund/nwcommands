@@ -171,4 +171,4 @@ The result can be nicely plotted in the following way:
 	{help nwhomophily}, {help nwgen}, {help nwexpand}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

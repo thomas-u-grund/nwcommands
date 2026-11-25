@@ -15,9 +15,8 @@ program nwimport, rclass
 	if "`clear'" != "" {
 		local nwclear "nwclear"
 	}
-	qui `nwclear'
 	qui nwset
-	if "`nwappend'" == "" & (`r(networks)' > 0 | "`r(networks)'" == "") {
+	if "`nwappend'" == "" & "`nwclear'" == "" & ("`r(networks)'" == "" | real("`r(networks)'") > 0) {
 		di "{err}No; data in memory would be lost. Specify either option {bf:nwclear} or {bf:nwappend}."
 		exit 999
 	}
@@ -56,9 +55,6 @@ program nwimport, rclass
 		if inlist("`name'", "_all", "_n", "_N", "if", "in", "using", "byte", "int", "long") local name "net_`name'"
 	}
 	
-	capture qui nwset
-	local nets_before = r(networks)
-		
 	local 0 `type'
 	syntax anything(name=import_type) [, *] 
 	// BUGFIX: "graphml" was accepted here and documented in nwimport.sthlp
@@ -74,11 +70,37 @@ program nwimport, rclass
 	
 	local options `"`options_original'"'
 
+	// Nothing of the user's is touched before the import has succeeded. The file is loaded in a work frame of its
+	// own, so the data in memory stay as they are. With nwclear the networks are not dropped yet: they are set
+	// aside under another name and brought back when the import fails.
+	if "`nwclear'" != "" {
+		capture mata: mata drop __nwibak
+		capture mata: mata rename `nw' __nwibak
+	}
+	local __nwi_cur ""
+	capture qui nwset
+	local nets_before = cond("`r(networks)'" == "", 0, real("`r(networks)'"))
+	if `nets_before' > 0 {
+		mata: st_local("__nwi_cur", `nws'.get_current_name())
+	}
+	local __nwi_home "`c(frame)'"
+	// data in memory (with or without unsaved changes) are only replaced with clear or nwclear
+	local __nwi_keepdata = ("`nwclear'" == "" & (c(k) > 0 | _N > 0))
+	tempname __nwi_work
+	frame create `__nwi_work'
+	frame change `__nwi_work'
+	global NWIMPORT_relabel ""
+	global NWIMPORT_error ""
+	local __nwi_declared ""
+
+	local __nwi_rc 0
 	if "`import_type'" == "matrix" {
-		 capture _nwimport_matrix `fname', `options' `typeoptions'
+		capture noisily quietly _nwimport_matrix `fname', `options' `typeoptions'
+		local __nwi_rc = _rc
 	}
 	if "`import_type'" == "compressed" {
-		  capture _nwimport_compressed `fname', `options' `typeoptions'
+		capture noisily quietly _nwimport_compressed `fname', `options' `typeoptions'
+		local __nwi_rc = _rc
 	}
 	if "`import_type'" == "edgelist" {
 		// forceundirected on a list: build the network undirected from the start (the missing direction of each tie gets
@@ -86,87 +108,181 @@ program nwimport, rclass
 		if "`forceundirected'" != "" & strpos(" `options' `typeoptions' ", "undirected") == 0 & strpos(" `options' `typeoptions' ", "directed") == 0 {
 			local typeoptions "`typeoptions' undirected"
 		}
-		// the edge list is read into the data in memory: with nwappend the
-		// user's data are kept and brought back (also when the import fails)
-		if "`nwappend'" != "" {
-			tempfile __nwi_userdata
-			qui save `"`__nwi_userdata'"', emptyok
-		}
-		capture _nwimport_edgelist `fname', `options' `typeoptions'
-		if "`nwappend'" != "" {
-			qui use `"`__nwi_userdata'"', clear
-		}
+		capture noisily quietly _nwimport_edgelist `fname', `options' `typeoptions'
+		local __nwi_rc = _rc
 	}
 	if "`import_type'" == "pajek" {
-		  _nwimport_pajek `fname', `options'		 
+		capture noisily _nwimport_pajek `fname', `options'
+		local __nwi_rc = _rc
 	}
 	if "`import_type'" == "gml" {
-		capture _nwimport_gml `fname', `options'
+		capture noisily quietly _nwimport_gml `fname', `options'
+		local __nwi_rc = _rc
 	}
 	if "`import_type'" == "ucinet" {
-		 capture _nwimpdl `fname'
-		  if "`nameoff'" == "" {
+		capture noisily quietly _nwimpdl `fname'
+		local __nwi_rc = _rc
+		if `__nwi_rc' == 0 & "`nameoff'" == "" {
 			local nameoff = r(nameoff)
-		  }
+		}
 	}
-	local i = 1
-	capture qui nwset
-	local nets_now = `r(networks)'
+	// close the files of the importers, also after an error (an open handle would stop every later import)
+	capture file close importfile
+	capture file close nwimpdl_fh
+	capture file close nwimpdl_rfh
+	capture postclose nwimpdl_post
 	
-	if `nets_now' > `nets_before'{
-		forvalues j = `=`nets_before'+1'/`nets_now' {
-			nwname, id(`j')
-			local d `r(directed)'	
-			// a temporal network keeps the direction it was declared with
-			local __nwi_temp "`r(temporal)'"
-
-			// check if network is undirected or not - r(is_symmetric)
-			// is documented (nwsym.ado) as the string "true"/"false";
-			// a numeric-scalar bug meant it was actually stored numeric
-			// until fixed as part of the sparse-backend migration, so
-			// this call site is updated to match what nwsym now
-			// actually stores.
-			qui nwsym, check
-			if "`r(is_symmetric)'" == "true" & "`d'" == "true" & "`forcedirected'" == "" & "`__nwi_temp'" != "true"{
-				local newdirectedcmd "newdirected(false)"
-			}
-			if "`r(is_symmetric)'" == "false" & "`d'" == "false" & "`forceundirected'" == "" & "`__nwi_temp'" != "true"{
-				local newdirectedcmd "newdirected(true)"
-			}
+	// the option directed of a list or matrix, given in type() or on its own, is a declaration too: such a network
+	// stays directed also when every tie is reciprocated
+	if inlist("`import_type'", "edgelist", "compressed", "matrix") {
+		local __nwi_words `" `options' `typeoptions' "'
+		if strpos(`"`__nwi_words'"', " directed ") > 0 local __nwi_declared "directed"
+	}
+	
+	local nets_now `nets_before'
+	capture qui nwset
+	if _rc == 0 & "`r(networks)'" != "" local nets_now = `r(networks)'
+	local __nwi_new ""
+	local __nwi_prc 0
+	if `__nwi_rc' == 0 & `nets_now' > `nets_before' {
+		capture noisily {
+			local i = 1
+			forvalues j = `=`nets_before'+1'/`nets_now' {
+				nwname, id(`j')
+				local d `r(directed)'	
+				// a temporal network keeps the direction it was declared with
+				local __nwi_temp "`r(temporal)'"
+				local newdirectedcmd ""
+				local newnamecmd ""
+		
+				// check if network is undirected or not - r(is_symmetric)
+				// is documented (nwsym.ado) as the string "true"/"false";
+				// a numeric-scalar bug meant it was actually stored numeric
+				// until fixed as part of the sparse-backend migration, so
+				// this call site is updated to match what nwsym now
+				// actually stores.
+				qui nwsym, check
+				// a file that declares its ties directed (Pajek *Arcs, GML directed 1) stays directed
+				if "`r(is_symmetric)'" == "true" & "`d'" == "true" & "`forcedirected'" == "" & "`__nwi_temp'" != "true" & "`__nwi_declared'" != "directed" {
+					local newdirectedcmd "newdirected(false)"
+				}
+				if "`r(is_symmetric)'" == "false" & "`d'" == "false" & "`forceundirected'" == "" & "`__nwi_temp'" != "true"{
+					local newdirectedcmd "newdirected(true)"
+				}
 				
-			local onename : word `i' of `name'
-			if "`onename'" != ""  & "`nameoff'" != "true"{
-				local newnamecmd "newname(`onename')"
-			}
-			nwname, id(`j') `newnamecmd' `newdirectedcmd'
-			if "`forceundirected'" != "" {
-				nwsym `r(netname)'
-			}
-			if "`forcedirected'" != "" {
-				nwname, id(`j') newdirected(true)
-			}
-			local i = `i' + 1
-			qui if "`xvars'" != ""{
-				nwload `r(netname)'
+				local onename : word `i' of `name'
+				if "`onename'" != ""  & "`nameoff'" != "true"{
+					local newnamecmd "newname(`onename')"
+				}
+				nwname, id(`j') `newnamecmd' `newdirectedcmd'
+				if "`forceundirected'" != "" {
+					nwsym `r(netname)'
+				}
+				if "`forcedirected'" != "" {
+					nwname, id(`j') newdirected(true)
+				}
+				qui nwname, id(`j')
+				local __nwi_new "`__nwi_new' `r(netname)'"
+				local i = `i' + 1
 			}
 		}
-		di "{hline 30}"
-		di  "{txt}{it:Importing successful}"
+		local __nwi_prc = _rc
 	}
-	else {
+	
+	frame change `__nwi_home'
+	local __nwi_relabel "$NWIMPORT_relabel"
+	local __nwi_error `"$NWIMPORT_error"'
+	macro drop NWIMPORT_relabel NWIMPORT_error
+	capture mata: mata drop __nwimport_*
+	
+	if `__nwi_rc' != 0 | `__nwi_prc' != 0 | `nets_now' <= `nets_before' {
+		// failed: the data were not touched; remove what was created and bring the networks back
+		capture frame drop `__nwi_work'
+		if "`nwclear'" != "" | `nets_before' == 0 {
+			capture mata: mata drop `nw'
+			if "`nwclear'" != "" capture mata: mata rename __nwibak `nw'
+		}
+		else {
+			qui nwset
+			local __nwi_all "`r(nets)'"
+			local __nwi_drop ""
+			local __nwi_k = 0
+			foreach __nwi_n of local __nwi_all {
+				local __nwi_k = `__nwi_k' + 1
+				if `__nwi_k' > `nets_before' local __nwi_drop "`__nwi_drop' `__nwi_n'"
+			}
+			if "`__nwi_drop'" != "" qui nwdrop `__nwi_drop'
+			mata: `nws'.make_current_from_name("`__nwi_cur'")
+		}
+		mata: st_rclear()
+		if `__nwi_rc' == 1 | `__nwi_prc' == 1 {
+			exit 1
+		}
+		// the Pajek reader and the refusal of a tie inside a mode (459) keep their own return codes
+		if `__nwi_rc' != 0 & ("`import_type'" == "pajek" | `__nwi_rc' == 459) {
+			exit `__nwi_rc'
+		}
 		di 
+		if `"`__nwi_error'"' != "" noi di `"{err}{p 0 0 2}`__nwi_error'{p_end}"'
 		noi di `"{err}{it:Loading networks from file {bf:`fname'} failed}"'
 		exit 480
 	}
-	capture mata: mata drop __nwimport_*
+	
+	capture mata: mata drop __nwibak
+	// the data that the importer leaves (node names, matrix columns, node attributes) go into memory when there was
+	// nothing to lose or the user asked for it with clear or nwclear
+	frame `__nwi_work': local __nwi_wk = c(k)
+	if !`__nwi_keepdata' {
+		if `__nwi_wk' > 0 {
+			qui frame copy `__nwi_work' `__nwi_home', replace
+		}
+		else if "`nwclear'" != "" {
+			clear
+		}
+	}
+	else {
+		frame `__nwi_work' {
+			capture unab __nwi_extra : _all
+			local __nwi_extra : list __nwi_extra - nw_nodename
+			local __nwi_extra : list __nwi_extra - nw_included
+			capture confirm variable _nodeoriginal
+			local __nwi_orig = (_rc == 0)
+			local __nwi_nattr : char _dta[nwimport_attributes]
+		}
+		if "`__nwi_nattr'" != "" | `__nwi_orig' {
+			di "{txt}{p 0 0 2}(note: the data in memory are kept, so the node variables of the file (`=trim("`__nwi_nattr' `=cond(`__nwi_orig', "_nodeoriginal", "")'")') are not loaded; to get them, import into an empty data set or specify {bf:nwclear}){p_end}"
+		}
+	}
+	frame drop `__nwi_work'
+	// columns of an adjacency matrix imported into an empty data set hold the ties under the node names: they count
+	// as variables made by nwload, so that nwload and nwsync may refresh them
+	if "`xvars'" == "" & !`__nwi_keepdata' & "`import_type'" == "matrix" {
+		foreach __nwi_n of local __nwi_new {
+			_nwsyntax `__nwi_n', max(1) other(__nwim)
+			mata: st_local("__nwi_nv", invtokens(`__nwimnetobj'->get_nodesvar()))
+			foreach __nwi_v of local __nwi_nv {
+				capture confirm variable `__nwi_v', exact
+				if _rc == 0 char `__nwi_v'[nwload] "`__nwi_n'"
+			}
+		}
+	}
+	if "`xvars'" != "" {
+		foreach __nwi_n of local __nwi_new {
+			// without data of the user to keep, variables of these names are the import's own
+			if `__nwi_keepdata' qui nwload `__nwi_n', keepuser
+			else qui nwload `__nwi_n', overwrite
+		}
+	}
+	if "`__nwi_relabel'" != "" {
+		di "{txt}{p 0 0 2}(note: node names cannot hold commas or double quotes; commas were replaced by blanks and double quotes by apostrophes, with a suffix _2, _3, ... where two names became equal){p_end}"
+	}
+	di "{hline 30}"
+	di  "{txt}{it:Importing successful}"
+	mata: st_rclear()
 	capture confirm number 0
 end
-	
-	
-	
 
-	
-	
+
 ///////////////////////////
 ///////////////////////////
 
@@ -180,13 +296,28 @@ program _nwimport_pajek
 		set more off
 		// the network is valued when the file gives tie values (a third field on an edge line, a matrix with values)
 		local __haswt 0
+		// the direction the file declares: lines in an *Arcs or an *Edges section
+		local __arcsec 0
+		local __edgesec 0
+		local __narcs 0
+		local __nedges 0
+		local __relab 0
+		local __mrow 0
+		local size ""
 		preserve
 		drop _all
 		
 		tempfile dict
 		unw_defs
 		
-		file open importfile using `anything', read
+		tempfile __nwi_masked
+		_nwimport_apos `anything' `"`__nwi_masked'"'
+		// the reader below takes an empty line as the end of the file: blank and comment lines are removed first
+		tempfile __nwi_noblank
+		mata: nwimp_pajeklines(st_local("__nwi_file"), st_local("__nwi_noblank"))
+		local __nwi_file `"`__nwi_noblank'"'
+		capture file close importfile
+		file open importfile using `"`__nwi_file'"', read
 		file read importfile line
 		local labs ""
 		qui while `"`line'"' != "" {
@@ -214,7 +345,7 @@ program _nwimport_pajek
 				
 				// parse node labels
 				if `f_star' != 1 {
-					tempname dict_handler
+					local dict_handler "nwimpdl_post"
 					local num_attributes : word count `line'
 					local attributes "" 
 					forvalues k = 3/`num_attributes'{
@@ -232,6 +363,14 @@ program _nwimport_pajek
 					while (`f_star' != 1) {
 						//local tempid : word 1 of `line'
 						local templab : word 2 of `line'
+						// the labels are handed on as a comma separated list: no comma or double quote inside a label
+						local templab = subinstr(`"`templab'"', "__nwapos__", "'", .)
+						if strpos(`"`templab'"', ",") | strpos(`"`templab'"', char(34)) {
+							local templab = subinstr(`"`templab'"', char(34), "'", .)
+							local templab = strtrim(stritrim(subinstr(`"`templab'"', ",", " ", .)))
+							if `"`templab'"' == "" local templab "_"
+							local __relab 1
+						}
 						local labs "`labs'`templab',"
 						local attributes_post ""
 						forvalues l = 3/`num_attributes' {
@@ -281,6 +420,7 @@ program _nwimport_pajek
 			}
 
 			if lower("`f_cmd'") == "*arcs" {
+				local __arcsec 1
 				local mode = "arcs"
 				local directed = "true"
 				local nwfromedgeopt = "directed"
@@ -289,6 +429,7 @@ program _nwimport_pajek
 				local f_cmd = lower("`f_cmd'")
 			}
 			if lower("`f_cmd'") == "*edges" {
+				local __edgesec 1
 				local mode = "edges"
 				local directed = "false"
 				if "`nwfromedgeopt'" != "directed" {
@@ -299,7 +440,15 @@ program _nwimport_pajek
 				local f_cmd = lower("`f_cmd'")
 			}
 			if lower("`f_cmd'") == "*matrix" {
-				local mode = "matrix"	
+				if "`size'" == "" | "`n1'" != "" {
+					noi di "{err}{p 0 0 2}*Matrix is read for a square matrix after a *Vertices line only (not for a two-mode network){p_end}"
+					exit 6705
+				}
+				local mode = "matrix"
+				local __mrow 0
+				file read importfile line
+				local f_cmd : word 1 of `line'
+				local f_cmd = lower("`f_cmd'")
 			}
 			
 			// read edges from edgelist
@@ -308,6 +457,8 @@ program _nwimport_pajek
 				local alter = word("`line'", 2)
 				local newN = _N + 1
 				if "`ego'" != "" & "`alter'" != "" {
+					if "`mode'" == "arcs" local __narcs 1
+					else local __nedges 1
 					set obs `newN'
 					replace _fromid = `ego' in `newN'
 					replace _toid = `alter' in `newN'
@@ -335,6 +486,10 @@ program _nwimport_pajek
 				local ego = word("`line'", 1)
 				local next = 2
 				local alter = word("`line'", `next')
+				if "`alter'" != "" {
+					if "`mode'" == "arcslist" local __narcs 1
+					else local __nedges 1
+				}
 				while "`alter'" != "" {
 					local newN = _N + 1
 					set obs `newN'
@@ -352,34 +507,57 @@ program _nwimport_pajek
 					local alter = word("`line'", `next') 
 				}
 			}
-			// read edges from matrix
-			if ("`mode'" == "matrix") {
-				local id_ego : word `id_num' of `id'
-				local id_num = `id_num' + 1
-				local next = 1
-				local value = word("`line'", `next') 
-				while "`value'" != "" {
-					local id_alter : word `next' of `id' 
-					local next = `next' + 1
-					if (`value' != 0 | (`id_alter' == `id_ego')){
+			// read edges from matrix: one row of the adjacency matrix per line
+			if ("`mode'" == "matrix") & word(`"`line'"', 1) != "" & substr(strtrim(`"`line'"'), 1, 1) != "*" {
+				local ++__mrow
+				if `__mrow' > `size' | wordcount(`"`line'"') != `size' {
+					noi di "{err}{p 0 0 2}*Matrix needs `size' lines with `size' numbers each (the number of vertices){p_end}"
+					exit 6705
+				}
+				forvalues next = 1/`size' {
+					local value = word(`"`line'"', `next')
+					capture confirm number `value'
+					if _rc {
+						noi di "{err}*Matrix: `value' is not a number"
+						exit 6705
+					}
+					if `value' != 0 {
 						local newN = _N + 1
 						set obs `newN'
-						replace _fromid = `id_ego' in `newN'
-						replace _toid = `id_alter' in `newN'
+						replace _fromid = `__mrow' in `newN'
+						replace _toid = `next' in `newN'
 						replace _value = `value' in `newN'
-						if `value' != 0 & `value' != 1 local __haswt 1
+						if `value' != 1 local __haswt 1
 					}
-					local value = word("`line'", `next') 
-				}	
+				}
 			}
 			
 			file read importfile line
+			if substr(strtrim(`"`line'"'), 1, 1) == "*" & "`mode'" == "matrix" local mode ""
 		}
 		file close importfile
+		if "`mode'" == "matrix" & `__mrow' != `size' {
+			noi di "{err}{p 0 0 2}*Matrix needs `size' lines with `size' numbers each (the number of vertices); found `__mrow'{p_end}"
+			exit 6705
+		}
+
+		// arcs make the network directed (an empty *Arcs section before *Edges does not)
+		if `__narcs' | (`__arcsec' & !`__edgesec' & !`__nedges') {
+			local nwfromedgeopt "directed"
+			c_local __nwi_declared "directed"
+		}
+		else if `__nedges' | `__edgesec' {
+			local nwfromedgeopt "undirected"
+		}
+		if `__relab' {
+			mata: st_local("labs", nwimp_uniquelist(st_local("labs")))
+			global NWIMPORT_relabel "1"
+		}
 
 		capture replace _fromid = trim(_fromid)
 		capture replace _toid = trim(_toid)
-		qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(`__haswt', "valued", "unvalued")'
+		_nwimport_loops _fromid _toid _value
+		qui nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(`__haswt', "valued", "unvalued")' `__nwi_loop'
 	
 		unw_defs
 		nwload, labelonly
@@ -445,92 +623,76 @@ program _nwimport_apply2mode
 end
 
 
+capture program drop _nwimport_apos
+program _nwimport_apos
+	// A double quote followed by an apostrophe ("'t Hart") ends a Stata compound quote, so such a line cannot be
+	// handled in macros. c_local __nwi_file: the file itself or, when it holds this pair, the copy masked (a
+	// temporary file of the caller) in which that apostrophe is written as __nwapos__.
+	args fn masked
+	c_local __nwi_file `"`fn'"'
+	mata: st_local("found", strofreal(nwimp_maskapos(st_local("fn"), st_local("masked"))))
+	if "`found'" == "1" c_local __nwi_file `"`masked'"'
+end
+
+
+capture program drop _nwimport_loops
+program _nwimport_loops
+	// c_local __nwi_loop: "selfloop" when the list built from a file has ties of a node with itself. The rows of
+	// value 0 that only declare such a node are removed (a later one would overwrite the tie).
+	args from to value
+	c_local __nwi_loop ""
+	qui count if `from' == `to' & `value' != 0 & `value' < .
+	if r(N) == 0 exit
+	tempvar order has
+	qui gen long `order' = _n
+	qui gen byte `has' = (`from' == `to' & `value' != 0 & `value' < .)
+	qui bysort `from' `to' (`has' `order'): replace `has' = `has'[_N]
+	qui drop if `from' == `to' & `value' == 0 & `has'
+	sort `order'
+	c_local __nwi_loop "selfloop"
+end
+
+
 capture program drop _nwimpdl_rect
 program _nwimpdl_rect
 	// UCINET DL with a rectangular matrix (nr rows, nc columns, format fullmatrix): rows form the first mode,
 	// columns the second; row and column labels as in nwexport (row labels: / col labels: / data:)
 	syntax anything(name=fn), ROWS(integer) COLS(integer)
 	unw_defs
-	tempname fh
-	file open `fh' using `fn', read text
-	local rl ""
-	local cl ""
-	local part ""
-	local r 0
 	preserve
 	drop _all
+	// The ties are listed with numbered stand-ins for the nodes (the rows first): node names with blanks or
+	// semicolons would not pass through an edge list and its list of isolates. They get their names afterwards.
 	qui {
-		gen str244 _fromid = ""
-		gen str244 _toid = ""
+		gen str12 _fromid = ""
+		gen str12 _toid = ""
 		gen double _value = .
 	}
-	file read `fh' line
-	while r(eof) == 0 {
-		local l = lower(trim(`"`line'"'))
-		if substr("`l'", 1, 10) == "row labels" {
-			local part "row"
-		}
-		else if substr("`l'", 1, 10) == "col labels" | substr("`l'", 1, 13) == "column labels" {
-			local part "col"
-		}
-		else if "`l'" == "data:" {
-			local part "data"
-		}
-		else if "`part'" == "row" | "`part'" == "col" {
-			local l = subinstr(trim(`"`line'"'), ",", " ", .)
-			foreach w of local l {
-				if "`part'" == "row" local rl "`rl'`w' "
-				else local cl "`cl'`w' "
-			}
-		}
-		else if "`part'" == "data" & "`l'" != "" {
-			local ++r
-			local rlab : word `r' of `rl'
-			if "`rlab'" == "" local rlab "r`r'"
-			local c 0
-			foreach v of local l {
-				local ++c
-				if real("`v'") != 0 & real("`v'") < . {
-					local clab : word `c' of `cl'
-					if "`clab'" == "" local clab "c`c'"
-					qui set obs `=_N + 1'
-					qui replace _fromid = "`rlab'" in L
-					qui replace _toid = "`clab'" in L
-					qui replace _value = real("`v'") in L
-				}
-			}
-		}
-		file read `fh' line
-	}
-	file close `fh'
-	// labels of all nodes (also the isolated ones) and the modes travel as characteristics of the list
-	local alln ""
-	local allm ""
-	forvalues i = 1/`rows' {
-		local w : word `i' of `rl'
-		if "`w'" == "" local w "r`i'"
-		local alln "`alln'`w';"
-		local allm "`allm'`w'=1,"
-	}
-	forvalues i = 1/`cols' {
-		local w : word `i' of `cl'
-		if "`w'" == "" local w "c`i'"
-		local alln "`alln'`w';"
-		local allm "`allm'`w'=2,"
-	}
-	local alln = substr("`alln'", 1, length("`alln'") - 1)
-	local allm = substr("`allm'", 1, length("`allm'") - 1)
-	if length("`allm'") <= 60000 {
-		char _dta[nwtoedge_nodes] `"`alln'"'
-		char _dta[nwtoedge_modes] `"`allm'"'
-	}
-	char _dta[nwtoedge_mode1desc] "rows"
-	char _dta[nwtoedge_mode2desc] "columns"
+	tempname names
+	mata: `names' = nwimp_dlrect(`fn', `rows', `cols')
 	if _N == 0 {
 		di "{err}The matrix has no ties."
 		restore
 		error 2000
 	}
+	local alln ""
+	local allm ""
+	forvalues i = 1/`=`rows' + `cols'' {
+		local w = "z" + string(1000000 + `i', "%7.0f")
+		local alln "`alln'`w';"
+		local allm "`allm'`w'=`=1 + (`i' > `rows')',"
+		if length("`allm'") > 60000 {
+			di "{err}a two-mode network in a UCINET file can have at most about 5,000 nodes"
+			restore
+			error 920
+		}
+	}
+	local alln = substr("`alln'", 1, length("`alln'") - 1)
+	local allm = substr("`allm'", 1, length("`allm'") - 1)
+	char _dta[nwtoedge_nodes] `"`alln'"'
+	char _dta[nwtoedge_modes] `"`allm'"'
+	char _dta[nwtoedge_mode1desc] "rows"
+	char _dta[nwtoedge_mode2desc] "columns"
 	qui sum _value
 	if r(min) == 1 & r(max) == 1 {
 		nw2fromedge _fromid _toid
@@ -538,6 +700,9 @@ program _nwimpdl_rect
 	else {
 		nw2fromedge _fromid _toid _value
 	}
+	_nwsyntax
+	mata: nwimp_dlrename(`netobj', `names')
+	mata: mata drop `names'
 	restore
 end
 
@@ -684,122 +849,109 @@ program _nwimport_matrix
 		local name "network"
 	}
 	
-	if "`rownames'" != "" {
-		local firstrow = "firstrow"
-	}
-
-	local excelfile = strpos(`"`anything'"', ".xls")
-	local excelfile = (`excelfile' != 0)
-	
-	local success = 0
-	local excel = 0
-	local pot_delimiters = `""tab" ";" "," " ""'
-	local pot_delimiters_length : word count `pot_delimiters'
-	local i = 1
+	// every cell is read as text; which row and column hold node names is decided afterwards (nwimp_matrix())
+	local excelfile = (strpos(lower(`"`anything'"'), ".xls") != 0)
+	local decimalcomma 0
 	
 	// Excel file detected
-	if (`excelfile' != 0){
-		local excel = 1
-		import excel `anything',  `firstrow' clear
+	if `excelfile' {
+		import excel `anything', allstring clear
 	}
-	else {	
-		while (`excel' == 0 & "`delimiter'" == "" & `success' == 0 & `i' <= `pot_delimiters_length'){
-			local use_delimiter : word `i' of `pot_delimiters'
-			local i = `i' + 1
-		
-			if "`use_delimiter'" == "tab" {
-				local insheet_opt = ", tab clear"
-			}
-			else {
-				local insheet_opt = `", delimiter("`use_delimiter'") clear"'
-			}
-	
-			// BUGFIX: this used to unconditionally treat c(k)==1 as "wrong
-			// delimiter, recover by splitting on whitespace" - but that
-			// space-split is ALSO exactly what pot_delimiters' own later
-			// " " entry already tries, correctly, as its own dedicated
-			// delimiter candidate. Applying it as a blanket "rescue" after
-			// every wrong guess (not just when space genuinely IS the
-			// delimiter) meant a wrong guess (e.g. trying "tab" against a
-			// comma-delimited file, tried first regardless of the file's
-			// real delimiter) could spuriously report success='`c(k)' != 1'
-			// merely because the misparsed single column happened to
-			// contain any whitespace at all (e.g. a trailing ", attribute
-			// name" column, or any attribute value with a space in it) -
-			// silently continuing with a garbled 1-2-column dataset instead
-			// of correctly moving on to try the real delimiter next. Left
-			// as a plain, honest c(k)==1 check; the loop's own explicit
-			// " " candidate already covers genuinely space-delimited files.
-			insheet using `anything' `insheet_opt'
-			if (`c(k)' == 1){
-				local success = 0
-			}
-			else {
-				local success = 1
-			}
-		}
-		if "`delimiter'" != "" {
-			local insheet_opt = ", clear"
-			insheet using `anything' `insheet_opt' delimiter("`delimiter'")
-			if (`c(k)' == 1){
-				local success = 0
-			}
-			else {
-				local success = 1
+	else if `"`delimiter'"' == "" {
+		local success 0
+		foreach use_delimiter in tab semicolon comma blank {
+			if `success' == 0 {
+				_nwimport_text `anything', delimiter(`use_delimiter')
+				if c(k) > 1 {
+					local success 1
+					if inlist("`use_delimiter'", "tab", "semicolon") local decimalcomma 1
+				}
 			}
 		}
 	}
-	
-	// Check for rownames and colnames
-	ds
-	local firstvar : word 1 of `r(varlist)'
-	local secondvar : word 2 of `r(varlist)'
-	
-	if "`rownames'" == "" { 
-		local check1 = `secondvar'[1]
-		capture confirm number `check1'
-		if _rc != 0 {
-			local rownames "rownames"
-		}
+	else {
+		_nwimport_text `anything', delimiter(`"`delimiter'"')
+		if inlist(`"`delimiter'"', "tab", ";") local decimalcomma 1
+	}
+	if _N == 0 | c(k) == 0 {
+		global NWIMPORT_error "no matrix found in the file"
+		exit 6705
 	}
 	
-	if "`colnames'" == "" {
-		local check2 = `firstvar'[2]
-		capture confirm number `check2'
-		if _rc != 0 {
-			local colnames "colnames"
-		}
+	// result: variables of the matrix (__nwimp_vars), their node names in __nwimport_names (empty: none given),
+	// the node attributes (__nwimp_attr)
+	mata: nwimp_matrix(`decimalcomma', "`rownames'" != "", "`colnames'" != "")
+	if `"`__nwimp_error'"' != "" {
+		global NWIMPORT_error `"adjacency matrix: `__nwimp_error'"'
+		exit 6705
 	}
-	
-	unab varlist : _all 
-	
-	if "`colnames'" == "colnames" {
-		local labscmd " labsfromvar(`firstvar')"
-		local varlist : list varlist - firstvar
-	}	
-	if "`rownames'" == "rownames" {
-		local newvarlist ""
-		local coladd = 0
-		if "`colnames'" != "" {
-			local coladd = 1
-		}
-		local k_start = 1 + `coladd'
-		local k_end = `=_N' + `coladd'
-		
-		local k = 1
-		foreach var of varlist _all {
-			if `k' >= `k_start' & `k' <= `k_end' {
-				local newvarlist "`newvarlist' `var'"
-			}
-			local k = `k' + 1
-		}
-		local varlist "`newvarlist'"
+	if "`__nwimp_attr'" != "" {
+		capture destring `__nwimp_attr', replace
+		char _dta[nwimport_attributes] "`__nwimp_attr'"
 	}
-	
-	destring `varlist', force replace
-	nwset `varlist', name("`name'") `labscmd'
-	drop `firstvar'
+	qui compress
+	local labscmd ""
+	if "`__nwimp_labvar'" != "" {
+		local labscmd "labsfromvar(`__nwimp_labvar')"
+	}
+	nwset `__nwimp_vars', name("`name'") `labscmd'
+	if "`__nwimp_labvar'" != "" {
+		capture drop `__nwimp_labvar'
+	}
 end
+
+
+capture program drop _nwimport_text
+program _nwimport_text
+	// a delimited text file, every cell as a string
+	syntax anything, delimiter(string asis)
+	local d `delimiter'
+	if `"`d'"' == "tab" local dopt `"delimiters("\t")"'
+	else if `"`d'"' == "semicolon" local dopt `"delimiters(";")"'
+	else if `"`d'"' == "comma" local dopt `"delimiters(",")"'
+	else if `"`d'"' == "blank" | `"`d'"' == " " local dopt `"delimiters(" ", collapse)"'
+	else local dopt `"delimiters(`"`d'"')"'
+	import delimited using `anything', `dopt' varnames(nonames) stringcols(_all) clear
+end
+
+
+capture program drop _nwimport_header
+program _nwimport_header
+	// A first line of an edge list that is clearly a header is removed. It is one when the first two cells are one of
+	// the pairs below (any case) and neither word occurs again in these two columns, or when the third column holds
+	// a word in the first line and numbers (or nothing) in all other lines.
+	if _N == 0 | c(k) < 2 exit
+	unab v : _all
+	local v1 : word 1 of `v'
+	local v2 : word 2 of `v'
+	local v3 : word 3 of `v'
+	local header 0
+	capture confirm string variable `v1' `v2'
+	if _rc == 0 {
+		local a = lower(strtrim(`v1'[1]))
+		local b = lower(strtrim(`v2'[1]))
+		if inlist(`"`a'|`b'"', "from|to", "source|target", "ego|alter", "sender|receiver", "sender|recipient") | ///
+		   inlist(`"`a'|`b'"', "node1|node2", "id1|id2", "src|dst", "tail|head") {
+			qui count if _n > 1 & (inlist(lower(strtrim(`v1')), "`a'", "`b'") | inlist(lower(strtrim(`v2')), "`a'", "`b'"))
+			if r(N) == 0 local header 1
+		}
+	}
+	if !`header' & "`v3'" != "" & _N > 1 {
+		capture confirm string variable `v3'
+		if _rc == 0 {
+			local c = strtrim(`v3'[1])
+			if !inlist(`"`c'"', "", ".") & real(`"`c'"') == . {
+				qui count if _n > 1 & real(`v3') == . & !inlist(strtrim(`v3'), "", ".")
+				if r(N) == 0 local header 1
+			}
+		}
+	}
+	if `header' {
+		qui drop in 1
+		capture destring _all, replace
+	}
+end
+
 
 capture program drop _nwimport_gml
 program _nwimport_gml
@@ -818,9 +970,13 @@ program _nwimport_gml
 		local nwmodes ""
 		local __haswt 0
 		
-		file open importfile using `anything', read
+		tempfile __nwi_masked
+		_nwimport_apos `anything' `"`__nwi_masked'"'
+		capture file close importfile
+		file open importfile using `"`__nwi_file'"', read
 
 		local mode ""
+		local __relab 0
 		local gmlvalue 1
 		local nwfromedgeopt ""
 		file read importfile line
@@ -852,6 +1008,13 @@ program _nwimport_gml
 				if "``i''" == "label" & "`mode'" == "node" {
 					local mode_sub = "node_label"
 					local nextlab `"``=`i'+1''"'
+					local nextlab = subinstr(`"`nextlab'"', "__nwapos__", "'", .)
+					if strpos(`"`nextlab'"', ",") | strpos(`"`nextlab'"', char(34)) {
+						local nextlab = subinstr(`"`nextlab'"', char(34), "'", .)
+						local nextlab = strtrim(stritrim(subinstr(`"`nextlab'"', ",", " ", .)))
+						if `"`nextlab'"' == "" local nextlab "_"
+						local __relab 1
+					}
 					// get_nodenames_from_string() (unw_core.do) tokenizes
 					// `labs' on COMMA, not whitespace, so multi-word GML
 					// labels (e.g. "Node 1") survive intact without needing
@@ -921,7 +1084,13 @@ program _nwimport_gml
 		// the ids are the numbers of the node blocks: sorted as text "10" comes before "2" and the labels (in the
 		// order of the node blocks) landed on the wrong nodes from 10 nodes on
 		capture destring _fromid _toid, replace
-		nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(`__haswt', "valued", "unvalued")'
+		if "`nwfromedgeopt'" == "forcedirected" c_local __nwi_declared "directed"
+		if `__relab' {
+			mata: st_local("labs", nwimp_uniquelist(st_local("labs")))
+			global NWIMPORT_relabel "1"
+		}
+		_nwimport_loops _fromid _toid _value
+		nwfromedge _fromid _toid _value, name(`name') labs(`labs') `nwfromedgeopt' `=cond(`__haswt', "valued", "unvalued")' `__nwi_loop'
 		if "`nwmodes'" != "" {
 			// the attribute nwmode (written by nwexport for a two-mode network) gives the mode of every node
 			_nwimport_apply2mode `name', labs(`labs') modes(`nwmodes') desc1(`"`__lv1'"') desc2(`"`__lv2'"')
@@ -1016,7 +1185,7 @@ end
 
 capture program drop _nwimport_edgelist
 program _nwimport_edgelist
-	syntax anything, [keeporiginal name(string) delimiter(string) directed undirected xvars eventtime time interval] 
+	syntax anything, [keeporiginal name(string) delimiter(string) directed undirected xvars eventtime time interval noheader] 
 	if "`name'" == "" {
 		local name "network"
 	}
@@ -1035,9 +1204,14 @@ program _nwimport_edgelist
 		local ego : word 1 of `r(varlist)'
 		local alter : word 2 of `r(varlist)'
 		local value : word 3 of `r(varlist)'
-		replace `alter' = `ego' if `alter' == .
+		// ties of a node with itself in the data set; without them, a missing alter is written as a row of the
+		// node with itself, which declares the node
+		_nwimport_selfties `ego' `alter' `value'
+		if "`__nwi_loop'" == "" {
+			replace `alter' = `ego' if `alter' == .
+		}
 		drop if `ego' == .
-		nwfromedge `ego' `alter' `value', `keeporiginal' `undirected' `directed' `xvars' name(`name')
+		nwfromedge `ego' `alter' `value', `keeporiginal' `undirected' `directed' `xvars' name(`name') `__nwi_loop'
 		//restore
 	}
 	else {
@@ -1052,7 +1226,7 @@ program _nwimport_edgelist
 	local i = 1
 
 	// Excel file detected
-	if (strpos(`"`anything'"', ".xls") != 0 ){
+	if (strpos(lower(`"`anything'"'), ".xls") != 0 ){
 		local excel = 1
 		import excel `anything', clear
 		if c(k) == 1 | _rc != 0 {
@@ -1074,6 +1248,7 @@ program _nwimport_edgelist
 		else {
 			local insheet_opt = `", delimiter("`use_delimiter'") clear"'
 		}
+		if "`header'" == "noheader" local insheet_opt `"`insheet_opt' nonames"'
 		
 		capture insheet using `anything' `insheet_opt'
 		
@@ -1094,8 +1269,9 @@ program _nwimport_edgelist
 	
 	// an explicit delimiter() (text files)
 	if `excel' == 0 & "`delimiter'" != "" {
-		if "`delimiter'" == "tab" capture insheet using `anything', tab clear
-		else capture insheet using `anything', delimiter("`delimiter'") clear
+		local __nwi_nn = cond("`header'" == "noheader", "nonames", "")
+		if "`delimiter'" == "tab" capture insheet using `anything', tab clear `__nwi_nn'
+		else capture insheet using `anything', delimiter("`delimiter'") clear `__nwi_nn'
 		if _rc != 0 | c(k) == 1 {
 			local success = 0
 		}
@@ -1105,15 +1281,26 @@ program _nwimport_edgelist
 	}
 	
 	if `success' == 0 {
-		noi di "{err}{it:edgelist} could not be loaded"
-		restore
+		global NWIMPORT_error "{it:edgelist} could not be loaded"
 		error 6705
 	}
+
+	// a header line that was read as a tie (insheet and import excel keep it when all columns are text)
+	if "`header'" == "" {
+		capture unab __nwi_first : _all
+		local __nwi_first : word 1 of `__nwi_first'
+		if `excel' | "`__nwi_first'" == "v1" _nwimport_header
+	}
+	// node names: no commas or double quotes
+	capture unab __nwi_v : _all
+	local __nwi_e1 : word 1 of `__nwi_v'
+	local __nwi_e2 : word 2 of `__nwi_v'
+	if "`__nwi_e2'" != "" mata: nwimp_cleanvars("`__nwi_e1' `__nwi_e2'")
 
 	if `__nwi_ntm' == 1 {
 		local __nwi_core = 3 + ("`interval'" != "")
 		if `c(k)' != `__nwi_core' & `c(k)' != `__nwi_core' + 1 {
-			noi di "{err}{p 0 0 2}a list with times needs `__nwi_core' columns (ego, alter, time" cond("`interval'" != "", " 1, time 2", "") ") or `=`__nwi_core'+1' with a value before the times; the file has `c(k)'.{p_end}"
+			global NWIMPORT_error "a list with times needs `__nwi_core' columns (ego, alter, time) or `=`__nwi_core'+1' with a value before the times (interval: two time columns); the file has `c(k)'."
 			exit 6705
 		}
 		ds
@@ -1131,7 +1318,7 @@ program _nwimport_edgelist
 		foreach __nwi_x in `__nwi_t1' `__nwi_t2' `value' {
 			capture confirm numeric variable `__nwi_x'
 			if _rc {
-				noi di "{err}{p 0 0 2}column {bf:`__nwi_x'} must be numeric (times and values).{p_end}"
+				global NWIMPORT_error "column {bf:`__nwi_x'} must be numeric (times and values)."
 				exit 6705
 			}
 		}
@@ -1180,13 +1367,36 @@ program _nwimport_edgelist
 		exit
 	}
 	if `c(k)' > 3 | `c(k)' < 2 {
-		noi di "{err}Something went wrong; data has more than three columns."
-		restore
+		global NWIMPORT_error "Something went wrong; data has more than three columns."
 		error 6705
 	}
-	nwfromedge _all, name(`name') `keeporiginal' `directed' `undirected' `xvars'
+	unab __nwi_v : _all
+	_nwimport_selfties `__nwi_v'
+	nwfromedge _all, name(`name') `keeporiginal' `directed' `undirected' `xvars' `__nwi_loop'
 	//restore
 	}
+end
+
+
+capture program drop _nwimport_selfties
+program _nwimport_selfties
+	// c_local __nwi_loop: "selfloop" when the list has a tie of a node with itself (a value other than 0)
+	args ego alter value
+	c_local __nwi_loop ""
+	tempvar a b
+	foreach s in a b {
+		local x = cond("`s'" == "a", "`ego'", "`alter'")
+		capture confirm string variable `x'
+		if _rc == 0 qui gen strL ``s'' = strtrim(`x')
+		else qui gen strL ``s'' = cond(missing(`x'), "", strofreal(`x', "%18.0g"))
+	}
+	local cond ""
+	if "`value'" != "" {
+		capture confirm numeric variable `value'
+		if _rc == 0 local cond "& `value' != 0 & `value' < ."
+	}
+	qui count if `a' == `b' & `a' != "" `cond'
+	if r(N) > 0 c_local __nwi_loop "selfloop"
 end
 
 
@@ -1214,12 +1424,13 @@ program _nwimport_compressed
 	rename v alter
 	replace ego = trim(ego)
 	replace alter = trim(alter)
+	mata: nwimp_cleanvars("ego alter")
 	nwfromedge ego alter, `directed' `undirected' `xvars' name(`name') `keeporiginal'
 
 	//restore
 	
 	if "`xvars'" != "" {
-		nwload
+		nwload, keepuser
 	}
 end
 
@@ -1227,13 +1438,9 @@ end
 
 capture program drop _nwimpdl_comma
 program _nwimpdl_comma
-	// c_local <first word> = the remaining words (quotes respected) separated by commas
-	gettoken __target 0 : 0
-	local __out ""
-	foreach __w of local 0 {
-		local __out `"`__out',`__w'"'
-	}
-	c_local `__target' `"`=substr(`"`__out'"', 2, .)'"'
+	// c_local <first word> = the remaining words (quotes respected) separated by commas, with the blanks and
+	// apostrophes of the words (written as placeholders by nwimp_dlline()) put back
+	mata: nwimp_dljoin(st_local("0"))
 end
 
 capture program drop _nwimpdl_nodelist1
@@ -1265,7 +1472,7 @@ program _nwimpdl_nodelist1
 	file read `filehandler' line
 	
 	if "`collabsembedded'" != "" {
-		local labs "`line'"
+		mata: st_local("labs", nwimp_dlline(st_local("line")))
 		file read `filehandler' line
 	}	
 	if "`rowlabsembedded'" != "" {
@@ -1278,7 +1485,7 @@ program _nwimpdl_nodelist1
 	while r(eof)==0 {	
 		if "`rowlabsembedded'" != "" & "`labscomplete'" == "" {
 			local onelab : word 1 of `line'
-			labs "`labs' `onelab'"
+			local labs `"`labs' `onelab'"'
 		}
 		local wc : word count `line'
 		local sender : word `=1 + `r'' of `line'
@@ -1311,6 +1518,8 @@ program _nwimpdl_nodelist1
 	file close `filehandler'
 	capture drop if _fromid == .
 	capture drop if _fromid == ""
+	capture confirm string variable _fromid _toid
+	if _rc == 0 mata: nwimp_cleanvars("_fromid _toid")
 	// nodes given by number (labels in the header): numeric ids, so that
 	// node i gets the i-th label
 	if "`labelsembedded'" == "" {
@@ -1319,7 +1528,8 @@ program _nwimpdl_nodelist1
 	// the labels go to nwfromedge separated by commas (a label may hold a blank)
 	_nwimpdl_comma __nwi_clabs `labs'
 	// a list without tie values (edgelist1 with two columns) is binary
-	nwfromedge _all, name(`netlabs') labs(`__nwi_clabs') `directed' `undirected' `xvars' `=cond(`__nwi_hasval', "valued", "unvalued")'
+	_nwimport_loops _fromid _toid _value
+	nwfromedge _all, name(`netlabs') labs(`__nwi_clabs') `directed' `undirected' `xvars' `=cond(`__nwi_hasval', "valued", "unvalued")' `__nwi_loop'
 	restore
 end
 
@@ -1339,12 +1549,15 @@ program _nwimpdl_fullmatrix
 	local netcounter 1
 	
 	if "`collabsembedded'" != "" {
-		local labs "`line'"
+		mata: st_local("labs", nwimp_dlline(st_local("line")))
 		file read `filehandler' line
 	}	
 		
 	while r(eof)==0 {
 		
+		if "`rowlabsembedded'" != "" {
+			mata: st_local("line", nwimp_dlline(st_local("line")))
+		}
 		local wc : word count `line'
 		
 		local nc = `nodes'
@@ -1361,7 +1574,7 @@ program _nwimpdl_fullmatrix
 			local twc = `twc' + 1
 			
 			if mod(`twc', `nc') == 1  & "`rowlabsembedded'" != "" {
-				local newlabs "`newlabs' ``oneword'" 
+				local newlabs `"`newlabs' `oneword'"'
 			}	
 			else {
 				local y = `y' + 1 
@@ -1377,8 +1590,10 @@ program _nwimpdl_fullmatrix
 					local onename : word `netcounter' of `netlabs'
 					mata: st_numscalar("r(issymmetric)", issymmetric(__nwimport_onenet))
 					local symmetric = `r(issymmetric)'
+					if `"`labs'"' == "" local labs `"`newlabs'"'
 					_nwimpdl_comma __nwi_clabs `labs'
-					nwset, name(`onename') labs(`__nwi_clabs') mat(__nwimport_onenet)
+					mata: st_local("__nwi_loop", any(diagonal(__nwimport_onenet) :!= 0 :& diagonal(__nwimport_onenet) :< .) ? "selfloop" : "")
+					nwset, name(`onename') labs(`__nwi_clabs') mat(__nwimport_onenet) `__nwi_loop'
 					if "`symmetric'" == "1" & "`directed'" == "" {
 						nwsym `onename'
 					}
@@ -1411,7 +1626,7 @@ program _nwimpdl_lowerhalf
 	local ab = 0
 	
 	if "`collabsembedded'" != "" {
-		local labs "`line'"
+		mata: st_local("labs", nwimp_dlline(st_local("line")))
 		file read `filehandler' line
 	}	
 	
@@ -1444,7 +1659,8 @@ program _nwimpdl_lowerhalf
 			if (`y' == `nodes' & `x' == `nodes' - `ab') {
 				local onename : word `netcounter' of `netlabs'
 				_nwimpdl_comma __nwi_clabs `labs'
-				nwset, name(`onename') labs(`__nwi_clabs') mat(__nwimport_onenet)
+				mata: st_local("__nwi_loop", any(diagonal(__nwimport_onenet) :!= 0 :& diagonal(__nwimport_onenet) :< .) ? "selfloop" : "")
+				nwset, name(`onename') labs(`__nwi_clabs') mat(__nwimport_onenet) `__nwi_loop'
 				mata: __nwimport_onenet = J(`nodes', `nodes', 0)
 				local x = 0
 				local y = 0 + `ab'
@@ -1477,12 +1693,24 @@ program _nwimpdl
 	local labels_embedded ""
 	
 	local diagonal = ""
-	tempname importfile
+	local importfile "nwimpdl_fh"
+	capture file close `importfile'
+	// tabs separate words in a DL file like blanks: the readers below split at blanks, so a copy without tabs is read
+	local __nwi_dlin = trim(`"`anything'"')
+	if substr(`"`__nwi_dlin'"', 1, 1) == char(34) local __nwi_dlin = substr(`"`__nwi_dlin'"', 2, length(`"`__nwi_dlin'"') - 2)
+	capture confirm file `"`__nwi_dlin'"'
+	if _rc == 0 {
+		tempfile __nwi_notab
+		mata: nwimp_notabs(st_local("__nwi_dlin"), st_local("__nwi_notab"))
+		local anything `""`__nwi_notab'""'
+	}
 	
 	// parse header of .dl file
 	file open `importfile' using `anything', read
 	
 	file read `importfile' line
+	// words are separated by blanks, commas, semicolons and =, except inside double quotes
+	mata: st_local("line", nwimp_dlline(st_local("line")))
 	local firstword : word 1 of `line'
 	local firstword = trim(lower("`firstword'"))
 
@@ -1500,9 +1728,10 @@ program _nwimpdl
 	set more off
 	// parse header until data part
 	while  ("`firstword'" != "data:") {
-		local line : subinstr local line "=" " ", all
-		local line : subinstr local line "," " ", all
-		local line : subinstr local line ";" " ", all
+		if r(eof) != 0 {
+			noi di "{err}No valid {bf:.dl} file: no {bf:data:} line"
+			exit `errFormatUnsupported'
+		}
 		
 		// parse word by word
 		local lc : word count `line'
@@ -1514,9 +1743,7 @@ program _nwimpdl
 			local key : list oneword_low  & keywords
 			
 			if `labels_on' == 1 & `netlabels_on' == 0 & "`key'" == "" {
-				// a label with a blank was quoted in the file: keep it one word
-				if strpos(`"`oneword'"', " ") local labs `"`labs' "`oneword'""'
-				else local labs `"`labs' `oneword'"'
+				local labs `"`labs' `oneword'"'
 			}
 			else {
 				local labels_on = 0
@@ -1557,7 +1784,7 @@ program _nwimpdl
 			}
 			if (lower("`oneword'") == "labels"){
 				local secondword : word `=`i' + 1' of `line'
-				if (lower("`secondword'") == "embedded"){
+				if inlist(lower("`secondword'"), "embedded", "embedded:") {
 					local labels_embedded "labelsembedded"
 				}
 			}
@@ -1574,7 +1801,7 @@ program _nwimpdl
 				local secondword : word `=`i' + 1' of `line'
 				if (lower("`secondword'") == "labels"){
 					local thirdword : word `=`i' + 2' of `line'
-					if (lower("`thirdword'") == "embedded"){
+					if inlist(lower("`thirdword'"), "embedded", "embedded:") {
 						if (lower("`oneword'") == "row")  {
 							local rowlab_embedded = "rowlabsembedded"
 						}
@@ -1586,10 +1813,17 @@ program _nwimpdl
 			}
 		}
 		file read `importfile' line
+		mata: st_local("line", nwimp_dlline(st_local("line")))
 		local firstword : word 1 of `line'
 		local firstword = lower("`firstword'")
 	}
 
+	// "labels embedded" of a full matrix: the first line of the data and the first word of every line are names
+	if "`format'" == "fullmatrix" & "`labels_embedded'" != "" & "`rowlab_embedded'`collab_embedded'" == "" {
+		local rowlab_embedded "rowlabsembedded"
+		local collab_embedded "collabsembedded"
+	}
+	
 	if "`rows'" != "`cols'" | ("`rows'" != "" & "`cols'" != "") {
 		// a rectangular matrix (nr= and nc= given, also when both are equal) is a two-mode network: rows are the first
 		// mode, columns the second
@@ -1604,8 +1838,7 @@ program _nwimpdl
 		local newlabs ""
 		forvalues i = 1/`nodes' {
 			local onelab : word `i' of `labs'
-			if strpos(`"`onelab'"', " ") local newlabs `"`newlabs' "`onelab'""'
-			else local newlabs `"`newlabs' `onelab'"'
+			local newlabs `"`newlabs' `onelab'"'
 		}
 		local labs `"`newlabs'"'
 	}
@@ -1615,16 +1848,16 @@ program _nwimpdl
 	if "`netlistonly'" == "" {
 		if lower("`format'") == "fullmatrix" {
 			di "full"
-			capture _nwimpdl_fullmatrix, filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') nets(`nets') diagonal(`diagonal') `rowlab_embedded' `collab_embedded'
+			_nwimpdl_fullmatrix, filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') nets(`nets') diagonal(`diagonal') `rowlab_embedded' `collab_embedded'
 		}
 		if lower("`format'") == "nodelist1" {
-			qui  capture _nwimpdl_nodelist1, filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') `labels_embedded' `rowlab_embedded' `collab_embedded'
+			qui _nwimpdl_nodelist1, filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') `labels_embedded' `rowlab_embedded' `collab_embedded'
 		}
 		if lower("`format'") == "rankedlist1" {
-			qui capture  _nwimpdl_nodelist1, rankedlist filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') `labels_embedded' `rowlab_embedded' `collab_embedded'
+			qui _nwimpdl_nodelist1, rankedlist filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') `labels_embedded' `rowlab_embedded' `collab_embedded'
 		}
 		if lower("`format'") == "edgelist1" {
-			qui capture _nwimpdl_nodelist1, edgelist filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') `labels_embedded' `rowlab_embedded' `collab_embedded'
+			qui _nwimpdl_nodelist1, edgelist filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') `labels_embedded' `rowlab_embedded' `collab_embedded'
 		}
 		if lower("`format'") == "lowerhalf" {
 			// BUGFIX: this checked a local named `rowlabsembedded' (no
@@ -1650,7 +1883,7 @@ program _nwimpdl
 				exit `errFormatUnsupported'
 			}
 			else {
-				capture _nwimpdl_lowerhalf, filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') nets(`nets') diagonal(`diagonal') `rowlab_embedded' `collab_embedded'
+				_nwimpdl_lowerhalf, filehandler(`importfile') labs(`labs') netlabs(`netlabs') nodes(`nodes') nets(`nets') diagonal(`diagonal') `rowlab_embedded' `collab_embedded'
 			}
 		}
 	}
@@ -1690,5 +1923,546 @@ end
 
 
 	
+capture mata: mata drop nwimp_maskapos()
+capture mata: mata drop nwimp_uniquestr()
+capture mata: mata drop nwimp_uniquelist()
+capture mata: mata drop nwimp_cleanstr()
+capture mata: mata drop nwimp_cleanvars()
+capture mata: mata drop nwimp_dlline()
+capture mata: mata drop nwimp_dlrect()
+capture mata: mata drop nwimp_pajeklines()
+capture mata: mata drop nwimp_pajekline()
+capture mata: mata drop nwimp_notabs()
+capture mata: mata drop nwimp_squareblankdiag()
+capture mata: mata drop nwimp_dlrename()
+capture mata: mata drop nwimp_dljoin()
+capture mata: mata drop nwimp_isnum()
+capture mata: mata drop nwimp_samenames()
+capture mata: mata drop nwimp_matrix()
+mata:
+// 1 when the file fn holds a double quote followed by an apostrophe; then the file out is written with that
+// apostrophe as __nwapos__. 0 otherwise (also when fn cannot be read as a local file: the reader reports it).
+real scalar nwimp_maskapos(string scalar fn, string scalar out)
+{
+	real scalar fh, i, found, n
+	string colvector L
+
+	if (!fileexists(fn)) return(0)
+	L = cat(fn)
+	n = rows(L)
+	if (n == 0) return(0)
+	found = any(strpos(L, char(34) + char(39)))
+	if (!found) return(0)
+	(void) _unlink(out)
+	fh = fopen(out, "w")
+	for (i = 1; i <= n; i++) fput(fh, subinstr(L[i], char(34) + char(39), char(34) + "__nwapos__"))
+	fclose(fh)
+	return(1)
+}
+
+// node names that the library can hold: no comma (the lists of names are comma separated), no double quote and no
+// left quote (they end up in Stata macros)
+string matrix nwimp_cleanstr(string matrix s)
+{
+	string matrix r
+	real scalar i, j
+
+	r = s
+	for (i = 1; i <= rows(r); i++) {
+		for (j = 1; j <= cols(r); j++) {
+			if (strpos(r[i,j], ",") | strpos(r[i,j], char(34)) | strpos(r[i,j], char(96))) {
+				r[i,j] = subinstr(subinstr(r[i,j], char(34), "'"), char(96), "'")
+				r[i,j] = strtrim(stritrim(subinstr(r[i,j], ",", " ")))
+				if (r[i,j] == "") r[i,j] = "_"
+			}
+		}
+	}
+	return(r)
+}
+
+// a name that is in the list already gets the suffix _2, _3, ...
+string colvector nwimp_uniquestr(string colvector s)
+{
+	transmorphic A
+	string colvector r
+	real scalar i, k
+
+	A = asarray_create()
+	r = s
+	for (i = 1; i <= rows(r); i++) {
+		if (asarray_contains(A, r[i])) {
+			k = 2
+			while (asarray_contains(A, r[i] + "_" + strofreal(k))) k++
+			r[i] = r[i] + "_" + strofreal(k)
+		}
+		asarray(A, r[i], 1)
+	}
+	return(r)
+}
+
+string scalar nwimp_uniquelist(string scalar s)
+{
+	string rowvector t
+
+	t = tokens(s, ",")
+	t = select(t, t :!= ",")
+	if (cols(t) == 0) return(s)
+	return(invtokens(nwimp_uniquestr(t')', ",") + ",")
+}
+
+// cleans the node names in the string variables among vars, the same way in all of them
+void nwimp_cleanvars(string scalar vars)
+{
+	string rowvector v
+	string colvector x, u, c, y
+	transmorphic A, B
+	real scalar i, j, k, n
+
+	v = tokens(vars)
+	u = J(0, 1, "")
+	for (i = 1; i <= cols(v); i++) {
+		if (st_isstrvar(v[i]) & st_nobs() > 0) u = u \ st_sdata(., v[i])
+	}
+	if (rows(u) == 0) return
+	u = uniqrows(u)
+	c = nwimp_cleanstr(u)
+	if (all(c :== u)) return
+	// A: names in use; B: old name -> new name
+	A = asarray_create()
+	B = asarray_create()
+	for (i = 1; i <= rows(u); i++) if (c[i] == u[i]) asarray(A, u[i], 1)
+	for (i = 1; i <= rows(u); i++) {
+		if (c[i] != u[i]) {
+			y = c[i]
+			k = 2
+			while (asarray_contains(A, y[1])) {
+				y = c[i] + "_" + strofreal(k)
+				k++
+			}
+			asarray(A, y[1], 1)
+			asarray(B, u[i], y[1])
+		}
+	}
+	n = st_nobs()
+	for (i = 1; i <= cols(v); i++) {
+		if (!st_isstrvar(v[i])) continue
+		x = st_sdata(., v[i])
+		for (j = 1; j <= n; j++) {
+			if (asarray_contains(B, x[j])) x[j] = asarray(B, x[j])
+		}
+		st_sstore(., v[i], x)
+	}
+	st_global("NWIMPORT_relabel", "1")
+}
+
+
+// Reads the labels and the matrix of a rectangular DL file; the ties go into _fromid, _toid, _value as stand-ins
+// z<1000000 + node number> (rows first). Returns the node names; labels may be quoted and are separated by blanks,
+// tabs or commas. Commas inside a name become blanks (node names cannot hold them); equal names get _2, _3, ...
+string rowvector nwimp_dlrect(string scalar fn, real scalar nr, real scalar nc)
+{
+	string colvector f, t
+	string rowvector rl, cl, tok, names
+	string scalar l, part, w, base
+	real matrix E
+	real scalar i, j, r, c, v, k, n, m
+	transmorphic scalar tk
+	transmorphic A
+
+	f = cat(fn)
+	rl = J(1, 0, "")
+	cl = J(1, 0, "")
+	part = ""
+	r = 0
+	m = 0
+	E = J(1024, 3, .)
+	tk = tokeninit(" " + char(9), ",", char(34) + char(34))
+	for (i = 1; i <= rows(f); i++) {
+		l = strlower(strtrim(f[i]))
+		if (substr(l, 1, 10) == "row labels") part = "row"
+		else if (substr(l, 1, 10) == "col labels" | substr(l, 1, 13) == "column labels") part = "col"
+		else if (l == "data:") part = "data"
+		else if (part == "row" | part == "col") {
+			tokenset(tk, f[i])
+			tok = tokengetall(tk)
+			for (j = 1; j <= cols(tok); j++) {
+				w = tok[j]
+				if (w == ",") continue
+				if (substr(w, 1, 1) == char(34)) w = substr(w, 2, strlen(w) - 2)
+				w = strtrim(subinstr(w, ",", " "))
+				if (part == "row") rl = (rl, w)
+				else cl = (cl, w)
+			}
+		}
+		else if (part == "data" & l != "") {
+			r++
+			tok = tokens(subinstr(l, ",", " "))
+			for (c = 1; c <= cols(tok); c++) {
+				v = strtoreal(tok[c])
+				if (v == 0 | v >= .) continue
+				if (r > nr | c > nc) continue
+				if (++m > rows(E)) E = E \ J(rows(E), 3, .)
+				E[m, .] = (r, nr + c, v)
+			}
+		}
+	}
+	names = J(1, nr + nc, "")
+	A = asarray_create()
+	for (k = 1; k <= nr + nc; k++) {
+		if (k <= nr) w = (k <= cols(rl) ? rl[k] : "r" + strofreal(k))
+		else w = (k - nr <= cols(cl) ? cl[k - nr] : "c" + strofreal(k - nr))
+		base = w
+		n = 1
+		while (asarray_contains(A, w)) w = base + "_" + strofreal(++n)
+		asarray(A, w, 1)
+		names[k] = w
+	}
+	if (m == 0) return(names)
+	st_addobs(m)
+	t = "z" :+ strofreal(1000000 :+ E[|1, 1 \ m, 1|], "%7.0f")
+	st_sstore(., "_fromid", t)
+	t = "z" :+ strofreal(1000000 :+ E[|1, 2 \ m, 2|], "%7.0f")
+	st_sstore(., "_toid", t)
+	st_store(., "_value", E[|1, 3 \ m, 3|])
+	return(names)
+}
+
+// a copy of a file with every tab replaced by a blank
+void nwimp_notabs(string scalar from, string scalar to)
+{
+	real scalar fi, fo
+	string matrix piece
+
+	fi = fopen(from, "r")
+	fo = fopen(to, "rw")
+	while ((piece = fread(fi, 65536)) != J(0, 0, "")) fwrite(fo, subinstr(piece, char(9), " "))
+	fclose(fi)
+	fclose(fo)
+}
+
+void nwimp_pajekline(real scalar fo, string scalar c)
+{
+	string scalar t
+	string rowvector l
+
+	t = strtrim(subinstr(c, char(9), " "))
+	if (t == "") return
+	if (substr(t, 1, 1) == "%") {
+		l = tokens(t)
+		if (cols(l) < 4) return
+		if (l[2] != "nwcommands" | l[3] != "level" | l[4] != "labels") return
+	}
+	fput(fo, c)
+}
+
+// copies a Pajek file without blank lines and comment lines (%); the comment with the level labels of a two-mode
+// network, written by nwexport, is kept. Lines of any length.
+void nwimp_pajeklines(string scalar from, string scalar to)
+{
+	real scalar fi, fo, i, last
+	string scalar buf
+	string matrix piece
+
+	fi = fopen(from, "r")
+	fo = fopen(to, "rw")
+	buf = ""
+	last = 0
+	while (!last) {
+		piece = fread(fi, 65536)
+		last = (piece == J(0, 0, ""))
+		if (!last) buf = buf + subinstr(piece, char(13), char(10))
+		else buf = buf + char(10)
+		while ((i = strpos(buf, char(10))) > 0) {
+			nwimp_pajekline(fo, substr(buf, 1, i - 1))
+			buf = substr(buf, i + 1, .)
+		}
+	}
+	fclose(fi)
+	fclose(fo)
+}
+
+// the stand-ins of the nodes of p are replaced by their names
+void nwimp_dlrename(pointer(class nw_def scalar) scalar p, string rowvector names)
+{
+	string rowvector old, res
+	real scalar i
+
+	old = p->get_nodenames()
+	res = old
+	for (i = 1; i <= cols(old); i++) res[i] = names[strtoreal(substr(old[i], 2, .)) - 1000000]
+	p->set_nodenames(res)
+}
+
+// a line of a UCINET DL file as a list of words: separated by blanks, tabs, commas, semicolons and =, except inside
+// double quotes (a quote ends a quoted word only before a separator or at the end of the line). The words are
+// returned separated by blanks; a blank inside a word is written as __nwblank__ and an apostrophe as __nwapos__ (a
+// quote next to an apostrophe ends a compound quote); nwimp_dljoin() puts them back.
+string scalar nwimp_dlline(string scalar line)
+{
+	string scalar sep, ch, w, out
+	real scalar i, j, n
+
+	sep = " " + char(9) + char(13) + ",;="
+	out = ""
+	n = strlen(line)
+	i = 1
+	while (i <= n) {
+		ch = substr(line, i, 1)
+		if (strpos(sep, ch)) {
+			i++
+			continue
+		}
+		if (ch == char(34)) {
+			j = i + 1
+			while (j <= n) {
+				if (substr(line, j, 1) == char(34)) {
+					if (j == n) break
+					if (strpos(sep, substr(line, j + 1, 1))) break
+				}
+				j++
+			}
+			w = substr(line, i + 1, j - i - 1)
+			i = j + 1
+		}
+		else {
+			j = i
+			while (j <= n) {
+				if (strpos(sep, substr(line, j, 1))) break
+				j++
+			}
+			w = substr(line, i, j - i)
+			i = j
+		}
+		if (nwimp_cleanstr(w) != w) {
+			w = nwimp_cleanstr(w)
+			st_global("NWIMPORT_relabel", "1")
+		}
+		w = subinstr(subinstr(w, " ", "__nwblank__"), char(39), "__nwapos__")
+		out = out + (out == "" ? "" : " ") + w
+	}
+	return(out)
+}
+
+void nwimp_dljoin(string scalar s)
+{
+	string rowvector t
+	string scalar target, out
+	real scalar i
+
+	t = tokens(s)
+	target = t[1]
+	out = ""
+	for (i = 2; i <= cols(t); i++) {
+		out = out + (i > 2 ? "," : "") + subinstr(subinstr(t[i], "__nwblank__", " "), "__nwapos__", char(39))
+	}
+	stata("c_local " + target + " " + char(96) + char(34) + out + char(34) + char(39))
+}
+
+// cells that stand for a number (a blank, . and NA are a missing value)
+real matrix nwimp_isnum(string matrix s)
+{
+	return((strtoreal(s) :!= .) :| (s :== "") :| (s :== ".") :| (strupper(s) :== "NA") :| (strupper(s) :== "NAN"))
+}
+
+// 1 when the cells 2..R of the first row and of the first column hold the same distinct, non-blank names
+real scalar nwimp_samenames(string matrix S)
+{
+	string colvector h, c
+
+	if (rows(S) < 2 | cols(S) < rows(S)) return(0)
+	h = S[|1, 2 \ 1, rows(S)|]'
+	c = S[|2, 1 \ rows(S), 1|]
+	if (any(h :!= c) | any(c :== "")) return(0)
+	return(rows(uniqrows(c)) == rows(c))
+}
+
+// 1 for a square table that holds numbers and empty cells only, with the whole diagonal empty
+real scalar nwimp_squareblankdiag(string matrix S)
+{
+	real scalar i
+
+	if (rows(S) != cols(S) | rows(S) < 2) return(0)
+	for (i = 1; i <= rows(S); i++) if (S[i,i] != "") return(0)
+	if (!any(S :!= "")) return(0)
+	return(all(nwimp_isnum(S) :| (S :== "")))
+}
+
+// The data in memory are the cells (all strings) of a file with an adjacency matrix. Finds the row and the column of
+// node names and replaces the data by the matrix columns (numeric), the node attributes (the columns after the first
+// N, N = number of rows of the matrix) and, if the file holds node names, a variable with these names.
+void nwimp_matrix(real scalar decimalcomma, real scalar optrow, real scalar optcol)
+{
+	string matrix S
+	string colvector names, hn, cells, vn, an
+	string rowvector head
+	real matrix M, num
+	real colvector keep, col
+	real scalar R, C, i, j, hdr, idc, i0, j0, n, nc, k, blankdiag, last
+	string scalar corner, name, labvar
+	transmorphic used
+
+	st_local("__nwimp_error", "")
+	st_local("__nwimp_vars", "")
+	st_local("__nwimp_attr", "")
+	st_local("__nwimp_labvar", "")
+	S = J(st_nobs(), st_nvar(), "")
+	for (j = 1; j <= st_nvar(); j++) S[., j] = strtrim(st_sdata(., j))
+	// empty rows, and empty columns at the left and right edge, are not part of the matrix
+	keep = J(rows(S), 1, 0)
+	for (i = 1; i <= rows(S); i++) keep[i] = any(S[i, .] :!= "")
+	if (!any(keep)) {
+		st_local("__nwimp_error", "the file is empty")
+		return
+	}
+	// not in a square table of numbers whose diagonal is empty: there an empty line or column is a node without ties
+	if (!nwimp_squareblankdiag(S)) {
+		S = select(S, keep)
+		last = cols(S)
+		while (all(S[., last] :== "")) last--
+		j = 1
+		while (all(S[., j] :== "")) j++
+		S = S[., (j..last)]
+	}
+	if (decimalcomma) {
+		for (i = 1; i <= rows(S); i++) {
+			for (j = 1; j <= cols(S); j++) {
+				if (regexm(S[i,j], "^[-+]?[0-9]*,[0-9]+([eE][-+]?[0-9]+)?$")) S[i,j] = subinstr(S[i,j], ",", ".")
+			}
+		}
+	}
+	R = rows(S)
+	C = cols(S)
+	num = nwimp_isnum(S)
+	corner = S[1,1]
+
+	// a column of names: text below the first row; a row of names: text in the cells of the first row that would
+	// belong to the matrix
+	idc = 0
+	if (R >= 2 & C >= 2) idc = !all(num[|2, 1 \ R, 1|])
+	hdr = 0
+	if (C >= 2 & 1 + idc <= min((C, R + idc))) hdr = !all(num[|1, 1 + idc \ 1, min((C, R + idc))|])
+	// numeric names: an empty (or text) corner and the same names in the first row and the first column
+	if (!idc & nwimp_samenames(S)) {
+		if (corner == "") {
+			// a matrix with an empty diagonal has an empty corner too
+			blankdiag = 1
+			for (i = 2; i <= R; i++) if (S[i,i] != "") blankdiag = 0
+			// (with an empty diagonal, numbers in the first row and column are ties unless the options say names)
+			if (!blankdiag | optrow | optcol) {
+				hdr = 1
+				idc = 1
+			}
+		}
+		else if (!num[1,1]) {
+			hdr = 1
+			idc = 1
+		}
+	}
+	// a header line over a column of numeric names
+	if (hdr & !idc & C >= 2) {
+		if (corner == "" | (C == R & anyof(("id", "name", "names", "node", "nodes", "label"), strlower(corner)))) idc = 1
+	}
+	// numbers as names in the first row only: one line more than columns
+	if (!hdr & !idc & R == C + 1) {
+		hn = S[1, .]'
+		if (all(hn :!= "") & rows(uniqrows(hn)) == C & !all((hn :== "0") :| (hn :== "1"))) hdr = 1
+	}
+	// the options say what the cells themselves do not show
+	if (optrow & !idc & C >= 2) {
+		if ((!hdr & C - 1 >= R) | (hdr & C == R)) idc = 1
+	}
+	if (optcol & !hdr & R >= 2) {
+		if (R - 1 == C - idc) hdr = 1
+	}
+
+	i0 = 1 + hdr
+	j0 = 1 + idc
+	n = R - hdr
+	nc = C - idc
+	if (n < 1 | nc < 1) {
+		st_local("__nwimp_error", "the file holds names but no matrix")
+		return
+	}
+	if (nc < n) {
+		st_local("__nwimp_error", sprintf("the matrix has %g rows but only %g columns; it must be square (further columns are node attributes)", n, nc))
+		return
+	}
+	for (i = i0; i <= R; i++) {
+		for (j = j0; j <= j0 + n - 1; j++) {
+			if (!num[i,j]) {
+				st_local("__nwimp_error", sprintf("the cell in line %g, column %g is not a number: ", i, j) + subinstr(subinstr(substr(S[i,j], 1, 40), char(34), "'"), char(96), "'"))
+				return
+			}
+		}
+	}
+	M = strtoreal(S[|i0, j0 \ R, j0 + n - 1|])
+
+	names = J(0, 1, "")
+	hn = J(0, 1, "")
+	if (hdr) hn = S[|1, j0 \ 1, j0 + n - 1|]'
+	if (idc) {
+		names = S[|i0, 1 \ R, 1|]
+		if (hdr) {
+			if (any(hn :!= names) & all(sort(hn, 1) :== sort(names, 1))) {
+				st_local("__nwimp_error", "the names in the first row and in the first column are the same but in a different order")
+				return
+			}
+		}
+	}
+	else if (hdr) names = hn
+	if (rows(names) > 0) {
+		for (i = 1; i <= n; i++) if (names[i] == "") names[i] = "n" + strofreal(i)
+		cells = nwimp_cleanstr(names)
+		if (any(cells :!= names)) {
+			st_global("NWIMPORT_relabel", "1")
+			cells = nwimp_uniquestr(cells)
+		}
+		names = cells
+		if (rows(uniqrows(names)) < n) {
+			st_local("__nwimp_error", "the node names are not unique")
+			return
+		}
+	}
+
+	// variable names: from the header line where they can be Stata names, otherwise v and the column number
+	used = asarray_create()
+	vn = J(C, 1, "")
+	for (j = j0; j <= C; j++) {
+		name = ""
+		if (hdr) name = strlower(S[1, j])
+		if (!st_isname(name) | substr(name, 1, 3) == "_nw" | asarray_contains(used, name)) name = "v" + strofreal(j)
+		k = 2
+		while (asarray_contains(used, name)) {
+			name = "v" + strofreal(j) + "_" + strofreal(k)
+			k++
+		}
+		asarray(used, name, 1)
+		vn[j] = name
+	}
+
+	stata("drop _all")
+	st_addobs(n)
+	for (j = j0; j <= j0 + n - 1; j++) {
+		(void) st_addvar("double", vn[j])
+		st_store(., vn[j], M[., j - j0 + 1])
+	}
+	st_local("__nwimp_vars", invtokens(vn[|j0 \ j0 + n - 1|]'))
+	an = J(0, 1, "")
+	for (j = j0 + n; j <= C; j++) {
+		cells = S[|i0, j \ R, j|]
+		(void) st_addvar(max((1, max(strlen(cells)))) > 2045 ? "strL" : "str" + strofreal(max((1, max(strlen(cells))))), vn[j])
+		st_sstore(., vn[j], cells)
+		an = an \ vn[j]
+	}
+	if (rows(an) > 0) st_local("__nwimp_attr", invtokens(an'))
+	if (rows(names) > 0) {
+		labvar = "__nwimp_lab"
+		(void) st_addvar("strL", labvar)
+		st_sstore(., labvar, names)
+		st_local("__nwimp_labvar", labvar)
+	}
+}
+end
+
 *! v1.5.0 __ 17 Sep 2015 __ 13:09:53
 *! v1.5.1 __ 17 Sep 2015 __ 14:54:23

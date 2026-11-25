@@ -20,6 +20,7 @@ program nwtranspose
 
 	_nwsyntax `netname', max(1)
 	local netobj1 `netobj'
+	local __trdir "`directed'"
 
 	if ("`generate'" != ""){
 		_nwreservedname `"`generate'"'
@@ -41,11 +42,13 @@ program nwtranspose
 		mata: nw_transpose_net(`netobj1', `netobj')
 		if `__tr_exists' nwdrop `generate'
 		mata: `nws'.rename("`__trnet'", "`generate'")
+		if "`__trdir'" == "true" _nwdetemporal `generate'
 		exit
 	}
 	_nwsyntax `netname', max(1)
 	local netobj2 `netobj'
 	
 	mata: nw_transpose_net(`netobj1', `netobj2')
+	if "`__trdir'" == "true" _nwdetemporal `netname'
 	
 end

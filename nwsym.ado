@@ -7,6 +7,7 @@ program nwsym
 	// undocumented no-op; confirmed via a direct probe).
 	syntax [anything(name=netname)][, check generate(string) replace mode(string)]
 	_nwsyntax `netname', max(1)
+	local __symdir "`directed'"
 
 
 	if "`check'" != "" {
@@ -67,4 +68,9 @@ program nwsym
 		mata: `netobj'->symmetrize("`mode'")
 	}
 	nwsync `netname'
+	// max and min leave an undirected network as it is
+	if !("`__symdir'" == "false" & inlist("`mode'", "max", "min")) {
+		if "`generate'" != "" _nwdetemporal `generate'
+		else _nwdetemporal `netname'
+	}
 end

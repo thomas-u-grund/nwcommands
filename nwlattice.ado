@@ -148,7 +148,7 @@ program nwlattice
 		nwload `randomname', xvars
 	}
 	else {
-		nwload `randomname'
+		nwload `randomname', keepuser
 	}
 	mata: st_global("r(netlist)", "`name'")
 	mata: mata drop __nwlattice_newmat

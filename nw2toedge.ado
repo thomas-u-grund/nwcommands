@@ -124,7 +124,8 @@ program nw2toedge
 
 	// two-mode network: the mode-1 node of a tie between the modes is always
 	// _ego and the mode-2 node _alter (nw2fromedge _ego _alter rebuilds it)
-	if "`is2mode'" == "true" & "`ignore2mode'" == "" {
+	// not with full, which lists both (i,j) and (j,i): turning the second one round would list each tie twice
+	if "`is2mode'" == "true" & "`ignore2mode'" == "" & "`full'" == "" {
 		local __tw_first : word 1 of `nets'
 		_nwsyntax `__tw_first'
 		mata: nw2toedge_mode1ego("`ego'", "`alter'", `netobj'->get_nodenames(), `netobj'->get_modes())

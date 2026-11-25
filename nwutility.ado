@@ -1,6 +1,6 @@
 capture program drop nwutility
 program nwutility
-	syntax [anything(name=netname)], [Benefit(real 1) Cost(real 1) INTRValue(string) INTRCost(string) force *]
+	syntax [anything(name=netname)], [Benefit(real 1) Cost(real 1) INTRValue(string) INTRCost(string) force replace *]
 	unw_defs
 	// Consistency (moderate-severity pass, stat_models group): a
 	// misspelled/nonexistent network name used to crash with a raw,
@@ -24,6 +24,15 @@ program nwutility
 	// afterward (the backup already existed in this file, unused,
 	// before this fix - the collision it guards against was real,
 	// just never completed).
+	if "`replace'" == "" {
+		foreach __nwuv in _benefit _cost _util {
+			capture confirm variable `__nwuv', exact
+			if _rc == 0 {
+				di "{err}{p 0 0 2}Variable {bf:`__nwuv'} already exists; specify {bf:replace}.{p_end}"
+				exit 110
+			}
+		}
+	}
 	local netname_backup "`netname'"
 	local netnodes `nodes'
 

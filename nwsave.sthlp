@@ -35,6 +35,17 @@ command saves data in its own file format {bf:.nwdta}. Network data saved in thi
 can be loaded with {help nwuse}. Notice that the command {help save} does not save
 network data.
 
+{pstd}
+Saving changes nothing in memory: the data, their sort order, the name of the data file (which {cmd:save, replace}
+writes to), the mark of unsaved changes and the current network stay as they are, also when the command fails.
+
+{pstd}
+Every observation is saved, also those that belong to no node, and so is every variable, also one that has the name of a
+network or a name that starts with {it:_nw_}. The variables that {help nwload} created to show a network are not saved
+(the network itself is). Names of nodes are kept in the variable {it:_nwnode}: observations with a node name belong to that node. When the
+data have no {it:_nwnode} yet and their number of observations differs from the number of nodes, they are not assigned
+to nodes; the file then holds one observation per node in addition to them.
+
 
 {title:Network types}
 
@@ -83,4 +94,4 @@ After this, one can easily load these 5 networks in a new Stata session just as 
         {help nwuse}, {help nwwebuse}, {help save}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

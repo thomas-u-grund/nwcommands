@@ -134,4 +134,4 @@ reduction for vertex connectivity)
 	{help nwkcomponents}, {help nwcomponents}, {help nwclique}, {help nwkplex}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

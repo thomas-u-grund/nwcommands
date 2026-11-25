@@ -1044,7 +1044,11 @@ program nwplot, rclass
 		mata: __nwplot_Coord = `_layoutfcn'(__nwplot_M`_layoutfcnopt')
 	}
 	if ("`layout'"== "mds" & `nodes' > 1){
+		// the layout runs mdsmat: the user's estimation results are set aside (and come back after an error too)
+		tempname __nwp_est
+		_estimates hold `__nwp_est', nullok restore
 		mata: __nwplot_Coord = netplotmds(__nwplot_M, `iterations')
+		_estimates unhold `__nwp_est'
 	}
 
 	// Layouts that use the tie values (kk and frucht on a valued, one-mode network; `binary' switches it off):
@@ -2745,12 +2749,20 @@ end
 // (st_store'd in by this same program a little earlier) - this renders
 // what nwplot actually resolved, it does not recompute anything.
 capture mata: mata drop _nwedit_viewmap()
+capture mata: mata drop _nwedit_num()
 capture mata: mata drop _nwedit_buildjson()
 capture mata: mata drop _nwedit_slurpfile()
 capture mata: mata drop _nwedit_buildinteractivehtml()
 capture mata: mata drop _nwedit_jsstr()
 capture mata: mata drop _nwedit_writejson()
 mata:
+// a number in the page's data: a missing value (of color(), size() or symbol()) is written as the fallback, never
+// as "." (which is not valid JavaScript)
+string scalar _nwedit_num(real scalar v, real scalar fallback)
+{
+	return(strofreal(v < . ? v : fallback))
+}
+
 // Viewer canvas mapping of the node coordinates (nx, ny of the plotting dataset). The page places a node at
 // 1000 x unit px. The layouts of nwplot give units between 0 and 1.5 and are kept as they are; coordinates
 // on another scale (nodexy() in degrees, metres, ... or a very small extent) are shifted to the origin and
@@ -2852,6 +2864,9 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 		sg = nsymbolv[i]
 		colorstr = st_local("_nwedit_htmlcolor_" + strofreal(cg))
 		shapestr = st_local("_nwedit_htmlshape_" + strofreal(sg))
+		// a node without a colour or shape value: grey circle
+		if (colorstr == "") colorstr = "#999999"
+		if (shapestr == "") shapestr = "ellipse"
 		// real Stata legend text (colorlabels'/symbollabels' own
 		// _getvaluelabel-resolved strings, captured into these locals
 		// alongside nwplot's own legend construction) when the network has
@@ -2883,11 +2898,11 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 			q+"shape_label"+q+":"+q+shapelbl+q+"," +
 			q+"color"+q+":"+q+colorstr+q+"," +
 			q+"shape"+q+":"+q+shapestr+q+"," +
-			q+"size"+q+":"+strofreal(sizepx)+"," +
-			q+"color_group"+q+":"+strofreal(cg)+"," +
-			q+"shape_group"+q+":"+strofreal(sg)+"," +
-			q+"x"+q+":"+strofreal(nxv[i])+"," +
-			q+"y"+q+":"+strofreal(nyv[i]) +
+			q+"size"+q+":"+_nwedit_num(sizepx, 22)+"," +
+			q+"color_group"+q+":"+_nwedit_num(cg, 0)+"," +
+			q+"shape_group"+q+":"+_nwedit_num(sg, 0)+"," +
+			q+"x"+q+":"+_nwedit_num(nxv[i], 0)+"," +
+			q+"y"+q+":"+_nwedit_num(nyv[i], 0) +
 			"}"
 		if (i < nn) json = json + ","
 	}
@@ -2945,10 +2960,10 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 				q+"edgegroup_label"+q+":"+q+edgegrouplbl+q+"," +
 				q+"color"+q+":"+q+colorstr+q+"," +
 				q+"style"+q+":"+q+shapestr+q+"," +
-				q+"width"+q+":"+strofreal(edgewv[i])+"," +
+				q+"width"+q+":"+_nwedit_num(edgewv[i], 1)+"," +
 				q+"arrow"+q+":"+(doarrows==1 ? "true" : "false")+"," +
 				q+"recip"+q+":"+((isdirected==1 & recipv[i]==1) ? "true" : "false")+"," +
-				q+"edgecolor_group"+q+":"+strofreal(ecg) +
+				q+"edgecolor_group"+q+":"+_nwedit_num(ecg, 0) +
 				"}"
 		}
 	}
@@ -3278,9 +3293,12 @@ real matrix function mmdslayout(real matrix G)
 	}
 	_diag(D,0)*/
 	
-	st_matrix("dMat",D) 	    //Distance mat to stata under tempname
-	// compute MDS coordinates in stata
-	rc = _stata( "  mdsmat dMat,  force noplot method(classical)", 1)
+	dname = st_tempname()
+	ehold = st_tempname()
+	st_matrix(dname, D) 	    //Distance mat to stata under a temporary name
+	// compute MDS coordinates in stata; the user's estimation results are set aside meanwhile
+	stata("_estimates hold " + ehold + ", nullok")
+	rc = _stata( "  mdsmat " + dname + ",  force noplot method(classical)", 1)
 				//" di `test_rc")
 	if (rc == 0) {
 		Coord = st_matrix("e(Y)") 
@@ -3294,6 +3312,8 @@ real matrix function mmdslayout(real matrix G)
 		Coord[.,1] = (((Coord[.,1] :/ CoordMax1))) 
 		Coord[.,2] = (((Coord[.,2] :/ CoordMax2)))
 	}
+	stata("_estimates unhold " + ehold)
+	st_matrix(dname, J(0, 0, .))
 	return(Coord)
 }
 end
@@ -3370,6 +3390,8 @@ real matrix function netplotmds(real matrix G, real scalar MaxIt)
         }
 
         Coord = st_matrix("e(Y)")       //pull coordinates back into mata
+        st_matrix(dMat, J(0, 0, .))
+        st_matrix(sMat, J(0, 0, .))
         
         // rescale coordinates to fit inside circle layout
 		

@@ -14,7 +14,7 @@
 
 {p 8 17 2}
 {cmdab: nwkeep} 
-[{it:{help netlist}}]
+{it:{help netlist}}
 
 {p 8 17 2}
 {cmdab: nwkeep} 
@@ -37,7 +37,7 @@
 {title:Description}
 
 {pstd}
-Keeps a network or a list of networks. The command is the network version of {help keep} and mirrors {help nwdrop}.
+Keeps a network or a list of networks (a list or an {help if} or {help in} condition is required). The command is the network version of {help keep} and mirrors {help nwdrop}.
 
 {pstd}
 It can also be used together with {help if} or {help in}. In this case, the command operates on the node-level
@@ -62,7 +62,8 @@ Load two networks and keep only one of them by name:
 	{cmd:. nwset}
 
 {pstd}
-Keep only certain nodes of a network, using {help if}:
+Keep only certain nodes of a network, using {help if} (a condition that no node meets stops with r(2000) and changes
+nothing; {help nwdrop} removes a network):
 
 	{cmd:. nwclear}
 	{cmd:. nwrandom 6, prob(.4) name(net3)}
@@ -70,4 +71,4 @@ Keep only certain nodes of a network, using {help if}:
 	{cmd:. nwsummarize net3}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

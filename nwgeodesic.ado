@@ -463,7 +463,7 @@ program _nwgeodesic_single
 			name(`__gname') `average' saving(`"`__gsv'"') export(`"`__gex'"') gopts(`"`options'"')
 	}
 	if "`xvars'" != "" {
-		nwload `name'
+		nwload `name', keepuser
 	}
 	// The two conditional-capture fixes above close the two known
 	// stale-`_rc'-leak sources, but `capture _return drop _geo' further

@@ -7,24 +7,54 @@ program nwsave
 	// Removed rather than wired up, since there is no second storage format
 	// implemented anywhere in this file to select between.
 	syntax anything [, old replace *]
+	unw_defs
+	// stops here when there is no network
+	_nwsyntax _all, max(99999)
+	// All work is done on a copy of the data in a second frame: the data in
+	// memory, their order, c(filename) and c(changed) stay as they are, also
+	// when the save fails. The current network is put back at the end.
+	mata: st_local("__nws_current", `nws'.get_current_name())
+	local __nws_home = c(frame)
+	tempname __nws_frame
+	frame copy `__nws_home' `__nws_frame'
+	frame change `__nws_frame'
+	capture noisily _nwsave_work `0'
+	local __nws_rc = _rc
+	quietly frame change `__nws_home'
+	frame drop `__nws_frame'
+	if "`__nws_current'" != "" capture mata: `nws'.make_current_from_name("`__nws_current'")
+	if `__nws_rc' exit `__nws_rc'
+	capture confirm number 0
+end
+
+capture program drop _nwsave_work
+program _nwsave_work
+	syntax anything [, old replace *]
 	// anything keeps the quotes of a quoted file name (paths with spaces)
 	local webname `anything'
 	if regexm(`"`webname'"', "\.nwdta$") local webname = substr(`"`webname'"', 1, strlen(`"`webname'"') - 6)
 	else if regexm(`"`webname'"', "\.dta$") local webname = substr(`"`webname'"', 1, strlen(`"`webname'"') - 4)
 	unw_defs
-	nwload, labelonly
-
-	tempfile existing
-	qui save `existing'
 	_nwsyntax _all, max(99999)
 	local nets r(networks)
+
+	// variables that nwload made from a network are copies of it, not data
+	mata: _nwsave_dropcopies(tokens(`nws'.get_names()), `nws'.pdefs)
+	// The file's own columns are named _nw_... and, for the tie values, like
+	// the networks. A variable of the user with such a name is stored as
+	// _nw_uvar# with its name in a characteristic; nwuse gives it back.
+	mata: _nwsave_aside(tokens(st_local("netname")))
+	// marks the observations that are in memory now: nwuse keeps them, also
+	// those that belong to no node (the other rows of the file hold ties only)
+	qui gen byte _nw_userrow = 1
+	local __nws_dlabel : data label
 
 	local format = "edgelist"
 
 	
 	// save attributes first
 	qui foreach onenet in `netname' {
-		nwload `onenet', labelonly
+		_nwdatasync `onenet'
 	}
 	capture drop _nwinclude
 	tempfile attributes
@@ -33,9 +63,17 @@ program nwsave
 	
 	// obtain edgelists for each network together with entries to which network entry belongs
 	_nwsyntax _all, max(99999)
+	// The column that marks the nodes of a network is _nw_match_<name>; the file has it with the suffix _nw_ego, which
+	// leaves 15 characters for the name. A network with a longer name gets _nw_m<number> instead (nwuse knows both).
+	local __nws_i 0
+	local __nws_keys ""
 	qui foreach onenet in `netname' {
-		nwload `onenet', labelonly
-		gen _nw_match_`onenet' = 1 if _nwinclude == 1
+		local ++__nws_i
+		if ustrlen("`onenet'") <= 15 local __nws_key`__nws_i' "_nw_match_`onenet'"
+		else local __nws_key`__nws_i' "_nw_m`__nws_i'"
+		local __nws_keys "`__nws_keys' `__nws_key`__nws_i''"
+		_nwdatasync `onenet'
+		gen `__nws_key`__nws_i'' = 1 if _nwinclude == 1
 	}
 	
 	// A two-mode network must not list the dyads inside each mode (a
@@ -55,9 +93,11 @@ program nwsave
 		tempfile __nws_all __nws_prep
 		qui save `__nws_prep'
 		local __nws_first = 1
+		local __nws_i 0
 		qui foreach onenet in `netname' {
+			local ++__nws_i
 			use `__nws_prep', clear
-			nwtoedge `onenet', egovars(_nw_match_`onenet') ego(_nw_ego) alter(_nw_alter) ignore2mode compress aggregate
+			nwtoedge `onenet', egovars(`__nws_key`__nws_i'') ego(_nw_ego) alter(_nw_alter) ignore2mode compress aggregate
 			// the isolate list nwtoedge attaches belongs to one network
 			// only; with several networks in the file it would add
 			// another network's nodes to each one on nwuse (the
@@ -77,7 +117,7 @@ program nwsave
 		use `__nws_all', clear
 	}
 	else {
-		qui nwtoedge _all, egovars(_nw_match_*) ego(_nw_ego) alter(_nw_alter) ignore2mode compress aggregate
+		qui nwtoedge _all, egovars(`__nws_keys') ego(_nw_ego) alter(_nw_alter) ignore2mode compress aggregate
 	}
 	qui gen _nw_running = _n
 	tempfile edgelist
@@ -190,34 +230,63 @@ program nwsave
 		qui merge 1:1 _nw_running using `__nws_tone', nogenerate
 	}
 	
-	// BUGFIX: this used to hardcode the literal "replace" here regardless
-	// of whether the caller actually passed the `replace' option (that
-	// local was declared in `syntax' and documented in nwsave.sthlp as
-	// "overwrite existing dataset", but never once referenced in the
-	// command body) - so nwsave always silently overwrote an existing
-	// target file, exactly the data-loss `replace' exists to guard
-	// against. Found via a failure-path test that expected a plain
-	// second `nwsave <same file>' (no `replace') to error and it didn't.
-	// Fixed to pass the caller's own `replace' local through instead of
-	// a hardcoded one, so an existing target file without `replace'
-	// now correctly raises Stata's own "file already exists" error.
-	//
-	// BUGFIX (found immediately by the fix above): once this save can
-	// actually fail, failing here used to abort the command before the
-	// `use `existing', clear' line below ever ran - leaving the CALLER'S
-	// OWN in-memory dataset stuck in this command's internal merged/
-	// mutated working state (stray _nw_running/_nw_match_* columns etc.)
-	// instead of restored, and the next command run in that same session
-	// (including a corrected `nwsave ..., replace' retry) hit an
-	// unrelated, confusing "variable _nw_running already defined" error
-	// instead of ever surfacing the real problem. `capture` the save,
-	// always restore the caller's original data either way, then
-	// re-raise the real error/rc so failures are still reported.
-	capture qui save`old' `"`webname'.nwdta"', `replace' `options'
-	local savercc = _rc
-	use `existing', clear
-	if `savercc' != 0 {
-		error `savercc'
-	}
+	if `"`__nws_dlabel'"' != "" label data `"`__nws_dlabel'"'
+
+	// without -replace- an existing file stops here with Stata's own error
+	qui save`old' `"`webname'.nwdta"', `replace' `options'
 end
 
+capture mata: mata drop _nwsave_nodesvar()
+mata:
+string rowvector _nwsave_nodesvar(pointer(class nw_def scalar) scalar p)
+{
+	return(p->get_nodesvar())
+}
+end
+capture mata: mata drop _nwsave_dropcopies()
+capture mata: mata drop _nwsave_aside()
+mata:
+// drop the variables that carry the mark of nwload and are still node
+// variables of the network named in it
+void _nwsave_dropcopies(string rowvector nets, pointer rowvector pdefs)
+{
+	real scalar i, j
+	string scalar v, net
+	string rowvector d
+	d = J(1, 0, "")
+	for (i = 1; i <= st_nvar(); i++) {
+		v = st_varname(i)
+		net = st_global(v + "[nwload]")
+		if (net == "") continue
+		for (j = 1; j <= cols(nets); j++) {
+			if (nets[j] == net) {
+				if (anyof(_nwsave_nodesvar(pdefs[j]), v)) d = (d, v)
+				break
+			}
+		}
+	}
+	if (cols(d)) st_dropvar(d)
+}
+end
+mata:
+// rename the variables named _nw_... or like a network to _nw_uvar#
+void _nwsave_aside(string rowvector nets)
+{
+	real scalar i, k
+	string scalar v, nv
+	string rowvector todo
+	todo = J(1, 0, "")
+	for (i = 1; i <= st_nvar(); i++) {
+		v = st_varname(i)
+		if (substr(v, 1, 4) == "_nw_" | anyof(nets, v)) todo = (todo, v)
+	}
+	k = 0
+	for (i = 1; i <= cols(todo); i++) {
+		do {
+			nv = "_nw_uvar" + strofreal(++k)
+		} while (_st_varindex(nv) != . | anyof(nets, nv))
+		st_varrename(todo[i], nv)
+		st_global(nv + "[nwsave_name]", todo[i])
+	}
+}
+end

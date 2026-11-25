@@ -920,7 +920,6 @@ The `nwcommands-ado*.pkg` chunks are generated from `_pkg_ado.txt`; a command or
 - **The temporal data are NOT in the tie matrix.** An event network has the aggregated matrix (made by `nwfromedge` inside `nwset`) plus `eventlist`; a snapshot/interval network has the matrix plus the lists `edgetime` / `edgestart`+`edgeend` (always lists, `timesparse = 1`). Any command that builds a network from the matrix (`nwfromedge`, `nwreplacemat`, the `generate()` family, `nwsym`, `nwtranspose`...) gives a network that is not temporal unless it copies the fields. `nwduplicate` used to drop them (so `nworder`, which duplicates, dropped them too); `nwdropnodes` drops them through `nwreplacemat`.
 - **Node numbers inside the lists change when nodes are dropped or reordered, so copy by labels.** `_nwtemporal stash` reads the temporal data of a network into Mata globals `__nwt_*` with the node LABELS; `_nwtemporal put net [, filter]` writes them into another network (or the same one after the nodes changed) through `build_eventlist()` / `nw_set_temporal_values()`. Use this pair, not a direct copy of the index matrices. The Mata library is not touched (no lockstep rebuild), all work is Mata one-liners in `_nwtemporal.ado`; the library functions it calls (`build_eventlist`, `nw_set_temporal_values`, the getters) are the same ones `nwset` uses.
 - **`.nwdta` extension.** Only a file with a temporal network has the extra columns `_nw_ttype`, `_nw_tvars` (one row per network: type, and `timevar|startvar|endvar|eventtimevar`) and `_nw_tnet`, `_nw_tego`, `_nw_talter`, `_nw_tt1`, `_nw_tt2`, `_nw_tval` (temporal rows, in their own row range, merged on `_nw_running` like the edge list). Old readers ignore unknown `_nw_*` columns and load the aggregated tie list, which a new writer still writes. A file of static networks is identical to the old one (`cf` and `datasignature` equal). Do not add the columns for static networks.
-- **`_rc` at the end of `nwuse`.** `nwuse` tests `if _rc != 0` after its loop, relying on `_rc` left by the last command of the loop; a helper that ends with `capture mata: mata drop ...` leaves `_rc` = 3000 and nwuse says "error in loading" (r(999)). End such helpers with `capture confirm number 0`.
 - **`gettoken sub 0 : 0` keeps a trailing comma on the subcommand** (`take,` is not `take`): use `parse(" ,")`. And `gen _nw_tvars = ""` makes a str1 variable that cuts `|||t` to `|`: give the width (`str244`).
 - **Internal callers of `nwtoedge` pass `aggregate`** (nwsave, nwexport, nwmixing, nwtabulate, nwdyadprob, nwcollapse): without it a temporal network prints the aggregation note in the middle of their output.
 - **`nwimport` reads a three-column list as `ego alter value`** whether or not the third column is a time: a temporal file written by `nwexport` is read as a valued static network unless `eventtime`, `time` or `interval` is given (only the four-column case is refused). The file does not hold the direction; import with `directed` / `undirected`.
@@ -962,3 +961,21 @@ The `nwcommands-ado*.pkg` chunks are generated from `_pkg_ado.txt`; a command or
 
 ## A test must never write into the real personal directory
 `cscripts/test_localcopy.do` ran `nwinstall, localcopy` with the real personal directory, which wrote `profile.do` with `nwinstall, usermenu` there (seen on Linux, `~/ado/personal`). Every later Stata start with the same home then failed with r(199) in the startup profile before `nwinstall` was on the adopath, which made a whole suite run look broken. The test now sets a scratch `sysdir PERSONAL`. When a whole suite shows r(199) "nwinstall unrecognized" at startup, look for a `profile.do` in the personal directory first. A suite runner should give each test a private home.
+
+## A `_nwsyntax` local goes stale when the network is rebuilt
+After a command that removes and re-creates a network (nwreplacemat with a new size), `netobj' points at another
+registry position; call `_nwsyntax netname, max(1)' again before any further `netobj'-> call.
+
+## A program that changes data before it can fail needs `preserve'
+nwfromedge and nwhierarchy do their work in a sub-program that a wrapper calls between `preserve' and `restore, not'.
+
+## Only variables with the characteristic [nwload] belong to nwload
+nwload and nwsync drop or rewrite no other variable, whatever its name. Do not decide by the name.
+
+## Changing ties in place must call `_nwdetemporal'
+The times, events and intervals are not rebuilt; commands that keep them (nwdropnodes) set the flag off around
+nwreplacemat and put the data back with _nwtemporal.
+
+## `global S_FN ""' empties c(filename)
+Used by nwuse so that `save, replace' cannot overwrite the .nwdta file (checked in Stata 17 only so far).
+

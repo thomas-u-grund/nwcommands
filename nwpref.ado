@@ -118,7 +118,7 @@ program nwpref
 		nwload, xvars
 	}
 	else {
-		nwload
+		nwload, keepuser
 	}
 	mata: st_global("r(netlist)", "`name'")
 

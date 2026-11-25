@@ -34,7 +34,7 @@ program nwreplacemat
 			nwload, xvars
 		}
 		else {
-			nwload
+			nwload, keepuser
 		}
 		_nwsyntax `netname', max(1)
 		mata: st_local("__sym", strofreal(nw_triplets_symmetric(`triplets', `matrows')))
@@ -43,7 +43,7 @@ program nwreplacemat
 			nwsync `netname'
 		}
 		if "`xvars'" != "" {
-			nwload `netname'
+			nwload `netname', keepuser
 		}
 		mata: `netobj'->set_directed(!`__sym')
 		exit
@@ -139,7 +139,7 @@ program nwreplacemat
 				nwload, xvars
 			}
 			else {
-				nwload
+				nwload, keepuser
 			}
 			// `nosync' itself is never populated (Stata's own "no"-
 			// prefix syntax convention stores the literal string
@@ -150,6 +150,9 @@ program nwreplacemat
 			nwreplacemat `netname', newmat(`newmat') `sync' `xvars'
 			// delete empty observations in Stata
 			nwcompressobs
+			// the network was dropped and created again at the end of the list: look it up again, otherwise the
+			// settings below go to the network that now stands at its old place
+			_nwsyntax `netname', max(1)
 		}
 	}
 	else {
@@ -172,6 +175,8 @@ program nwreplacemat
 			}
 		}
 		mata: `netobj'->set_edge(`__matname')
+		_nwdetemporal `netname'
+		_nwsyntax `netname', max(1)
 		if "`netonly'" == "" {
 			if "`sync'" == "" {
 				nwsync `netname'
@@ -188,7 +193,7 @@ program nwreplacemat
 		// actually generates the Stata variables, confirmed directly
 		// against nwload.ado's own body.
 		if "`xvars'" != "" {
-			nwload `netname'
+			nwload `netname', keepuser
 		}
 	}
 

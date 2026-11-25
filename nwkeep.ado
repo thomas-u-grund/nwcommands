@@ -2,6 +2,11 @@
 capture program drop nwkeep
 program nwkeep
 	syntax [anything(name=netname)] [if] [in] [, clean]
+	// without a list (an empty local, say) every network but the current one used to be dropped
+	if `"`netname'"' == "" & `"`if'`in'"' == "" {
+		di "{err}{p 0 0 2}name the networks to keep, or give an {bf:if} or {bf:in} condition for the nodes of the current network{p_end}"
+		exit 198
+	}
 	unw_defs
 	_nwsyntax `netname', max(9999)
 	local keeplist `netname'
@@ -22,11 +27,23 @@ program nwkeep
 	else {
 		_nwsyntax `netname', max(1)
 		local n `nodes'
-		_nwdatasync `netname'
-		//list _nw*
-		
 		tempvar ifcond orig
 		tempname keep
+
+		// a condition that no node meets is refused (it used to drop the whole network without a message)
+		preserve
+		_nwdatasync `netname'
+		tempvar __nwkc
+		qui gen `__nwkc' = 1 `if' `in'
+		qui count if `__nwkc' == 1 & _n <= `n'
+		local __nwk = r(N)
+		restore
+		if `__nwk' == 0 {
+			di "{err}{p 0 0 2}No node of network {bf:`netname'} meets the condition; nothing was changed. To remove the network use {bf:nwdrop `netname'}.{p_end}"
+			exit 2000
+		}
+		_nwdatasync `netname'
+		
 
 		qui gen `orig' = `nw_included'
 		//gen o = `nw_included'

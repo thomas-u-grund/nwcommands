@@ -97,6 +97,6 @@ program nwattime, rclass
 	di "{txt}  Ties: {res}`tiesshown'"
 
 	if "`xvars'" != "" {
-		nwload `name'
+		nwload `name', keepuser
 	}
 end
