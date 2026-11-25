@@ -6,6 +6,24 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
+## [3.37.1] - 2026-11-25
+
+**Summary.** Fixes for commands that destroyed networks or gave wrong results. Please update. The core Mata library and the plugins are unchanged; the model packages need no update.
+
+### Results that change (read before you re-run old analyses)
+- `nwlambda` and `nwsimindex`: with the input network's name as the name of the result (`name(`*input*`) replace`), they returned **wrong values** without an error. Recompute results obtained this way. The input's name is now refused.
+- `nwset, mat(B) bipartite` **changed the Mata matrix `B`** (it became the square matrix of all nodes), so that using `B` again gave a different, larger network. `B` is now left as it is. Networks declared from a matrix that had been used before may be wrong.
+
+### Fixed: lost networks
+- `nwbridges` and `nwsimmelian` (option `nwreplace`), `nw2project` and `nwattime` (option `replace`): with the input network's name as the name of the result, the input was destroyed; `name(_all)` with `nwbridges` or `nwsimmelian` dropped **all** networks. These commands now refuse the input's name.
+
+### Fixed
+- Rows of the data that belong to no node keep their order when networks are created or the data are synchronized (before: shuffled).
+- `nwplot, edgesize()` without `forcekeys()` had no legend entries; they now show the smallest and largest value (none when all ties have one value).
+- `nwplot, interactive`: the degree of a clicked node was blank.
+- Dialog boxes: long labels shortened.
+- `help nwintro`: measured timings removed; the limits stay.
+
 ## [3.37.0] - 2026-11-25
 
 **Summary.** Pictograms in the interactive view of `nwplot`, and fixes from a test of the commands at their limits: input checks, error messages, help files and dialog boxes. Some results and behaviour change (below). The core Mata library and the plugins are unchanged; the model packages need no update.

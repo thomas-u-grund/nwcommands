@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.37.0  25nov2026}{...}
+{* *! version 3.37.1  25nov2026}{...}
 
 {phang}
 {help nwcommands:NW-1 intro} {hline 2} Introduction and concepts
@@ -170,152 +170,67 @@ How to cite the model packages is explained at {browse "https://nwcommands.org/c
 {title:Network size and speed}
 
 {pstd}
-How large a network you can use depends on what you do with it. nwcommands stores a network in three ways, each with
-its own limits. This section gives measured numbers, so that you know what to expect before you build a large network.
+How large a network you can use depends on what you do with it. Commands that work on the stored ties need memory in
+proportion to the number of ties; commands whose work or result is an {it:n}-by-{it:n} matrix need memory in proportion
+to the square of the number of nodes. Up to 9999 networks can be in memory at once.
 
 {pstd}
-In total, the software supports up to 9999 networks in memory at once, regardless of their individual size.
-
-{pstd}
-The web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?} lists, command by command, which commands are comfortable, workable or refused at 1,000 to
-100,000 nodes.
+The web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?} lists, command by
+command, which commands are comfortable, workable or refused at 1,000 to 100,000 nodes. The help file of each command
+states its own limits.
 
 {marker limits_sparse}{...}
-{title:Structural analysis (components, degree, clustering, neighbors, unweighted distances)}
+{title:Commands that work on the ties}
 
 {pstd}
-Most of the package's own graph-traversal commands - {help nwcomponents}, {help nwdegree}, {help nwclustering},
-{help nwneighbor}, {help nwgeodesic}'s unweighted mode, {help nwevcent} (eigenvector centrality, by sparse power iteration),
-{help nwpagerank} (also sparse power iteration), {help nwrandomwalk} (exact hitting time via a sparse linear
-solve, not simulation), {help nwmaxflow} and {help nwmatching} (Edmonds-Karp max-flow on a sparse vertex-split
-representation), {help nwlambda} (edge connectivity, the same sparse max-flow primitive), and anything built on
-them - operate on a genuinely sparse internal representation. They do {bf:not} allocate memory proportional to
-the square of the node count, only to the number of actual ties. Measured end to end in Stata/BE (not MP), on a
-shared computer, for a random directed network with 10 ties per node: {help nwfromedge} builds 10,000 / 25,000 /
-40,000 / 100,000 nodes in 0.3 / 0.8 / 1.2 / 3.7 seconds (with automatic directed/undirected detection, i.e. without
-{opt directed}: 0.3 / 0.9 / 1.5 / 8.8 seconds; {opt forceundirected} at 100,000 nodes: 14 seconds). At 100,000 nodes /
-1,000,000 ties, {help nwdegree} takes 0.5, {help nwcomponents} 0.5, {help nwneighbor} (one node) 0.4 and
-{help nwclustering} 0.7 seconds (at 25,000 nodes: 0.13, 0.12 and 0.13 seconds for the first three). Building the network from an edge
-list ({help nwfromedge}, {cmd:nwset, edgelist}, {help nwimport} type(edgelist)) never allocates the dense matrix.
-With 5 ties drawn per node (a mean degree of 10 when undirected) and 100,000 nodes, in seconds: {help nwfromedge} 0.51 for a
-directed network and 1.07 for an undirected one; {help nwdegree} 0.032 (undirected) and 0.19 (directed); {help nwconstraint}
-2.2 (undirected) and 0.70 (directed); {help nwclique} with option {opt nomatrix} 0.26.
-{help nwtoedge} with {opt compress}, {help nwsave}, {help nwuse} and {help nwappend} of a single network work at this
-size too (100,000 nodes / 1,000,000 ties: {cmd:nwtoedge, compress} 15, {cmd:nwsave} 15 seconds and a 124 MB file,
-{cmd:nwuse} 28, {cmd:nwappend} 36 seconds on a busy computer; 25,000 nodes: 2.0, 2.7, 4.4 and 4.0 seconds).
-{help nwgeodesic} is {bf:not} in this group at the command level: it returns the full matrix of distances between
-all pairs, which is dense (10,000 nodes: 19 seconds; refused above 20,000 nodes).
-({help nwfactions} and {help nwmotifs} are combinatorial rather than sparse-traversal in nature - see their own
-help files for their own, different scaling characteristics.)
-
-{pstd}
-Other general-purpose commands work on the ties as well
-(Stata/BE, random directed network with 10 ties per node; 1,000 / 5,000 / 20,000 nodes): {help nwtoedge} with
-{opt compress}, {help nwexport} (edge list, Pajek, UCINET, GML), {help nwrecode} and {help nwdichotomize} take
-0.1-0.3 / 0.2-0.4 / 0.3-1.4 seconds; {help nwtabulate} of one network 0.01 / 0.01 / 0.03 seconds; {help nwkcomponents}
-(undirected, about 20 ties per node) 0.05 / 2 / 31 seconds. Still quadratic by nature: {help nwtoedge} and {help nw2toedge}
-without {opt compress} (one row per dyad: 5,000 nodes 20 / 24 seconds, refused above 50,000,000 rows), {help nwplotmatrix}
-(one box per dyad: 1,000 nodes 5 seconds, refused above 2,500 nodes) and {cmd:nwplot, layout(kk)} (5,000 nodes 21 seconds
-and 2.2 GB).
+Among others, {help nwfromedge}, {cmd:nwset, edgelist}, {help nwimport} type(edgelist), {help nwdegree},
+{help nwcomponents}, {help nwclustering}, {help nwneighbor}, {help nwevcent}, {help nwpagerank}, {help nwrandomwalk},
+{help nwmaxflow}, {help nwmatching}, {help nwtriads}, {help nwburt}, {help nwsimmelian}, and {help nwtoedge} with
+{opt compress} do not build an {it:n}-by-{it:n} matrix.
 
 {marker limits_dense}{...}
 {title:Commands that need the full adjacency matrix}
 
 {pstd}
-A number of commands, most weighted-distance calculations among them, need the network's complete N-by-N adjacency matrix in memory at once. This matrix
-is guarded at 20,000 nodes: attempting to build it above that size raises a clear, immediate error rather than
-silently exhausting memory (at 20,000 nodes the matrix alone is already several gigabytes of numbers). In
-practice, comfortable, responsive use of these specific commands is closer to a few thousand nodes than to the
-20,000-node hard ceiling - memory and running time both grow with the SQUARE of the node count for anything that
-touches this matrix directly. Among the commands people reach for with big data, {help nwgeodesic}, {help nwsummarize},
-the uncompressed {help nwtoedge} (it lists every dyad), {cmd:nwtoedge} and {cmd:nwsave} of several networks at once,
-and {help nw2toedge} are in this group; so are two-mode networks in {cmd:nwtoedge, compress}. ({help nwspectral} needs the full eigenspectrum of the Laplacian, not just a dominant pair, so it has no
-sparse
-equivalent as {help nwevcent} has.)
+The matrix is not built above 20,000 nodes; in practice these commands are comfortable at a few thousand nodes. At
+100,000 nodes, commands with an {it:n}-by-{it:n} result or matrix ({help nwgeodesic}, {help nwreach}, {help nwlambda},
+{help nwexpand}, {help nwcontext}, {help nwsimilar}, {help nwdissimilar}, {help nwsimindex}, {help nwcorrelate},
+{help nwqap}, {help nwutility}, {help nwspectral}, {help nwconcor}, {help nwhierarchy}, {help nwplotmatrix},
+{help nwtomata}, {help nwtostata}) stop with r(484), a message and an alternative.
 
 {pstd}
-Measured at 5,000 nodes (Stata/BE, random network with 10 ties per node, one command each): {help nwspectral}, {help nwconcor}
-and {help nwhierarchy} work on dense matrices with a running time that grows with the cube (or, for the clustering, about
-the 2.4th power) of the number of nodes: 1,000 / 2,000 / 3,000 / 5,000 nodes take 1.5 / 14 / 50 / more than 180 seconds
-({cmd:nwspectral}), 4 / 16 / 57 / more than 180 seconds ({cmd:nwconcor}) and 3 / 16 / 45 / 170 seconds ({cmd:nwhierarchy});
-{help nwhomophily} 78 seconds and 5.3 GB, {help nwcollapse} 61 seconds, {help nwbalance}, {help nwmatching}, {help nwmixing}, {help nwevcent}, {help nwdissimilar},
-{help nwsimilar}, {help nwsimindex} and {help nwlambda} take under 2 seconds at 5,000 nodes. {help nwtostata} needs one Stata
-variable per node and is limited by the number of variables of your Stata flavour (2,048 in Stata/BE).
+Further limits:
+
+{p 8 12 2}o {help nwspectral}, {help nwconcor}, {help nwhierarchy} and {help nwdendrogram}: running time grows steeply
+with the number of nodes; refused above 6,000 nodes unless {opt force} is given.{p_end}
+{p 8 12 2}o {help nwcorrelate} of the nodes of one network: refused above 7,000 nodes.{p_end}
+{p 8 12 2}o {help nwhomophily}, {help nwcollapse}, and {help nwtoedge} and {help nw2toedge} without {opt compress} (one
+row per dyad): refused above 50,000,000 dyads (7,071 nodes for a directed network).{p_end}
+{p 8 12 2}o {help nwplotmatrix}: refused above 2,500 nodes.{p_end}
+{p 8 12 2}o {help nwbetween}, {help nwcloseness}, {help nwkatz}, {help nwkcomponents} and {help nwcohesion} stop with
+r(484) on very large networks when the run would be long; their help files give the rules.{p_end}
+{p 8 12 2}o Commands that would need more than 12 GB for a dense result stop with r(484).{p_end}
+{p 8 12 2}o Two-mode networks are one matrix over both modes and are refused above 20,000 nodes in total.{p_end}
 
 {pstd}
-Measured at 10,000 nodes (Stata/BE, random network with 10 ties per node): the cubic commands {help nwspectral},
-{help nwconcor} and {help nwhierarchy} (and {help nwdendrogram} of its result) need more than 5 minutes and stop with
-r(484) above 6,000 nodes unless the option {opt force} is given; {help nwcorrelate} of the nodes of one network needs about
-25 dense matrices and stops with r(484) above 7,000 nodes; {help nwqap} 40 seconds and 11.6 GB; {help nwhomophily},
-{help nwcollapse} and the uncompressed {help nwtoedge} stop above 7,071 nodes; the generators draw the ties as a list ({help nwrandom} 0.1 seconds, {help nwcug} with 5 draws 1.5 seconds). Two-mode
-networks
-cost the square of both modes together: 10,000 + 5,000 nodes need 7 GB. {help nwcommunity} 0.24 seconds,
-{help nwrandomwalk} 0.15 seconds, {help nwcomponents} 0.04 seconds. Most other commands finish in under 30 seconds
-(the slowest: {help nwplot} with the circle layout 39 seconds, {help nwutility} 26 seconds, {help nwkatz} 24 seconds).
-
-{pstd}
-Measured at 20,000 nodes (Stata/BE, random directed network with 10 ties per node, 200,000 ties; the sparse cutoff of the
-dense matrix). Most commands work on the stored ties and finish in seconds: {help nwcomponents} 0.07, {help nwdegree} 0.08,
-{help nwcommunity} 0.6, {help nwcoreperiphery} 0.6, {help nwclique} 1.0, {help nwcloseness} and {help nwkatz} 9.9 and 10 seconds
-(one breadth-first search per node in the plugin),
-{help nwbetween} 29, {help nwkcomponents} (k = 2) 1.0, {help nwcohesion} 27 seconds. {help nwtranspose}, {help nwpermute}, {help nwaddnodes},
-{help nwdropnodes}, {help nwkeepnodes}, {help nwturnover}, {help nwshared}, {help nwsimmelian}, {help nwbridges}, {help nwpath},
-{help nwdyads}, {help nwsummarize} and {help nwvalue} do not build an {it:n}-by-{it:n} matrix. The generators {help nwring}, {help nwrandom}, {help nwsmall} and {help nwpref} draw the ties as a list
-above
-2,000 nodes (0.2 to 2.8 seconds at 20,000 nodes), so {help nwcug} with 5 draws takes 2 seconds. Networks whose result is a dense
-{it:n}-by-{it:n} network take their memory, which is why the following stop at once with r(484) when it would not fit in 12 GB
-({opt force} runs them): {help nwsimilar} (9 matrices, 28.8 GB), {help nwdissimilar}, {help nwsimindex}, {help nwcorrelate} of two
-networks, {help nwqap} (48 GB), {help nwutility} and {help nwplot}; still working at 20,000 nodes: {help nwgeodesic} (10 seconds,
-6.4 GB), {help nwreach} (11 seconds, 6.4 GB), {help nwlambda} (30 seconds, 6.5 GB), {help nwconstraint}, {help nwexpand}.
-Two-mode networks are one matrix over both modes: 20,000 nodes in total (13,333 + 6,667) work in every two-mode command
-(1.7 to 12 seconds, 3.4 GB), above 20,000 nodes {help nw2fromedge} refuses at once. Refused by design: {help nwtoedge} and
-{help nw2toedge} without {opt compress} (one row per dyad, refused above 50,000,000 rows), {help nwhomophily} and {help nwcollapse}
-(the same list of dyads, refused at once), {help nwspectral}, {help nwconcor}, {help nwhierarchy} and {help nwdendrogram} (cubic,
-refused above 6,000 nodes), {help nwnclique}, {help nwkplex} and {help nwnclan} (more than 100,000 maximal subgroups),
-{help nwplotmatrix} and {help nwtostata}.
-
-{pstd}
-Measured at 100,000 nodes (Stata/BE, random directed network with 10 ties per node, 1.0 million ties, 0.6 to 1.5 GB for most
-commands). Seconds: {help nwfromedge} 3, {help nwset} 3, {help nwsave} 6, {help nwuse} 14, {help nwdegree} 0.3, {help nwdyads} 0.5,
-{help nwsummarize} 0.06, {help nwcomponents} 0.3, {help nwkcore} 0.5, {help nwpagerank} 0.3, {help nwcommunity} 7 (label propagation 15),
-{help nwevcent} 0.5, {help nwclustering} 0.7, {help nwshared} 10, {help nwtriads} 1.0, {help nwburt} 0.17,
-{help nwsimmelian} 0.75, {help nwconstraint} 10 (undirected; the compiled search takes 0.9 seconds of that, the rest is storing the result as a network), {help nwclique} (the search takes 0.6 seconds;
-from about 40,000 nodes the time is Stata storing the clique matrix, which grows with the square of the number of columns), {help nwmaxflow} 1.7, {help nwrecode} and
-{help nwdichotomize} 2, {help nwdropnodes}, {help nwkeepnodes} and {help nwsubset} 1 to 3, {help nwattime} 2, the generators
-{help nwring}, {help nwrandom}, {help nwpref} 1 to 2 and {help nwsmall} 6 (but {help nwrandom} with {opt prob()} 64 seconds).
-These commands stop at once with r(484), a message and an alternative ({opt force} runs them anyway): the commands with an
-{it:n}-by-{it:n} result or matrix ({help nwgeodesic}, {help nwreach}, {help nwlambda}, {help nwexpand}, {help nwcontext},
-{help nwreplace}, {help nwsimilar}, {help nwdissimilar}, {help nwsimindex}, {help nwcorrelate}, {help nwqap}, {help nwutility},
-{help nwspectral}, {help nwconcor}, {help nwhierarchy}, {help nwplotmatrix}, {help nwtomata}, {help nwtostata}), and the ones that
-would run for more than 2 minutes: {help nwbetween} (about 15 minutes), {help nwcloseness} and {help nwkatz} (5 minutes; measured
-302 seconds), {help nwkcomponents} (refused without {opt force} above about 31,000 nodes, although k = 2 takes about a minute at 100,000 nodes) and {help nwcohesion} (about 13 minutes). Two-mode
-networks are one matrix over
-both modes and are refused above 20,000 nodes in total ({help nw2fromedge}).
+Where a command offers the option {opt force}, it runs in spite of such a guard. {help nwtostata} needs one Stata
+variable per node and is limited by the number of variables of your Stata flavor.
 
 {marker limits_combinatorial}{...}
 {title:Cohesion, factions, motifs, connectivity and exhaustive subgroup searches}
 
 {pstd}
-{help nwcohesion}, {help nwfactions}, {help nwlambda}, {help nwmotifs}, {help nwclustering} (on a two-mode network) and {help nwinduced}
-with {opt measure(degree)} run in compiled code on the list of ties and do not build N-by-N matrices
-(except that {help nwlambda}'s result is itself a dense N-by-N network). Measured in Stata/BE on a random network with
-10 ties drawn per node, seconds at 300 / 1,000 / 5,000 nodes: {cmd:nwcohesion} 0.02 / 0.10 / 1.4, {cmd:nwfactions}
-0.02 / 0.02 / 0.05, {cmd:nwlambda} 0.02 / 0.09 / 1.9 (1.4 GB at 5,000 nodes), {cmd:nwmotifs} 0.006 / 0.014 / 0.05,
-{cmd:nwclustering} on a two-mode network (N and N/2 nodes) 0.09 / 0.24 / 1.4, {cmd:nwinduced, measure(degree)} 0.02 / 0.03 / 0.09.
-{cmd:nwinduced} with betweenness,
-closeness or eigenvector centrality still recomputes the measure for every node left out and takes minutes at a few
-hundred nodes.
+{help nwcohesion}, {help nwfactions}, {help nwlambda}, {help nwmotifs}, {help nwclustering} (on a two-mode network) and
+{help nwinduced} with {opt measure(degree)} run in compiled code on the list of ties (the result of {help nwlambda} is
+itself a dense {it:n}-by-{it:n} network). {cmd:nwinduced} with betweenness, closeness or eigenvector centrality
+recomputes the measure for every node left out and is slow already at a few hundred nodes.
 
 {pstd}
-{help nwkplex}, {help nwnclique} and {help nwnclan} list {it:all} maximal subgroups, and the number of those, not
-the number of nodes, decides what is feasible: a random network with 10 ties per node and 100 nodes already has
-46,580,136 maximal 2-cliques of at least 3 nodes (100 nodes, 10,141 maximal 2-plexes; 1,000 nodes, 148,070; 300 nodes,
-3,968,148 maximal 3-plexes). The search itself is fast (maximal 2-plexes of 5,000 nodes are counted in 2 seconds; the
-n-clans of 5,000 nodes in 2.5 seconds), but the result is a sets-by-nodes matrix. These commands therefore stop with a
-clear message (r(484)) when they find more than {opt maxplexes()} / {opt maxcliques()} sets (default 100,000), when
-the matrix would be too large, or after {opt maxtime()} seconds (default 60); {opt countonly} counts the sets
-without storing them and {opt nomatrix} keeps only the per-node variable and the counts. See the help file of each
-command for its measured sizes.
+{help nwkplex}, {help nwnclique} and {help nwnclan} list {it:all} maximal subgroups, and the number of those, not the
+number of nodes, decides what is feasible: it can reach millions in a network of 100 nodes. These commands stop with a
+message (r(484)) when they find more than {opt maxplexes()} / {opt maxcliques()} sets (default 100,000), when the matrix
+would be too large, or after {opt maxtime()} seconds (default 60); {opt countonly} counts the sets without storing them
+and {opt nomatrix} keeps only the per-node variable and the counts.
 
 {marker limits_stata}{...}
 {title:Loading a network as Stata variables}
@@ -338,9 +253,7 @@ still there for the cases that genuinely call for it - inspecting individual tie
 network's data into ordinary Stata commands.
 
 {pstd}
-None of the figures on this page are promises for every possible network shape or every command - a command's
-own help file is the authority on anything specific to it. When in doubt for a genuinely large network, try the
-structural commands first (they are the ones proven at real scale), and treat the figures for the dense-matrix commands as realistic planning numbers rather than hard guarantees.
+These limits do not cover every shape of network; the help file of a command is the authority on it.
 
 {hline}
-{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

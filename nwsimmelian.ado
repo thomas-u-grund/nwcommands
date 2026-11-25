@@ -23,6 +23,8 @@ program nwsimmelian
 	if "`name'" == "" {
 		local name "_simmelian"
 	}
+	// the input cannot receive the result: it would be dropped before or while the result is formed
+	_nwtargetcheck `name', source(`netname') given(0)
 	nwvalidate `name'
 	if "`r(exists)'" == "true" & "`nwreplace'" == "" {
 		// BUGFIX: was `error 3000' - a bare Stata error code with its

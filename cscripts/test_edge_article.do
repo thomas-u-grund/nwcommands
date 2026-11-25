@@ -234,4 +234,106 @@ nwimport "`c(tmpdir)'/edge_one.txt", type(edgelist) name(back)
 nwsummarize back
 assert r(nodes) == 2
 
+* unrelated rows keep their order
+nwclear
+clear
+set seed 1
+set obs 40
+gen row = _n
+mata: M = (0,1,0 \ 1,0,1 \ 0,1,0)
+nwset, mat(M) name(a) undirected
+assert _N == 43
+assert row == _n - 3 if !missing(row)
+nwrandom 3, prob(.5) name(b)
+gen long now = _n
+local ok = 1
+gen long prev = sum(!missing(row))
+quietly count if !missing(row)
+assert r(N) == 40
+preserve
+quietly keep if !missing(row)
+assert row == _n
+restore
+* a second sync, with the data sorted by the user, keeps the rows that belong to no node in the user's order
+drop now prev
+gsort -row
+nwsummarize a
+nwdegree a, generate(deg)
+preserve
+quietly keep if !missing(row)
+assert row == 41 - _n
+restore
+* attributes stay with their nodes after sorting
+nwclear
+clear
+set obs 3
+gen str5 _nwnode = word("n1 n2 n3", _n)
+gen v = _n * 10
+nwset, mat(M) name(a) undirected
+sort v
+gsort -v
+nwdegree a, generate(d)
+assert d == 2 if _nwnode == "n2"
+assert v == 20 if _nwnode == "n2"
+
+* a result cannot take the input's name: nothing is lost (these dropped the input, or all networks, or gave wrong values)
+mata: M = (0,2,1,0 \ 2,0,1,0 \ 1,1,0,3 \ 0,0,3,0)
+foreach c in nwbridges nwsimmelian nwlambda nwsimindex {
+	local fl = cond(inlist("`c'", "nwbridges", "nwsimmelian"), "nwreplace", "replace")
+	foreach tgt in a _all {
+		nwclear
+		clear
+		nwset, mat(M) name(a) directed
+		nwset, mat(M) name(keepme) directed
+		capture `c' a, name(`tgt') `fl'
+		assert _rc != 0
+		nwtomata a, mat(Z)
+		mata: _diag(Z, 0)
+		mata: assert(Z == M)
+		nwname keepme
+	}
+}
+nwclear
+clear
+mata: TM = (1,1,0 \ 0,1,1)
+nwset, mat(TM) name(tm) bipartite
+capture nw2project tm, project(1) name(tm) replace
+assert _rc == 483
+nwsummarize tm
+assert r(nodes) == 5
+
+* edgesize() legend keys
+nwclear
+clear
+mata: V = (0,1,3,0 \ 1,0,0,5 \ 3,0,0,2 \ 0,5,2,0)
+nwset, mat(V) name(val) undirected
+nwset, mat(V :!= 0) name(b) undirected
+nwplot b, edgesize(val) layout(circle) legendopt(on)
+graph describe
+nwplot b, edgesize(b) layout(circle) legendopt(on)
+
+* nwset, mat() leaves the caller's Mata matrix as it was
+mata: TM = (1,1,0 \ 0,1,1)
+mata: B0 = TM
+foreach i in 1 2 3 {
+	nwclear
+	clear
+	nwset, mat(TM) name(tm) bipartite
+	nwsummarize tm
+	assert r(nodes) == 5
+	mata: assert(TM == B0)
+}
+mata: C = (5,1,0 \ 0,5,1 \ 1,0,5)
+mata: C0 = C
+foreach o in "" "undirected" "directed" "selfloop" {
+	nwclear
+	clear
+	nwset, mat(C) name(c) `o'
+	mata: assert(C == C0)
+	nwclear
+	clear
+	nwset, mat(C) `o'
+	mata: assert(C == C0)
+}
+
 di "PASS test_edge_article"

@@ -28,13 +28,13 @@ BEGIN
   CHECKBOX cx_replace 290 138 190 ., label("replace") option(replace)
   TEXT tx_cx_silent 20 166 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 166 190 ., label("silent") option(silent)
-  TEXT tx_cx_onemode 20 194 260 ., label("Two-mode: one-mode clustering (default: two-mode)")
+  TEXT tx_cx_onemode 20 194 260 ., label("Two-mode: use one-mode (default: two-mode)")
   CHECKBOX cx_onemode 290 194 190 ., label("onemode") option(onemode)
-  TEXT tx_cx_ra 20 222 260 ., label("Two-mode network: Robins-Alexander coefficient")
+  TEXT tx_cx_ra 20 222 260 ., label("Two-mode: Robins-Alexander coefficient")
   CHECKBOX cx_ra 290 222 190 ., label("ra") option(ra)
-  TEXT tx_cx_level 20 250 260 ., label("Two-mode network: level of the nodes to cluster (1 or 2)")
+  TEXT tx_cx_level 20 250 260 ., label("Two-mode: mode of nodes to cluster (1 or 2)")
   EDIT ed_level 290 250 100 ., numonly nomem option(level)
-  TEXT tx_ed_save 20 278 260 ., label("With several networks: save one row per network in this file")
+  TEXT tx_ed_save 20 278 260 ., label("Several networks: file for one row per network")
   EDIT ed_save 290 278 190 ., nomem option(save)
 END
 

@@ -671,6 +671,7 @@ function render(data) {
   ];
 
   if (cy) cy.destroy();
+  netDirected = !!data.directed;
 
   cy = cytoscape({
     container: document.getElementById('cy'),
@@ -1018,6 +1019,13 @@ function applyArrowColor(hex) {
   cy.edges().forEach(e => e.data('arrowColor', hex));
 }
 
+// the number of ties drawn at the node (self-ties not counted); both directions of a directed network
+let netDirected = false;
+function degreeText(node) {
+  if (netDirected) return `out ${node.outdegree(false)}, in ${node.indegree(false)}`;
+  return `${node.degree(false)}`;
+}
+
 function inspectNode(node) {
   selectedNodeId = node.id();
   const d = node.data();
@@ -1025,7 +1033,7 @@ function inspectNode(node) {
   document.getElementById('inspect').innerHTML = `
     <div class="row"><div class="label">ID</div><div class="value">${d.id}</div></div>
     <div class="row"><div class="label">Label</div><div class="value">${d.label ?? ''}</div></div>
-    <div class="row"><div class="label">Degree</div><div class="value">${d.degree ?? ''}</div></div>
+    <div class="row"><div class="label">Degree</div><div class="value">${degreeText(node)}</div></div>
     <div class="row"><div class="label">Group</div><div class="value">${d.group_label ?? d.group ?? ''}</div></div>
     <div class="row"><div class="label">Color / shape</div><div class="value">${d.color ?? ''} / ${d.shape ?? ''}</div></div>
     <div class="row"><div class="label">Size</div><div class="value">${(+d.size).toFixed(1)}px</div></div>

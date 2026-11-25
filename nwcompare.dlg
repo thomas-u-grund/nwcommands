@@ -10,13 +10,13 @@ POSITION 10 10 550 250
 
 DIALOG main, title("nwcompare - Compare the fit statistics of stored network models")
 BEGIN
-  TEXT tx_names 20 20 260 ., label("Stored results (names, blank = all; . = active results)")
+  TEXT tx_names 20 20 260 ., label("Stored results (blank = all; . = active)")
   EDIT ed_names 290 20 230 ., nomem
   TEXT tx_sort 20 54 260 ., label("Sort rows by")
   COMBOBOX cb_sort 290 54 150 ., dropdown contents(list_sort) nomem option(sort)
   CHECKBOX cx_graph 20 88 500 ., label("Also draw the coefficients of the models side by side") option(graph)
   GROUPBOX gb_opt 10 106 520 94, label("Options")
-  TEXT tx_name 20 116 260 ., label("name of the coefficient graph; default = compare")
+  TEXT tx_name 20 116 260 ., label("Name of coefficient graph; default = compare")
   EDIT ed_name 290 116 190 ., nomem option(name)
   TEXT tx_saving 20 144 260 ., label("Save the graph to a file (.gph)")
   FILE fi_saving 290 144 190 ., save nomem option(saving)

@@ -26,7 +26,7 @@ BEGIN
   CHECKBOX cx_replace 290 110 190 ., label("replace") option(replace)
   TEXT tx_ed_matrix 20 138 260 ., label("Matrix name for the node position counts")
   EDIT ed_matrix 290 138 190 ., nomem option(matrix)
-  TEXT tx_cx_normalise 20 166 260 ., label("Add the normalised frequencies to the motif table")
+  TEXT tx_cx_normalise 20 166 260 ., label("Add normalised frequencies to the motif table")
   CHECKBOX cx_normalise 290 166 190 ., label("normalise") option(normalise)
   TEXT tx_cb_posnorm 20 194 260 ., label("Normalisation of the node position counts")
   COMBOBOX cb_posnorm 290 194 190 ., dropdown contents(pnlist) nomem option(posnorm)

@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network:")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 76, label("Options")
-  TEXT tx_sp_level 20 54 260 ., label("Mode whose pairs of nodes enter the C-score (1 or 2)")
+  TEXT tx_sp_level 20 54 260 ., label("Mode whose node pairs enter C-score (1 or 2)")
   SPINNER sp_level 290 54 70 ., default(2) max(2) min(1) nomem option(level)
   TEXT tx_cx_silent 20 82 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 82 190 ., label("silent") option(silent)

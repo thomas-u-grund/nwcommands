@@ -122,4 +122,4 @@ Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. {it:
 	{help nwsmall}, {help nwrandom}, {help nwlattice}, {help nwring}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

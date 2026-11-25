@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 76, label("Options")
-  TEXT tx_cx_alpha 20 54 260 ., label("Sort names alphabetically (default: creation order)")
+  TEXT tx_cx_alpha 20 54 260 ., label("Alphabetical order (default: creation order)")
   CHECKBOX cx_alpha 290 54 190 ., label("alpha") option(alpha)
   TEXT tx_cx_not 20 82 260 ., label("List all loaded networks except those named")
   CHECKBOX cx_not 290 82 190 ., label("not") option(not)

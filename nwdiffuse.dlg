@@ -22,7 +22,7 @@ DIALOG main, title("nwdiffuse - Diffusion and contagion on a network")
 BEGIN
   TEXT tx_sub 20 14 260 ., label("What to do:")
   COMBOBOX cb_sub 290 14 190 ., dropdownlist contents(list_sub) default(exposure) onselchange(program sub_changed) nomem
-  TEXT tx_net 20 42 260 ., label("Network(s) (curve and long: optional / one per period):")
+  TEXT tx_net 20 42 260 ., label("Network(s) (curve/long: optional; 1 per period):")
   COMBOBOX cb_net 290 42 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_when 10 70 540 128, label("Who adopts when (one of the two)")
   TEXT tx_toa 20 88 260 ., label("toa(): variable with the period of adoption")
@@ -34,7 +34,7 @@ BEGIN
   TEXT tx_t1 20 166 260 ., label("Last period (t1)")
   EDIT ed_t1 290 166 70 ., nomem option(t1)
   GROUPBOX gb_opt 10 206 540 220, label("Options of exposure, threshold, curve and long")
-  TEXT tx_generate 20 224 260 ., label("generate(): new variable (stub) for the exposure share")
+  TEXT tx_generate 20 224 260 ., label("generate(): variable (stub) for exposure share")
   EDIT ed_generate 290 224 190 ., nomem option(generate)
   TEXT tx_count 20 250 260 ., label("count(): variable for adopting neighbours")
   EDIT ed_count 290 250 190 ., nomem option(count)

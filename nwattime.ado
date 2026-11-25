@@ -14,6 +14,8 @@ program nwattime, rclass
 	if "`name'" == "" {
 		local name "atview"
 	}
+	// the input cannot receive the result: it would be dropped before or while the result is formed
+	_nwtargetcheck `name', source(`netname') given(0)
 	nwvalidate `name'
 	if "`r(exists)'" == "true" {
 		if "`replace'" == "" {

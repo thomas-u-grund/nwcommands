@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network (with optional [i,j] or expression):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 480 58, label("Details")
-  TEXT tx_ed_free 20 54 260 ., label("Replace with (e.g. '= 99', '[2,3] = 99', '= othernet'):")
+  TEXT tx_ed_free 20 54 260 ., label("Replace (e.g. '= 99', '[2,3] = 99', '= net'):")
   EDIT ed_free 290 54 190 ., nomem
 END
 

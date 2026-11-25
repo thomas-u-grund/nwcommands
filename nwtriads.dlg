@@ -18,11 +18,11 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 188, label("Options")
-  TEXT tx_cx_plot 20 54 260 ., label("draw a bar chart of the 16 MAN-category counts")
+  TEXT tx_cx_plot 20 54 260 ., label("Draw bar chart of the 16 MAN-category counts")
   CHECKBOX cx_plot 290 54 190 ., label("plot") option(plot)
   TEXT tx_cx_exp 20 82 260 ., label("plot: add expected counts (dyad census fixed)")
   CHECKBOX cx_exp 290 82 190 ., label("expected") option(expected)
-  TEXT tx_ed_name 20 110 260 ., label("name for the graph created by plot; default = triads")
+  TEXT tx_ed_name 20 110 260 ., label("Name of graph made by plot; default = triads")
   EDIT ed_name 290 110 190 ., nomem option(name)
   TEXT tx_saving 20 138 260 ., label("Save the graph to a file (.gph)")
   FILE fi_saving 290 138 190 ., save nomem option(saving)

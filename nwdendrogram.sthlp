@@ -60,4 +60,4 @@ The command works the same for every network type (see {help nwnetworktypes}).{p
 {cmd:nwdendrogram} stores no results of its own in {cmd:r()}.
 
 {hline}
-{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

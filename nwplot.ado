@@ -815,10 +815,17 @@ program nwplot, rclass
 			exit 6056
 		}
 		local edgesizekeys "`forcekeys'"
-		if "`forcekeys'" == "" {
-			local edgesizekeys "`r(minval)' `r(maxval)'"
-		}
 		nwtomata `edgesize', mat(__nwplot_edgesizemat)
+		// default keys: the smallest and largest size (absolute value) among the ties; none when all are equal,
+		// because the lines then all have one width
+		if "`forcekeys'" == "" {
+			mata: __nwp_ev = abs(select(vec(__nwplot_edgesizemat), (vec(__nwplot_edgesizemat) :< .) :& (vec(__nwplot_edgesizemat) :!= 0)))
+			mata: st_local("__nwp_emin", rows(__nwp_ev) ? strofreal(round(min(__nwp_ev), 0.01), "%12.0g") : "")
+			mata: st_local("__nwp_emax", rows(__nwp_ev) ? strofreal(round(max(__nwp_ev), 0.01), "%12.0g") : "")
+			mata: mata drop __nwp_ev
+			local edgesizekeys ""
+			if trim("`__nwp_emin'") != trim("`__nwp_emax'") local edgesizekeys "`=trim("`__nwp_emin'")' `=trim("`__nwp_emax'")'"
+		}
 		nwname `edgesize', newdirected("`edgesize_directed'")
 	}
 	else {
@@ -2820,6 +2827,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 	}
 
 	json = "{" +
+		q+"directed"+q+":"+(isdirected ? "true" : "false")+"," +
 		q+"label_font"+q+":"+strofreal(8 * vmap[5])+"," +
 		q+"has_node_legend"+q+":"+(hasnodelegend==1 ? "true" : "false")+"," +
 		q+"has_edge_legend"+q+":"+(hasedgelegend==1 ? "true" : "false")+"," +

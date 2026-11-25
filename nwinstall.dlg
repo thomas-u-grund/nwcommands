@@ -24,7 +24,7 @@ BEGIN
   CHECKBOX cx_permanently 290 104 190 ., label("permanently") option(permanently)
   TEXT tx_cx_dialog 20 132 260 ., label("download the dialog boxes")
   CHECKBOX cx_dialog 290 132 190 ., label("dialog") option(dialog)
-  TEXT tx_cx_remove 20 160 260 ., label("remove the 'Network Analysis' menu from your Stata")
+  TEXT tx_cx_remove 20 160 260 ., label("Remove 'Network Analysis' menu from Stata")
   CHECKBOX cx_remove 290 160 190 ., label("remove") option(remove)
   TEXT tx_cx_downloadoff 530 20 260 ., label("Rebuild the menu only, without downloading")
   CHECKBOX cx_downloadoff 800 20 190 ., label("downloadoff") option(downloadoff)

@@ -22,11 +22,11 @@ BEGIN
   EDIT ed_measure 290 54 190 ., nomem option(measure)
   TEXT tx_sp_level 20 82 260 ., label("Mode (1 or 2) to score; default = 1")
   SPINNER sp_level 290 82 70 ., default(1) max(999999) min(1) nomem option(level)
-  TEXT tx_ed_generate 20 110 260 ., label("Required. Variable for the clustering coefficients")
+  TEXT tx_ed_generate 20 110 260 ., label("Required. Variable for clustering coefficients")
   EDIT ed_generate 290 110 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 138 260 ., label("Replace an existing generate() variable")
   CHECKBOX cx_replace 290 138 190 ., label("replace") option(replace)
-  TEXT tx_cx_ra 20 166 260 ., label("Global coefficient of Robins and Alexander (2004), 4 C4 / L3")
+  TEXT tx_cx_ra 20 166 260 ., label("Robins-Alexander (2004) global: 4 C4 / L3")
   CHECKBOX cx_ra 290 166 190 ., label("ra") option(ra)
 END
 

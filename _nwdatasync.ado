@@ -224,10 +224,16 @@ program _nwdatasync_work
 		qui capture confirm new variable `generate'
 		qui if _rc capture drop `generate'
 	}
+	// the order the rows have now: without it the sort below leaves rows that belong to no node (equal in both
+	// sort keys) in random order, so unrelated variables of the caller were shuffled
+	tempvar __order
+	qui gen long `__order' = _n
+
 	qui merge n:1 (`nw_nodename') using `f', generate(`current')
 
 	qui replace `current' = (`current' != 1)
-	gsort -`current' +`nodeindex'
+	gsort -`current' +`nodeindex' +`__order'
+	drop `__order'
 	qui if "`generate'" != "" {
 		capture confirm new variable `generate'
 		if _rc capture drop `generate'

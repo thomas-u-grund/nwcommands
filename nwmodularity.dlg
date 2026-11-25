@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 188, label("Options")
-  TEXT tx_vr_group 20 54 260 ., label("Stata variable holding each node's community/group assignment")
+  TEXT tx_vr_group 20 54 260 ., label("Variable with each node's community/group")
   VARNAME vr_group 290 54 190 ., nomem option(group)
   TEXT tx_ed_measure 20 82 260 ., label("Tie values (valued) or ties only (binary)")
   EDIT ed_measure 290 82 190 ., nomem option(measure)

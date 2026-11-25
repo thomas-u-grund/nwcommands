@@ -19,7 +19,7 @@ BEGIN
   EDIT ed_keep 290 94 230 ., nomem option(keep)
   TEXT tx_drop 20 122 260 ., label("Drop coefficients (names or patterns)")
   EDIT ed_drop 290 122 230 ., nomem option(drop)
-  TEXT tx_eq 20 150 260 ., label("Equations: one panel for each, or all on one axis")
+  TEXT tx_eq 20 150 260 ., label("Equations: one panel each, or all on one axis")
   COMBOBOX cb_eq 290 150 150 ., dropdownlist contents(list_eq) nomem
   CHECKBOX cx_eform 20 178 250 ., label("Exponentiate (odds or rate ratios)") option(eform)
   CHECKBOX cx_nocons 290 178 230 ., label("Leave out the constant") option(noconstant)

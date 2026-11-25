@@ -26,11 +26,11 @@ BEGIN
   CHECKBOX cx_replace 290 110 190 ., label("replace") option(replace)
   TEXT tx_cx_silent 20 138 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 138 190 ., label("silent") option(silent)
-  TEXT tx_ed_maxiter 20 166 260 ., label("Maximum number of power iterations; default = 1000")
+  TEXT tx_ed_maxiter 20 166 260 ., label("Maximum power iterations; default = 1000")
   EDIT ed_maxiter 290 166 100 ., numonly nomem option(maxiter)
   TEXT tx_ed_tol 20 194 260 ., label("Convergence tolerance; default = 1e-10")
   EDIT ed_tol 290 194 100 ., nomem option(tol)
-  TEXT tx_cx_binary 20 222 260 ., label("Ignore the tie values of a valued network (default: use them)")
+  TEXT tx_cx_binary 20 222 260 ., label("Ignore tie values (default: use them)")
   CHECKBOX cx_binary 290 222 190 ., label("binary") option(binary)
 END
 

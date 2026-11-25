@@ -69,4 +69,4 @@ This example loads the [Florentine marriage data](netexample) and exports to bot
 
 ---
 
-*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))

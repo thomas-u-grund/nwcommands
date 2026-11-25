@@ -24,6 +24,8 @@ program nwbridges
 		local generate "_bridges"
 	}
 
+	// the input cannot receive the result: it would be dropped before or while the result is formed
+	_nwtargetcheck `generate', source(`netname') given(0)
 	capture _nwsyntax `generate', other(other)
 	if _rc == 0 & "`nwreplace'" == "" {
 		di "{err}Network {bf:`generate'} already exists; use {bf:nwreplace}"
