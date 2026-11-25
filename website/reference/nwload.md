@@ -35,7 +35,7 @@ force]
 | `generate(varname)` | Generate flag for nodes of the loaded network; default = *_nwinclude* |
 | `viewoff` | Unconnect view from network to dataset; default |
 | `viewon` | Establish view of network to dataset |
-| `overwrite` | overwrite existing variables that have the names of the node variables (otherwise error 110); also forwarded to [_nwdatasync](_nwdatasync) |
+| `overwrite` | replace existing variables that have the names of the node variables (otherwise error 110); also forwarded to [_nwdatasync](_nwdatasync) |
 | `force` | By default, matrix is not loaded for networks with more than 1000 nodes unless **force** is specified |
 
 ## Description
@@ -59,7 +59,7 @@ For example, if one were to import/use a network with 16 nodes and drop all Stat
 . drop _all
 . nwload flomarriage
 ```
-All Stata variables can be deleted without deleting the underlying networks (except when a network is established as a view on the dataset with option **viewon**; see above). With **nwload** a network can always be brought back as Stata variables. Only one network is loaded at a time: loading another network drops the variables of the network loaded before, and a note says so. A variable of your own that has the name of one of the node variables is not overwritten; **nwload** stops with error 110 unless option `overwrite` is given (or declare the network with other variable names, `nwset ..., vars()`). If one wants to permanently drop a network one needs to use [nwdrop](nwdrop) or [nwclear](nwclear) (very similar to how one would drop or clear normal variables).
+All Stata variables can be deleted without deleting the underlying networks (except when a network is established as a view on the dataset with option **viewon**; see above). With **nwload** a network can always be brought back as Stata variables. Only one network is loaded at a time: loading another network, also with `labelonly`, drops the variables that **nwload** created for the network loaded before, and a note says so. **nwload** drops no other variables. A variable of your own that has the name of one of the node variables is not overwritten; a command that loads a network for you (its option `xvars`) prints a note and keeps your variables; **nwload** itself stops with error 110 and changes nothing unless option `overwrite` is given (or declare the network with other variable names, `nwset ..., vars()`). A variable that already holds exactly the network's values, such as the variables a network was declared from with [nwset](nwset), is left as it is and stays yours (on the diagonal of a network without self-loops, 0 and missing count as equal). If one wants to permanently drop a network one needs to use [nwdrop](nwdrop) or [nwclear](nwclear) (very similar to how one would drop or clear normal variables).
 
 **nwload** not only loads the adjacency matrix as variables, but also generates (or overwrites) the variable *_nwnode*. This variable identifies nodes. When the network is two-mode (see [introduction to two-mode networks](nw2set)), the command also creates the variable *_nwmode*. Lastly, the command generates (or overwrites) the variable *_nwinclude* (unless option `generate()` specifies another variable name. This variable indicates which nodes are part of the network that has been loaded.
 
@@ -95,4 +95,4 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

@@ -15,7 +15,7 @@ Keep networks or nodes
 
 ```stata
 nwkeep 
-[netlist]
+netlist
 nwkeep 
 [netname]
 ifin
@@ -29,7 +29,7 @@ clean]
 
 ## Description
 
-Keeps a network or a list of networks. The command is the network version of `keep` and mirrors [nwdrop](nwdrop).
+Keeps a network or a list of networks (a list or an `if` or `in` condition is required). The command is the network version of `keep` and mirrors [nwdrop](nwdrop).
 
 It can also be used together with `if` or `in`. In this case, the command operates on the node-level and keeps only certain nodes of a network.
 
@@ -48,7 +48,7 @@ Load two networks and keep only one of them by name:
 . nwkeep net2
 . nwset
 ```
-Keep only certain nodes of a network, using `if`:
+Keep only certain nodes of a network, using `if` (a condition that no node meets stops with r(2000) and changes nothing; [nwdrop](nwdrop) removes a network):
 
 ```stata
 . nwclear
@@ -59,4 +59,4 @@ Keep only certain nodes of a network, using `if`:
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

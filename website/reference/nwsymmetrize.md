@@ -46,4 +46,4 @@ See [nwsym](nwsym).
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

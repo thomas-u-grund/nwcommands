@@ -6,6 +6,6 @@ authors:
     given-names: Thomas U.
     affiliation: RWTH Aachen University
 version: "3.37.2"
-date-released: "2026-11-25"
+date-released: "2026-11-26"
 repository-code: "https://github.com/thomas-u-grund/nwcommands"
 license: GPL-3.0-only

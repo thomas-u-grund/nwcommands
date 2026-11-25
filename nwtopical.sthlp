@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.37.2  25nov2026}{...}
+{* *! version 3.37.2  26nov2026}{...}
 {phang}
 {help nwcommands:NW-2 topical} {hline 2} Topical list of network commands
 
@@ -284,4 +284,4 @@ Which package do you need? See {browse "https://nwcommands.org/which-package/"}.
 {p2colreset}{...}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.2, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

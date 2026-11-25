@@ -6,7 +6,7 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
-## [3.37.2] - 2026-11-25
+## [3.37.2] - 2026-11-26
 
 **Summary.** Fixes for commands that deleted or overwrote data and networks, and for wrong results. Please update.
 

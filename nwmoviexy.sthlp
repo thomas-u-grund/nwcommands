@@ -58,4 +58,4 @@ Animate two waves of a network (accepts exactly the same arguments as {help nwmo
 	{help nwmovie}, {help nwplot}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.2, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

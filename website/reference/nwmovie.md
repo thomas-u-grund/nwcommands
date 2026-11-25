@@ -28,10 +28,10 @@ temporal network - there is no separate option to choose between them.
 
 | | |
 |---|---|
-| `fname(string)` | base filename for the output; writes *fname***.html** in the current directory; default **movie** (with `export()` and no `fname()` the page is a temporary file and no **movie.html** is written) |
+| `fname(string)` | base name of the page *fname***.html**; default **movie**; see [Output files](nwmovie) |
 | `noo:pen` | build the .html file but do not open it in a viewer |
 | `exp:ort`(*filename*) | write the movie as a video or GIF file without opening the interactive view; the format follows the extension: **.mp4** (H.264 video), **.webm** or **.gif**; see [Remarks](nwmovie) |
-| `replace` | with `export()`: overwrite an existing file |
+| `replace` | overwrite an existing `export()` file; also write over an `fname()` page that `nwmovie` did not write |
 | `time:out(int)` | with `export()`: seconds to wait for the file; default 600 |
 | `layout`(*[layout](nwplot)*) | **panel mode**: layout algorithm - see [nwplot](nwplot)'s own `layout()`; any value other than the **kk** default disables the per-wave transitioning below and falls back to `fixedlayout`'s one-shared-layout behavior, since only **kk** has a "warm start" to relax from |
 | `fixedlayout` | **panel mode**: compute one node layout, on the first network only, and reuse it unchanged for every wave, instead of the default per-wave transitioning layout (see Description below) |
@@ -55,7 +55,7 @@ temporal network - there is no separate option to choose between them.
 | `symbolpalette`(*string*) | see [nwplot](nwplot) |
 | `scheme`(*string*) | see [nwplot](nwplot) |
 | `duration(int)` | **panel mode**: milliseconds per wave-to-wave transition; default 800 |
-| `easing`(*string*) | **panel mode**: a Cytoscape.js easing name (e.g. **ease-in-out-cubic**, **linear**, **ease-in-out-bounce**); default **ease-in-out-cubic** |
+| `easing`(*string*) | **panel mode**: how a transition speeds up and slows down; default **ease-in-out-cubic**; see [below](nwmovie) |
 | `window(real)` | **event mode**: a tie fades out *window* time units (same units as `eventtime()`'s own variable) after its most recent event, and is removed once fully faded; omitted means ties accumulate permanently (a "growth" movie) rather than decaying |
 | `speed(real)` | **event mode**: simulated event-time units per real second during playback; default 1 |
 
@@ -74,6 +74,10 @@ Both modes reuse [nwplot](nwplot)'s own color/shape/position resolution - `color
 The toolbar's speed slider (0.1x-5x) scales playback speed for both modes - a single wave-to-wave `duration()` or the whole event-time range `speed()` would otherwise take, divided by the live slider value, re-read on every transition/frame so changing it mid-playback takes effect immediately - and also scales the timing of the exported GIF and video to match. The Loop checkbox restarts playback from the beginning once it reaches the end instead of stopping there (panel mode: back to wave 1; event mode: back to *eventtime()*'s own minimum); an exported GIF loops when Loop is checked at the time of export (a video file never loops by itself).
 
 The current wave's title/counter (or, in event mode, the active-tie count/time readout) is ALSO shown as its own small box drawn directly on the canvas, not just in the toolbar - draggable by its own handle and resizable via its own bottom-right resize handle, the same way [nwplot](nwplot)'s own `interactive` view lets you reposition/resize its legend. Unlike the toolbar text, this on-canvas box gets baked into exported GIF and video files, at its own current on-screen position and size, so an exported movie still shows what wave/time each frame is at once it's outside the interactive viewer. Its own "**x**" button removes it for the rest of that viewing session (and stops it being baked into any file exported after that); there is no way to bring it back short of reopening the movie. Its own font size only ever changes from manually resizing its box - it never changes on its own between waves, regardless of how long each wave's own title text happens to be.
+
+**Output files.** `fname()` writes *fname***.html** in the current directory; a name that already ends in **.html** is used as it is. With `export()` and no `fname()`, the page is a temporary file and no **movie.html** is written. An earlier movie page of the same name is written over; any other file only with `replace`.
+
+**easing()** takes **linear**, **ease**, **ease-in**, **ease-out** or **ease-in-out**; the last three may be followed by **-sine**, **-quad**, **-cubic**, **-quart**, **-quint**, **-expo** or **-circ**. Also **spring()** and **cubic-bezier()**. `duration()`, `speed()` and `window()` must be positive.
 
 ## Remarks
 
@@ -155,4 +159,4 @@ The same movie written to a video file and to an animated GIF, two seconds per t
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))
