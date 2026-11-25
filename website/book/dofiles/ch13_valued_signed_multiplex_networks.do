@@ -1,16 +1,16 @@
 * --------------------------------------------------------------------------
 * Network Analysis with Stata (Stata Press)
-* Chapter 13: Valued, signed, and multiplex networks
+* Chapter 13: Multiplex, valued, and signed networks
 *
 * All commands of the chapter, in the order in which the book prints them.
 * Requires Stata 17 or later and nwcommands (see Getting started:
 *     net install nwcommands, from(https://nwcommands.org/net/)
 *     nwinstall, everything
 * ). The data sets are loaded from the internet with nwwebuse.
-* The do-file runs from top to bottom. It was checked against nwcommands 3.34.0,
-* nwergm 1.12.0, nwsaom 1.9.1, nwrem 1.7.0, nwdynam 1.11.0, nwalaam 1.3.1,
-* nwlsm 1.0.5 and nwsbm 1.0.2, the versions the book was printed with.
-* Lines marked "setup" are not printed in the book but are needed to run it.
+* The do-file runs from top to bottom. It was checked against nwcommands 3.37.1,
+* nwergm 1.16.1, nwsaom 1.9.2, nwrem 1.7.2, nwdynam 1.11.1, nwalaam 1.4.0,
+* nwlsm 1.0.6 and nwsbm 1.1.0, the versions the book was printed with.
+* Lines marked "setup" are not printed in the book but are needed to run it; lines marked "run" are fits that the text summarizes.
 * Commands that the book shows failing on purpose are run with capture noisily.
 * Do-files for all chapters: https://nwcommands.org/book/dofiles/
 * --------------------------------------------------------------------------
@@ -22,8 +22,6 @@ set more off
 * Multiplexity: overlap between relations
 * ============================================================
 nwwebuse lazega, nwclear
-nwsummarize lazega_fr
-nwsummarize lazega_cow
 nwtabulate lazega_adv lazega_fr
 
 nwgen nrel = lazega_adv + lazega_cow + lazega_fr
@@ -50,13 +48,7 @@ gsort -btw_bin
 list _nwnode btw_bin btw_wgt in 1/8, clean
 
 nwwebuse chesapeake, nwclear
-nwsummarize chesapeake
-summarize Biomass
-quietly nwdegree chesapeake, binary generate(_outcount _incount)
-summarize _outcount _incount
-
 quietly nwdegree chesapeake, generate(_outflow _inflow)
-summarize _outflow _inflow
 gsort -_outflow
 list _nwnode Biomass _outflow _inflow in 1/5, clean
 

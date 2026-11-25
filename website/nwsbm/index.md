@@ -6,8 +6,7 @@ permalink: /nwsbm/
 description: "nwsbm: stochastic block models and latent block models for networks in Stata, following the R packages sbm, blockmodels and greed. Installation, two worked tutorials and how to cite."
 ---
 
-# nwsbm
-{: .fs-9 }
+<h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwsbm.png' | relative_url }}" alt="nwsbm" width="213" height="76"></h1>
 
 Stochastic block models for networks in Stata: which actors play the same role in the network, and how do the roles connect.
 {: .fs-6 .fw-300 }

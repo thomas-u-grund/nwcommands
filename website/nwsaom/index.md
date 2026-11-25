@@ -6,8 +6,7 @@ permalink: /nwsaom/
 description: "nwsaom: stochastic actor-oriented models for Stata, after RSiena. Installation, worked tutorials, a guide for RSiena users, an effect overview and how to cite."
 ---
 
-# nwsaom
-{: .fs-9 }
+<h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwsaom.png' | relative_url }}" alt="nwsaom" width="253" height="76"></h1>
 
 Stochastic actor-oriented models (SAOM) for Stata: how networks and the behavior of the actors
 change over time.

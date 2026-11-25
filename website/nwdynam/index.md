@@ -6,8 +6,7 @@ permalink: /nwdynam/
 description: "nwdynam: dynamic network actor models (DyNAM) for Stata, after the R package goldfish. Installation, worked tutorials, a guide for goldfish users and how to cite."
 ---
 
-# nwdynam
-{: .fs-9 }
+<h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwdynam.png' | relative_url }}" alt="nwdynam" width="309" height="76"></h1>
 
 Dynamic network actor models (DyNAM) for Stata: who acts next, and whom do they choose, in a stream of
 timestamped events.

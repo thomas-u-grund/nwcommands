@@ -6,8 +6,7 @@ permalink: /nwlsm/
 description: "nwlsm: latent space models for networks (Hoff, Raftery and Handcock) for Stata, following the R package latentnet, with a latent space model for social influence. Installation, two worked tutorials and how to cite."
 ---
 
-# nwlsm
-{: .fs-9 }
+<h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwlsm.png' | relative_url }}" alt="nwlsm" width="193" height="76"></h1>
 
 Latent space models for networks in Stata: every actor has a position in a hidden space, and actors that are close are more likely to be tied.
 {: .fs-6 .fw-300 }

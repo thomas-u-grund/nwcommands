@@ -6,8 +6,7 @@ description: "The nwcommands core package: network import, generation, descripti
 permalink: /nwcommands/
 ---
 
-# nwcommands (core)
-{: .no_toc }
+<h1 class="pkg-logo no_toc"><img src="{{ '/assets/images/packages/nwcommands.png' | relative_url }}" alt="nwcommands" width="346" height="76"></h1>
 
 The core package, version 3.37.1, handles networks in Stata: it imports and exports them, generates
 them, describes and analyzes them, and plots them. It is the base for the model packages

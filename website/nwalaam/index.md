@@ -6,8 +6,7 @@ permalink: /nwalaam/
 description: "nwalaam: autologistic actor attribute models (ALAAM) for Stata, following ALAAMEE and MPNet. Installation, worked tutorials and how to cite."
 ---
 
-# nwalaam
-{: .fs-9 }
+<h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwalaam.png' | relative_url }}" alt="nwalaam" width="256" height="76"></h1>
 
 Autologistic actor attribute models (ALAAM) for Stata: why do these actors, and not the others, have the outcome, given the network around them.
 {: .fs-6 .fw-300 }
