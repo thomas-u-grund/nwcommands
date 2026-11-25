@@ -119,4 +119,4 @@ The tie probabilities are an *n*-by-*n* matrix and the ties are drawn with these
 
 ---
 
-*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))

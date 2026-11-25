@@ -155,4 +155,4 @@ The same movie written to a video file and to an animated GIF, two seconds per t
 
 ---
 
-*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))

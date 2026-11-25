@@ -12,7 +12,7 @@ The current version of each package and every release, newest first. Each entry 
 
 | Package | Current version | Released | Release notes | Package page |
 |---|---|---|---|---|
-| **nwcommands** | 3.37.0 | 25 November 2026 | [all releases of nwcommands](https://github.com/thomas-u-grund/nwcommands/releases) | [nwcommands](../nwcommands/) |
+| **nwcommands** | 3.37.1 | 25 November 2026 | [all releases of nwcommands](https://github.com/thomas-u-grund/nwcommands/releases) | [nwcommands](../nwcommands/) |
 | **nwsaom** | 1.9.2 | 22 November 2026 | [all releases of nwsaom](https://github.com/thomas-u-grund/nwsaom/releases) | [nwsaom](../nwsaom/) |
 | **nwergm** | 1.16.1 | 24 November 2026 | [all releases of nwergm](https://github.com/thomas-u-grund/nwergm/releases) | [nwergm](../nwergm/) |
 | **nwdynam** | 1.11.1 | 22 November 2026 | [all releases of nwdynam](https://github.com/thomas-u-grund/nwdynam/releases) | [nwdynam](../nwdynam/) |
@@ -22,6 +22,14 @@ The current version of each package and every release, newest first. Each entry 
 | **nwsbm** | 1.1.0 | 23 November 2026 | [all releases of nwsbm](https://github.com/thomas-u-grund/nwsbm/releases) | [nwsbm](../nwsbm/) |
 
 ## All releases
+
+<a id="nwcommands-3-37-1"></a>
+
+### 25 November 2026: nwcommands 3.37.1
+
+**nwcommands 3.37.1** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.37.1)). Please update. Results that change: `nwlambda` and `nwsimindex` returned wrong values, without an error, when the result was given the input network's name (`name(` *input* `) replace`); recompute results obtained this way. `nwset, mat(B) bipartite` changed the Mata matrix `B`, so that using it again gave a different network. Lost networks: with the input's name as the name of the result, `nwbridges` and `nwsimmelian` (`nwreplace`), `nw2project` and `nwattime` (`replace`) destroyed the input, and `name(_all)` with `nwbridges` or `nwsimmelian` dropped all networks. All six commands now refuse the input's name. Also: rows of the data that belong to no node keep their order; the `edgesize()` legend has entries; the interactive view shows node degrees; shorter dialog labels.
+
+The core Mata library and the plugins are unchanged; the model packages need no update.
 
 <a id="nwcommands-3-37-0"></a>
 

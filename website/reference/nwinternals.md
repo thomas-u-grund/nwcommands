@@ -59,4 +59,4 @@ This page exists so that a curious user finds an explanation somewhere, rather t
 
 ---
 
-*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))

@@ -164,4 +164,4 @@ A two-mode and a valued network stop with error 198 ({helpb nwdichotomize} first
 	{help nwdyads}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
