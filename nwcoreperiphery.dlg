@@ -32,7 +32,7 @@ BEGIN
   EDIT ed_seed 290 194 190 ., nomem option(seed)
   TEXT tx_cx_silent 20 222 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 222 190 ., label("silent") option(silent)
-  TEXT tx_cx_sym 20 250 260 ., label("Directed: analyse symmetrized (default: refused)")
+  TEXT tx_cx_sym 20 250 260 ., label("Directed: symmetrize (default: refused)")
   CHECKBOX cx_sym 290 250 190 ., label("sym") option(symmetrize)
 END
 

@@ -15,14 +15,14 @@ END
 
 DIALOG main, title("nwqap - Multivariate QAP regression")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Formula: dependent network, then predictor networks:")
+  TEXT tx_net 20 20 260 ., label("Formula: dependent net, then predictor nets:")
   EDIT cb_net 290 20 190 ., nomem
   GROUPBOX gb_opt 10 44 520 384, label("Options")
   TEXT tx_cx_detail 20 54 260 ., label("display details of regression results")
   CHECKBOX cx_detail 290 54 190 ., label("detail") option(detail)
-  TEXT tx_ed_type 20 82 260 ., label("Regression command for the dyads; default = logit")
+  TEXT tx_ed_type 20 82 260 ., label("Dyad regression command; default = logit")
   EDIT ed_type 290 82 190 ., nomem option(type)
-  TEXT tx_ed_typeoptions 20 110 260 ., label("options to be passed on to the regression command")
+  TEXT tx_ed_typeoptions 20 110 260 ., label("Options passed on to the regression command")
   EDIT ed_typeoptions 290 110 190 ., nomem option(typeoptions)
   TEXT tx_ed_mode 20 138 260 ., label("modes for expanding variables to networks")
   EDIT ed_mode 290 138 190 ., nomem option(mode)
@@ -34,7 +34,7 @@ BEGIN
   COMBOBOX cb_predict 290 222 190 ., dropdown contents(netlist) nomem option(predict)
   TEXT tx_cx_qapspp 20 250 260 ., label("Double semi-partialling QAP (MRQAP)")
   CHECKBOX cx_qapspp 290 250 190 ., label("qapspp") option(qapspp)
-  TEXT tx_cx_plot 20 278 260 ., label("draw a histogram-plus-reference-line panel per coefficient")
+  TEXT tx_cx_plot 20 278 260 ., label("Histogram + reference line, one per coefficient")
   CHECKBOX cx_plot 290 278 190 ., label("plot") option(plot)
   TEXT tx_ed_name 20 306 260 ., label("name for the graph created by plot")
   EDIT ed_name 290 306 190 ., nomem option(name)

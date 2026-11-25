@@ -26,7 +26,7 @@ BEGIN
   COMBOBOX cb_mode 290 110 190 ., dropdownlist contents(list_mode) nomem option(mode)
   TEXT tx_ed_generate 20 138 260 ., label("Required. Name of the context variable")
   EDIT ed_generate 290 138 190 ., nomem option(generate)
-  TEXT tx_ed_mat 20 166 260 ., label("Also store the result in a Mata matrix of this name")
+  TEXT tx_ed_mat 20 166 260 ., label("Also store result as Mata matrix with this name")
   EDIT ed_mat 290 166 190 ., nomem option(mat)
   TEXT tx_cx_noweight 20 194 260 ., label("Ignore valued ties and treats all as binary")
   CHECKBOX cx_noweight 290 194 190 ., label("noweight") option(noweight)

@@ -26,7 +26,7 @@ BEGIN
   CHECKBOX cx_replace 290 110 190 ., label("replace") option(replace)
   TEXT tx_cx_silent 20 138 260 ., label("Suppress display of results")
   CHECKBOX cx_silent 290 138 190 ., label("silent") option(silent)
-  TEXT tx_cx_listall 20 166 260 ., label("Show the full table of components (default: first 30)")
+  TEXT tx_cx_listall 20 166 260 ., label("List all components (default: first 30)")
   CHECKBOX cx_listall 290 166 190 ., label("listall") option(listall)
   TEXT tx_cx_weak 20 194 260 ., label("Directed: weakly connected (default: strongly)")
   CHECKBOX cx_weak 290 194 190 ., label("weak") option(weak)

@@ -28,7 +28,7 @@ BEGIN
   CHECKBOX cx_force 290 138 190 ., label("force") option(force)
   TEXT tx_cx_viewon 20 166 260 ., label("Establish view of network to dataset")
   CHECKBOX cx_viewon 290 166 190 ., label("viewon") option(viewon)
-  TEXT tx_cx_viewoff 20 194 260 ., label("Disconnect the view between network and data")
+  TEXT tx_cx_viewoff 20 194 260 ., label("Disconnect view between network and data")
   CHECKBOX cx_viewoff 290 194 190 ., label("viewoff") option(viewoff)
   TEXT tx_cx_nocurrent 20 222 260 ., label("Load without making the network current")
   CHECKBOX cx_nocurrent 290 222 190 ., label("nocurrent") option(nocurrent)

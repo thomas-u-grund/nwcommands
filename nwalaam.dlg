@@ -46,7 +46,7 @@ BEGIN
   CHECKBOX cx_sender 20 246 130 ., label("sender")
   CHECKBOX cx_receiver 160 246 130 ., label("receiver")
   CHECKBOX cx_reciprocity 300 246 130 ., label("reciprocity")
-  TEXT tx_other 20 280 260 ., label("Other effects (covariates, e.g. alter(age) same(sex)):")
+  TEXT tx_other 20 280 260 ., label("Other effects (e.g. alter(age) same(sex)):")
   EDIT ed_other 290 280 270 ., nomem
   TEXT tx_oth2 20 306 540 ., label("Effect names and options are listed in help nwalaam.")
   GROUPBOX gb_est 10 352 560 150, label("Estimation")

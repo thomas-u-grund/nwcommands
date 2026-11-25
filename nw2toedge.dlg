@@ -32,7 +32,7 @@ BEGIN
   EDIT ed_alter 290 194 190 ., nomem option(alter)
   TEXT tx_cx_full 20 222 260 ., label("Both (i,j) and (j,i) for undirected networks")
   CHECKBOX cx_full 290 222 190 ., label("full") option(full)
-  TEXT tx_cx_ignore2mode 20 250 260 ., label("One-mode reading: no _nwmode_ego/alter variables")
+  TEXT tx_cx_ignore2mode 20 250 260 ., label("One-mode: no _nwmode_ego/alter variables")
   CHECKBOX cx_ignore2mode 290 250 190 ., label("ignore2mode") option(ignore2mode)
   TEXT tx_cx_allpairs 20 278 260 ., label("Also write pairs without a tie")
   CHECKBOX cx_allpairs 290 278 190 ., label("allpairs") option(allpairs)

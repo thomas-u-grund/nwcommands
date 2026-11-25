@@ -20,7 +20,7 @@ BEGIN
   GROUPBOX gb_opt 10 44 480 86, label("Details")
   TEXT tx_ed_new 20 54 260 ., label("New network name:")
   EDIT ed_new 290 54 190 ., nomem option(newname)
-  TEXT tx_ed_free 20 82 260 ., label("Additional options (typed as on the command line):")
+  TEXT tx_ed_free 20 82 260 ., label("More options (typed as on the command line):")
   EDIT ed_free 290 82 190 ., nomem
 END
 

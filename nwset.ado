@@ -884,9 +884,12 @@ real matrix get_2mode_edge(real matrix edge){
 }
 
 
-real matrix check_bipartite(real matrix edge, string scalar bip){
+real matrix check_bipartite(real matrix input, string scalar bip){
 	real scalar m
+	real matrix edge
 
+	// a copy: Mata passes arguments by reference, and assigning to the argument changed the caller's own matrix
+	edge = input
 	if (bip == "bipartite"){
 		edge = get_2mode_edge(edge)
 	}

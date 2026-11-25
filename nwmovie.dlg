@@ -15,30 +15,30 @@ END
 
 DIALOG main, title("nwmovie - Animated HTML network movie (panel or event mode)")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Network(s): one per wave, or one temporal network")
+  TEXT tx_net 20 20 260 ., label("Network(s): one per wave, or one temporal")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem append
 
   GROUPBOX gb_out 10 44 530 76, label("Output")
-  TEXT tx_ed_fname 20 54 260 ., label("base filename for the output .html; default = movie")
+  TEXT tx_ed_fname 20 54 260 ., label("Base name of output .html; default = movie")
   EDIT ed_fname 290 54 190 ., nomem option(fname)
-  TEXT tx_cx_noopen 20 82 260 ., label("build the .html file but do not open it in a viewer")
+  TEXT tx_cx_noopen 20 82 260 ., label("Build .html file, do not open it in a viewer")
   CHECKBOX cx_noopen 290 82 190 ., label("noopen") option(noopen)
 
   GROUPBOX gb_lay 10 126 530 146, label("Layout")
-  TEXT tx_cb_layout 20 136 260 ., label("Layout algorithm (panel mode); see layout() of nwplot")
+  TEXT tx_cb_layout 20 136 260 ., label("Layout algorithm (panel); see nwplot layout()")
   COMBOBOX cb_layout 290 136 190 ., dropdown contents(list_layout) nomem option(layout)
   TEXT tx_cx_fixedlayout 20 164 260 ., label("Use the first network's layout for all waves")
   CHECKBOX cx_fixedlayout 290 164 190 ., label("fixedlayout") option(fixedlayout)
-  TEXT tx_sp_iterations 20 192 260 ., label("iterations for the layout algorithm; default = 500")
+  TEXT tx_sp_iterations 20 192 260 ., label("Layout algorithm iterations; default = 500")
   SPINNER sp_iterations 290 192 70 ., default(500) max(999999) min(1) nomem option(iterations)
   CHECKBOX cx_binary 380 192 155 ., label("binary (ignore tie values)") option(binary)
-  TEXT tx_ed_duration 20 220 260 ., label("Panel: milliseconds per transition; default = 800")
+  TEXT tx_ed_duration 20 220 260 ., label("Panel: ms per transition; default = 800")
   EDIT ed_duration 290 220 100 ., numonly nomem option(duration)
   TEXT tx_ed_easing 20 248 260 ., label("Panel: easing; default = ease-in-out-cubic")
   EDIT ed_easing 290 248 190 ., nomem option(easing)
 
   GROUPBOX gb_evt 10 276 530 76, label("Event mode")
-  TEXT tx_ed_window 20 286 260 ., label("Event mode: fade-out window (blank = no fading)")
+  TEXT tx_ed_window 20 286 260 ., label("Event mode: fade-out window (blank = none)")
   EDIT ed_window 290 286 100 ., numonly nomem option(window)
   TEXT tx_ed_speed 20 314 260 ., label("Event mode: time units per second; default = 1")
   EDIT ed_speed 290 314 100 ., numonly nomem option(speed)
@@ -79,7 +79,7 @@ BEGIN
   EDIT ed_symbolpalette 830 360 190 ., nomem option(symbolpalette)
   TEXT tx_ed_scheme 560 388 260 ., label("graph scheme (see nwplot)")
   EDIT ed_scheme 830 388 190 ., nomem option(scheme)
-  TEXT tx_cx_nosign 560 416 260 ., label("panel mode: no sign colours on signed networks")
+  TEXT tx_cx_nosign 560 416 260 ., label("Panel: no sign colours on signed networks")
   CHECKBOX cx_nosign 830 416 190 ., label("nosign") option(nosign)
 
   GROUPBOX gb_exp 550 462 530 104, label("Export a video or GIF instead of opening the movie")
@@ -87,7 +87,7 @@ BEGIN
   FILE fi_export 830 472 190 ., label("Browse...") filter("MP4 video|*.mp4|WebM video|*.webm|Animated GIF|*.gif|All files|*.*") save nomem option(export)
   TEXT tx_cx_replace 560 500 260 ., label("overwrite an existing export file")
   CHECKBOX cx_replace 830 500 190 ., label("replace") option(replace)
-  TEXT tx_sp_timeout 560 528 260 ., label("seconds to wait for the export file; default = 600")
+  TEXT tx_sp_timeout 560 528 260 ., label("Seconds to wait for export file; default = 600")
   SPINNER sp_timeout 830 528 70 ., default(600) max(99999) min(1) nomem option(timeout)
 END
 

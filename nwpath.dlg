@@ -30,13 +30,13 @@ BEGIN
   SPINNER sp_alterid 290 166 70 ., default(0) max(999999) min(0) nomem option(alterid)
   TEXT tx_cx_sym 20 194 260 ., label("Symmetrize network for calculation")
   CHECKBOX cx_sym 290 194 190 ., label("sym") option(sym)
-  TEXT tx_cb_generate 20 222 260 ., label("Save paths as networks beginning with newnetnamestub")
+  TEXT tx_cb_generate 20 222 260 ., label("Save paths as networks: newnetnamestub")
   COMBOBOX cb_generate 290 222 190 ., dropdown contents(netlist) nomem option(generate)
   TEXT tx_cx_nopaths 20 250 260 ., label("Do not print the list of paths")
   CHECKBOX cx_nopaths 290 250 190 ., label("nopaths") option(nopaths)
-  TEXT tx_cx_binary 20 278 260 ., label("Ignore the tie values of a valued network (default: use them)")
+  TEXT tx_cx_binary 20 278 260 ., label("Ignore tie values (default: use them)")
   CHECKBOX cx_binary 290 278 190 ., label("binary") option(binary)
-  TEXT tx_ed_alpha 20 306 260 ., label("Step cost 1/w^alpha (valued network; default 1)")
+  TEXT tx_ed_alpha 20 306 260 ., label("Step cost 1/w^alpha (valued net; default 1)")
   EDIT ed_alpha 290 306 100 ., numonly nomem option(alpha)
 END
 

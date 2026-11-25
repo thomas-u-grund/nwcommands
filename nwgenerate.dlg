@@ -20,9 +20,9 @@ BEGIN
   EDIT ed_new 290 20 190 ., nomem
   TEXT tx_ed_expr 20 48 260 ., label("Expression (e.g. '2 * mynet1'):")
   EDIT ed_expr 290 48 190 ., nomem
-  TEXT tx_cx_replace 20 76 260 ., label("overwrite an existing network/variable of the same name")
+  TEXT tx_cx_replace 20 76 260 ., label("Overwrite same-named network or variable")
   CHECKBOX cx_replace 290 76 190 ., label("replace") option(replace)
-  TEXT tx_cx_xvars 20 104 260 ., label("also generate Stata variables for the resulting network")
+  TEXT tx_cx_xvars 20 104 260 ., label("Also create Stata variables for new network")
   CHECKBOX cx_xvars 290 104 190 ., label("xvars") option(xvars)
 END
 

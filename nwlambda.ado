@@ -21,6 +21,8 @@ program nwlambda, rclass
 	// - matches nwsimindex.ado's own identical convention exactly (this
 	// command is the same shape: compute an n x n matrix, save it as a
 	// new valued network).
+	// the input cannot receive the result: it would be dropped before or while the result is formed
+	_nwtargetcheck `name', source(`netname') given(0)
 	nwvalidate `name'
 	if "`r(exists)'" == "true" {
 		if "`replace'" == "" {

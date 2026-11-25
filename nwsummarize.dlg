@@ -26,7 +26,7 @@ BEGIN
   CHECKBOX cx_detail 290 110 190 ., label("detail") option(detail)
   TEXT tx_ed_save 20 138 260 ., label("Save network measures in file")
   EDIT ed_save 290 138 190 ., nomem option(save)
-  TEXT tx_cx_silent 20 166 260 ., label("Compute and return results without displaying anything")
+  TEXT tx_cx_silent 20 166 260 ., label("Compute and return results without display")
   CHECKBOX cx_silent 290 166 190 ., label("silent") option(silent)
 END
 

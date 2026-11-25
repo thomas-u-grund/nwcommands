@@ -32,7 +32,7 @@ BEGIN
   CHECKBOX cx_xvars 290 194 190 ., label("xvars") option(xvars)
   TEXT tx_cx_undirected 20 222 260 ., label("Generate an undirected network")
   CHECKBOX cx_undirected 290 222 190 ., label("undirected") option(undirected)
-  TEXT tx_sp_ntimes 20 250 260 ., label("number of networks to be generated; default = 1")
+  TEXT tx_sp_ntimes 20 250 260 ., label("Number of networks to generate; default = 1")
   SPINNER sp_ntimes 290 250 70 ., default(1) max(999999) min(1) nomem option(ntimes)
 END
 

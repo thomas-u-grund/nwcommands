@@ -35,6 +35,8 @@ program nw2project, rclass
 	// going to be reused anyway. Found and fixed while building
 	// nwsimindex, which had copied this same pattern - see its own
 	// docs/CERTIFICATION.md entry.
+	// the input cannot receive the result: it would be dropped before or while the result is formed
+	_nwtargetcheck `name', source(`netname') given(0)
 	nwvalidate `name'
 	if "`r(exists)'" == "true" {
 		if "`replace'" == "" {
