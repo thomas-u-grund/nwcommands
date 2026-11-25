@@ -8,7 +8,7 @@ description: "Who develops and maintains nwcommands and its model packages nwsao
 # About
 
 nwcommands and the model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm are written and maintained by
-**Thomas U. Grund**, RWTH Aachen University. He is the sole author of the eight packages, which are free
+[**Thomas U. Grund**](http://www.grund.co.uk), RWTH Aachen University. He is the author of the eight packages, which are free
 software under the GNU General Public License, version 3.
 
 - Code and issues: [github.com/thomas-u-grund](https://github.com/thomas-u-grund)
