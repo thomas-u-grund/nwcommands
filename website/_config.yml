@@ -16,14 +16,7 @@ search_enabled: true
 heading_anchors: true
 
 aux_links:
-  "nwcommands": ["https://github.com/thomas-u-grund/nwcommands"]
-  "nwsaom": ["https://github.com/thomas-u-grund/nwsaom"]
-  "nwergm": ["https://github.com/thomas-u-grund/nwergm"]
-  "nwdynam": ["https://github.com/thomas-u-grund/nwdynam"]
-  "nwrem": ["https://github.com/thomas-u-grund/nwrem"]
-  "nwalaam": ["https://github.com/thomas-u-grund/nwalaam"]
-  "nwlsm": ["https://github.com/thomas-u-grund/nwlsm"]
-  "nwsbm": ["https://github.com/thomas-u-grund/nwsbm"]
+  "GitHub": ["https://github.com/thomas-u-grund/nwcommands"]
   "Request a feature": ["https://github.com/thomas-u-grund/nwcommands/issues/new?template=feature_request.yml"]
   "Report an issue": ["https://github.com/thomas-u-grund/nwcommands/issues/new?template=bug_report.yml"]
 
