@@ -94,7 +94,7 @@ which is essentially what Newman (2001) and Brandes (2001) suggested. This simpl
 
 ## Limits
 
-The breadth-first searches run in the plugin, 128 sources per call (the ties are read once per call). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 2.7 seconds, 20,000 nodes 10 seconds and 6.4 GB; the result is a dense *n*-by-*n* network. For the sums of the distances alone use [nwcloseness](nwcloseness) or [nwkatz](nwkatz), which do not build the matrix.
+The breadth-first searches run in the plugin, 128 sources per call (the ties are read once per call). The result is a dense *n*-by-*n* network (about 6.4 GB at 20,000 nodes). For the sums of the distances alone use [nwcloseness](nwcloseness) or [nwkatz](nwkatz), which do not build the matrix.
 
 The distances of all pairs of nodes are an *n*-by-*n* matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), names [nwcloseness](nwcloseness), [nwkatz](nwkatz), [nwcomponents](nwcomponents) and [nwpath](nwpath) as the alternatives for sums of distances, connectedness and single pairs, and `force` runs it anyway.
 
@@ -178,4 +178,4 @@ Newman, M. E.J. (2001). Scientific collaboration networks. II. Shortest paths, w
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

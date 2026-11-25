@@ -638,8 +638,12 @@ program nwplot, rclass
 		local nodefactor = `nodefactor' / 2
 		qui sum `varlist' if _n <= `nodes'
 		local sizekeys_legendoff "`legendoff'"
-		local sizekeys "`=round(`r(min)',0.01)' `=round(`r(max)',0.01)'"
-		local sizekeys_size "`=round(`r(min)',0.01)' `=round(`r(max)',0.01)'"
+		// string() with a format: a bare `=round(x,0.01)' puts values such as
+		// 9.870000000000001 into the legend labels
+		local _nwp_keymin = strtrim(string(round(`r(min)', 0.01), "%12.0g"))
+		local _nwp_keymax = strtrim(string(round(`r(max)', 0.01), "%12.0g"))
+		local sizekeys "`_nwp_keymin' `_nwp_keymax'"
+		local sizekeys_size "`_nwp_keymin' `_nwp_keymax'"
 		
 		if "`forcekeys'" != "" {
 			local sizekeys "`forcekeys'"

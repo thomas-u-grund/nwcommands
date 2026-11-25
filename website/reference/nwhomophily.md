@@ -111,7 +111,7 @@ Generates a one-mode network. **Directed:** directed by default, `undirected` fo
 
 ## Limits
 
-The tie probabilities are an *n*-by-*n* matrix and the ties are drawn with these weights from the list of all dyads ([nwdyadprob](nwdyadprob)), so the time and the memory grow with the square of the number of nodes. Measured in Stata/BE, density 0.0001: 1,000 nodes 9 seconds, 5,000 nodes 78 seconds and 5.3 GB. Above 7,071 nodes the command stops at once with r(484) (more than 50,000,000 dyads), before any matrix is built.
+The tie probabilities are an *n*-by-*n* matrix and the ties are drawn with these weights from the list of all dyads ([nwdyadprob](nwdyadprob)), so the time and the memory grow with the square of the number of nodes. At density 0.0001, 5,000 nodes need about 5.3 GB. Above 7,071 nodes the command stops at once with r(484) (more than 50,000,000 dyads), before any matrix is built.
 
 ## See also
 
@@ -119,4 +119,4 @@ The tie probabilities are an *n*-by-*n* matrix and the ties are drawn with these
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

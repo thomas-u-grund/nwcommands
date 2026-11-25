@@ -95,14 +95,14 @@ Plain MR-QAP's own standard permutation test (the default, no `qapspp`) permutes
 
 ## Limits
 
-The regression runs on one observation for every dyad, in Stata memory. Measured in Stata/BE, random directed network with 10 ties per node, `type(regress)`, five permutations: 5,000 nodes 10 seconds and 3 GB, 10,000 nodes 40 seconds and 11.6 GB. Memory is about 120 bytes per dyad, so networks above 10,000 nodes need more than 12 GB.
+The regression runs on one observation for every dyad, in Stata memory. With `type(regress)`, 5,000 nodes need about 3 GB and 10,000 nodes about 11.6 GB. Memory is about 120 bytes per dyad, so networks above 10,000 nodes need more than 12 GB.
 
-QAP regresses the dyads of the networks, one observation per pair of nodes, and holds about 15 matrices of *n*-by-*n* (10,000 nodes with 5 permutations: 39 seconds and 11.6 GB). Above 10,000 nodes the command stops at once with r(484) and a message with the memory needed (48 GB at 20,000 nodes); option `force` runs it anyway.
+QAP regresses the dyads of the networks, one observation per pair of nodes, and holds about 15 matrices of *n*-by-*n* (10,000 nodes: 11.6 GB). Above 10,000 nodes the command stops at once with r(484) and a message with the memory needed (48 GB at 20,000 nodes); option `force` runs it anyway.
 
 ## Examples
 
 ```stata
-. nwwebuse glasgow
+. nwwebuse glasgow, nwclear
 . nwqap glasgow2 glasgow1 smoke1 sport1
 . nwqap glasgow2 glasgow1 smoke1 sport1, predict(glasgow2_fitted)
 
@@ -129,7 +129,8 @@ This example shows that two individuals are more likely to be friends at time2 (
 
 `name()` names the graph in memory, `gsaving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
 
-- `. nwqap wdv iv1 iv2, plot export(qap.png, width(1200))`
+- `. nwwebuse glasgow, nwclear`
+- `. nwqap glasgow2 glasgow1 smoke1 sport1, plot export(qap.png, width(1200))`
 
 ## Stored results
 
@@ -159,4 +160,4 @@ This example shows that two individuals are more likely to be friends at time2 (
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

@@ -62,7 +62,7 @@ For two-mode networks (see [introduction to two-mode networks](nw2set)) the comm
 
 ## Limits
 
-Only the dyads between the two modes are listed, so the size grows with the product of the two mode sizes. Measured in Stata/BE for N mode-1 and N/2 mode-2 nodes with 10 ties per mode-1 node: 1,000 nodes 0.7 seconds, 5,000 nodes 24 seconds with `allpairs`; by default (ties only) 1,000 / 5,000 nodes in 0.7 / 1.0 seconds.
+Only the dyads between the two modes are listed, so the size grows with the product of the two mode sizes. By default only the ties are listed.
 
 ## Examples
 
@@ -82,4 +82,4 @@ Build a small two-mode network (3 people x 2 events) and convert it to an edgeli
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

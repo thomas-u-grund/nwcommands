@@ -130,4 +130,4 @@ This imports networks in compressed edgelist format. As delimiter "," is allowed
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

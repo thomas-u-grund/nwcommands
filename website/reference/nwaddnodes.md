@@ -41,7 +41,7 @@ An isolate node added this way has no ties to any existing node. A network built
 
 ## Limits
 
-The added nodes have no ties, so a network held as stored ties only gets longer row pointers: 20,000 nodes 0.1 seconds.
+The added nodes have no ties, so a network held as stored ties only gets longer row pointers.
 
 ## Examples
 
@@ -55,10 +55,16 @@ This example adds three new nodes (isolates) to a random network with 5 nodes.
 This example adds two isolate nodes to a two-mode network - one to each mode (a mode-1 "person" with no memberships, and a mode-2 "institution" with no members):
 
 ```stata
+. nwclear
+. input str8 person str8 institution
+.   Anna Church
+.   Ben Church
+.   Ben Club
+. end
 . nw2fromedge person institution, name(mynet)
 . nwaddnodes mynet, nodenames(NewPerson, NewInstitution) mode(1 2)
 ```
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

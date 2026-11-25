@@ -47,7 +47,7 @@ The command makes use of the normal `tabulate` command, hence, all *`tabulate1_o
 ## Example
 
 ```stata
-. nwwebuse gang
+. nwwebuse gang, nwclear
 . nwtabulate gang
 
 Network:  gang      Directed: false
@@ -69,16 +69,16 @@ Network:  gang      Directed: false
 
 ## Limits
 
-The table of one network counts the dyads of each value without listing them, so the time depends on the number of ties, not on the square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 / 5,000 / 20,000 nodes in 0.01 / 0.01 / 0.03 seconds. The tabulation of a network by an attribute lists the ties only; the permutation test (`permutations()`, default 100) permutes the attribute on the dense matrix and takes most of the time: 10,000 nodes with 100 permutations 47 seconds and 4.8 GB. The tabulation of two networks uses the dyad list and the full matrix.
+The table of one network counts the dyads of each value without listing them, so the time depends on the number of ties, not on the square of the number of nodes. The tabulation of a network by an attribute lists the ties only; the permutation test (`permutations()`, default 100) permutes the attribute on the dense matrix and takes most of the time (10,000 nodes: 4.8 GB). The tabulation of two networks uses the dyad list and the full matrix.
 
-With `attribute()` the permutation test acts on the stored ties of a network that is held that way (20,000 nodes with the default 100 permutations: 1.6 seconds). The test of two networks works on the matrices.
+With `attribute()` the permutation test acts on the stored ties of a network that is held that way. The test of two networks works on the matrices.
 
-Frequency weights of Stata stop at 2,147,483,647: a directed network of more than about 46,000 nodes (an undirected one of 65,000) has more dyads than that. The table is then written by `nwtabulate` itself (value, frequency, percent, cumulative percent; the options of `tabulate` are ignored). A network of 100,000 nodes takes 0.1 seconds.
+Frequency weights of Stata stop at 2,147,483,647: a directed network of more than about 46,000 nodes (an undirected one of 65,000) has more dyads than that. The table is then written by `nwtabulate` itself (value, frequency, percent, cumulative percent; the options of `tabulate` are ignored).
 
 ## Example
 
 ```stata
-. nwwebuse gang
+. nwwebuse gang, nwclear
 . nwtabulate gang
 
 Network:  gang      Directed: false
@@ -101,7 +101,7 @@ Network:  gang      Directed: false
 ## Example
 
 ```stata
-. nwwebuse gang
+. nwwebuse gang, nwclear
 . nwtabulate gang
 
 Network:  gang      Directed: false
@@ -158,4 +158,4 @@ The `plot` option draws the table with a built-in bar plot (the same plot the us
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

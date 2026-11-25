@@ -16,10 +16,9 @@ Ego-network size and density
 ```stata
 nwego
 [netlist]
-[,
-sizevar(newvarname)
-densvar(newvarname)
-replace
+,
+sizevar(newvarname) densvar(newvarname)
+[replace
 silent]
 ```
 
@@ -61,4 +60,4 @@ Burt, R.S. (1992). *Structural Holes: The Social Structure of Competition*. Harv
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

@@ -183,10 +183,10 @@ In that case Stata will not find it automatically, so add it to your ado path ev
 ```stata
 . adopath ++ "D:\my_ado"
 ```
-or make that permanent by adding the same line to your own `profile.do` (see `profiles`).
+or make that permanent by adding the same line to your own `profile.do` (see `profile`).
 
 `localcopy` accepts the same `ado`/`help`/`dialog`/`all` selectors as the normal network install (`ext` is accepted but does nothing, same as without `localcopy` - see `ext` above), so e.g. `nwinstall, localcopy dialog` copies only the dialog boxes.
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

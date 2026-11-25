@@ -54,7 +54,7 @@ The command can also be used in more complicated ways using the intrinsic value 
 Then one can use `intrvalue()` in `nwutility`:
 
 ```stata
-. nwutility network, benefit(.5) cost(.3) intrvalue(same)
+. nwutility random, benefit(.5) cost(.3) intrvalue(same)
 ```
 **Important**: the w_ii term (a node's intrinsic self-value) is read from `intrvalue()`'s own network diagonal. [nwset](nwset) treats the diagonal as "no self-tie" (missing) by default for any network, `intrvalue()` included - a network built without the `selfloop` option will have a missing diagonal, and `nwutility` will report *_benefit*/*_util* as missing rather than silently substituting a wrong number. To supply real w_ii values, build the `intrvalue()` network with [nwset](nwset)'s own `selfloop` option so the diagonal is preserved.
 
@@ -68,7 +68,7 @@ When not specified otherwise, benefit = 1, cost = 1, w_ij = 1 (for i != j), y_ij
 
 ## Limits
 
-The utility is computed from the matrix of shortest paths and holds about 4 matrices of *n*-by-*n* (10,000 nodes: 24 seconds and 3.3 GB). Above about 19,300 nodes the command stops at once with r(484) and a message with the memory needed (12.8 GB at 20,000 nodes); option `force` runs it anyway.
+The utility is computed from the matrix of shortest paths and holds about 4 matrices of *n*-by-*n* (10,000 nodes: 3.3 GB). Above about 19,300 nodes the command stops at once with r(484) and a message with the memory needed (12.8 GB at 20,000 nodes); option `force` runs it anyway.
 
 ## Bibliography
 
@@ -76,4 +76,4 @@ Jackson, M. and Wolinsky, A. (1996) A Strategic Model of Social and Economic Net
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

@@ -50,7 +50,7 @@ For an **undirected** pair of networks, **r(stable)**, **r(formed)**, and **r(di
 
 ## Limits
 
-The ties kept, formed and dissolved are counted from the lists of ties of the two networks (sorted keys) when both are held as stored ties. Measured in Stata/BE, random directed network with 10 ties per node: 20,000 nodes 0.2 seconds.
+The ties kept, formed and dissolved are counted from the lists of ties of the two networks (sorted keys) when both are held as stored ties.
 
 ## Examples
 
@@ -88,4 +88,4 @@ Snijders, T.A.B., van de Bunt, G.G., Steglich, C.E.G. (2010). Introduction to st
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

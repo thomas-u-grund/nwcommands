@@ -54,7 +54,7 @@ If the network is a two-mode (bipartite) network, `nwclustering` uses the two-mo
 
 ## Limits
 
-For `measure(binary)` the closed and potential triples are counted in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give identical coefficients. The work grows with the sum of the squared degrees. Measured in Stata/BE, random undirected network with 10 ties per node: 5,000 nodes 0.06 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 0.7 seconds (the Mata route needs 1.1, 4.9 and 26 seconds). The weighted measures (arithmetic, geometric, maximum, minimum) still run in Mata.
+For `measure(binary)` the closed and potential triples are counted in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give identical coefficients. The work grows with the sum of the squared degrees. The weighted measures (arithmetic, geometric, maximum, minimum) still run in Mata.
 
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
 
@@ -101,4 +101,4 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

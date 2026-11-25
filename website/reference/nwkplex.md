@@ -56,7 +56,7 @@ Like cliques, k-plexes genuinely overlap - a node can belong to several at once 
 
 ## Limits
 
-**Feasible sizes.** The search runs in compiled code on bitset adjacency. It is limited by the number of maximal k-plexes, which can be enormous (any set of `k` or fewer nodes is a k-plex, and large sparse networks have very many bigger ones), and by the sets-by-nodes matrix **r(kplex_matrix)**, which needs sets x nodes numbers. Measured in Stata/BE on a random network with 10 ties drawn per node, `k(2)`, `minsize(3)`: 100 nodes have 10,141 maximal 2-plexes (0.2 s), 300 nodes 31,081 (2.1 s, nearly all of it building the 31,081 x 300 matrix; 0.04 s with `nomatrix`), 1,000 nodes 148,070 (0.2 s with `nomatrix`), 5,000 nodes (2.9 s with `nomatrix`; 1.9 s with `countonly`). For `k(3)`, 300 nodes have 3,968,148 maximal 3-plexes, counted in 0.5 s.
+**Feasible sizes.** The search runs in compiled code on bitset adjacency. It is limited by the number of maximal k-plexes, which can be enormous (any set of `k` or fewer nodes is a k-plex, and large sparse networks have very many bigger ones), and by the sets-by-nodes matrix **r(kplex_matrix)**, which needs sets x nodes numbers. For example, in a random network with 10 ties drawn per node and `k(2)`, `minsize(3)`, 100 nodes have 10,141 maximal 2-plexes, 300 nodes 31,081 and 1,000 nodes 148,070; with `k(3)`, 300 nodes have 3,968,148 maximal 3-plexes. Use `nomatrix` or `countonly` for such numbers.
 
 **Guards.** The command stops with r(484) and a message that names the option to raise when it has found more than `maxplexes()` maximal k-plexes (default 100,000), when the result matrix would be too large to build (more than 50 million numbers; use `nomatrix`), or when the search has run for `maxtime()` seconds (default 60) without finishing. `countonly` does not store the sets and is not limited by memory; `nomatrix` keeps the per-node variable and the counts but not the matrix.
 
@@ -94,4 +94,4 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

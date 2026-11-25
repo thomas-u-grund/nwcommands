@@ -39,7 +39,7 @@ nw2motifs [netname] [, six:node gen:erate(stub) replace mat:rix(name) norm:alise
 
 A motif occurrence is a set of nodes whose subgraph, with *all* the ties between them, is connected and has the shape of the motif; an occurrence is counted once however many ways it can be read (the motifs are induced subgraphs, so a path of two rows and two columns and a four-cycle are two different motifs, and a set of four nodes is exactly one of them). The first mode of the network (mode 1) forms the *rows* of the biadjacency matrix of `bmotif` and the second mode the *columns*; the numbering of the motifs and of the positions is the one of `bmotif` (Simmons et al.), listed in the table below. The motif table equals `bmotif::mcount` and the position counts `bmotif::node_positions` (bmotif 2.0.2) exactly, on a toy network, the Southern women, the Swedish directors, a subsample of them and 34 random networks.
 
-The counting runs in the compiled plugin of nwcommands and needs no matrices of the size of the network: the 5,092 directors and 455 firms of `ftdirectors_se` (5,669 ties) take 0.04 seconds for the motifs and positions up to five nodes, and 0.05 seconds with `sixnode`; a random network of 1,000 and 150 nodes with 14,800 ties takes 0.05 and 0.9 seconds. (The R function takes about a minute for the five-node set on the directors.) The time with `sixnode` grows quickly with the density and the number of nodes of the smaller mode. Counts are held as doubles, so they are exact up to 9 x 10^15. The command stops with a message when the plugin of the installed copy is older than the command or missing for the platform: update the installation (`net install nwcommands, replace`) and restart Stata.
+The counting runs in the compiled plugin of nwcommands and needs no matrices of the size of the network. The time with `sixnode` grows quickly with the density and the number of nodes of the smaller mode. Counts are held as doubles, so they are exact up to 9 x 10^15. The command stops with a message when the plugin of the installed copy is older than the command or missing for the platform: update the installation (`net install nwcommands, replace`) and restart Stata.
 
 The node position counts of a node that is in no motif (an isolate) are zero. In the variables and the matrix the nodes are in the order of the network, the rows of the matrix of `bmotif` being the nodes of mode 1 in that order and its columns those of mode 2; the position ids *np1* to *np148* are those of `bmotif` (*stub*1 holds position 1).
 
@@ -139,16 +139,16 @@ Examples: motif 1 is a single tie (positions 2 for the row and 1 for the column)
 - `. nw2fromedge p g, name(toy)`
 - `. nw2motifs toy, normalise`
 
-- Node positions of the Southern women and events, with the shares of each woman's positions among the positions of motifs of the same size:
-
-- `. nwuse davis, nwclear`
-- `. nw2motifs davis, generate(np) posnorm(sizeclass) silent`
-- `. summarize np1-np6`
-
 - All 44 motifs of the toy network, with the position counts in a matrix:
 
 - `. nw2motifs toy, sixnode matrix(P) silent`
 - `. matrix list r(motifs)`
+
+- Node positions of the Southern women and events, with the shares of each woman's positions among the positions of motifs of the same size:
+
+- `. nwwebuse davis, nwclear`
+- `. nw2motifs davis, generate(np) posnorm(sizeclass) silent`
+- `. summarize np1-np6`
 
 ## Stored results
 
@@ -181,4 +181,4 @@ Stouffer, D. B., M. Sales-Pardo, M. I. Sirer, and J. Bascompte. 2012. Evolutiona
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

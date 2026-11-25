@@ -16,9 +16,9 @@ Betweenness centrality
 ```stata
 nwbetween
 [netlist]
-[,
+,
 generate(newvarlist)
-replace
+[replace
 sym
 nosym
 standardize
@@ -80,7 +80,7 @@ The stored result **r(bw_central)** is Freeman's betweenness centralization, com
 
 ## Performance
 
-The default (unweighted) mode of `nwbetween` transparently uses a compiled native (C) implementation of the same algorithm when one is available for the current platform (currently: macOS), falling back to an identical, fully-supported Mata implementation everywhere else - there is nothing to configure and no difference in the result, only in how fast it is computed (a native run at 10,000 nodes was measured faster than the Mata implementation at just 1,000). The weighted mode (valued networks) has its own native kernel (Dijkstra's search inside Brandes' algorithm) with the same result as the Mata routine: 1,000 nodes with 3,000 valued ties take 0.13 seconds (Mata: 111 seconds), 10,000 nodes 15 seconds; the Mata routine needs a dense work space of n x n cells for every node and is not usable above a few hundred nodes.
+The default (unweighted) mode of `nwbetween` transparently uses a compiled native (C) implementation of the same algorithm when one is available for the current platform (currently: macOS), falling back to an identical, fully-supported Mata implementation everywhere else - there is nothing to configure and no difference in the result, only in how fast it is computed. The weighted mode (valued networks) has its own native kernel (Dijkstra's search inside Brandes' algorithm) with the same result as the Mata routine; the Mata routine needs a dense work space of n x n cells for every node and is not usable above a few hundred nodes.
 
 ## Network types
 
@@ -88,7 +88,7 @@ The default (unweighted) mode of `nwbetween` transparently uses a compiled nativ
 
 ## Limits
 
-Betweenness needs one shortest-path search from every node, so the time grows with the number of nodes times the number of ties. Measured in Stata/BE on a random directed network with 10 ties per node: 10,000 nodes 7.6 seconds, 20,000 nodes 29 seconds, 100,000 nodes about 15 minutes (estimated). When the estimated time is more than 2 minutes (about 36,000 nodes with 10 ties per node) the command stops at once with r(484) and a message; option `force` runs it anyway.
+Betweenness needs one shortest-path search from every node, so the time grows with the number of nodes times the number of ties. When the estimated time is more than 2 minutes (about 36,000 nodes with 10 ties per node) the command stops at once with r(484) and a message; option `force` runs it anyway.
 
 ## Stored results
 
@@ -107,4 +107,4 @@ Opsahl, T., Agneessens, F. and Skvoretz, J. (2010). Node centrality in weighted 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

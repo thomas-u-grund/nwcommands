@@ -16,8 +16,9 @@ Network components and the largest component
 ```stata
 nwcomponents 
 [netlist]
-[, lgc
+,
 generate(newvarname)
+[lgc
 replace
 silent
 listall
@@ -71,7 +72,7 @@ This shows that there are two components in the Florentine marriage network. All
 
 ## Limits
 
-The components are found from the stored ties (10,000 nodes: 0.04 seconds). A network with more than 1,000 components (any sparse network of a few thousand nodes) has its component sizes counted in Mata; the table is not printed above 1,000 components, and **r(comp_sizeid)** holds the sizes ordered by size and then by component number.
+The components are found from the stored ties. A network with more than 1,000 components (any sparse network of a few thousand nodes) has its component sizes counted in Mata; the table is not printed above 1,000 components, and **r(comp_sizeid)** holds the sizes ordered by size and then by component number.
 
 ## Stored results
 
@@ -90,4 +91,4 @@ The components are found from the stored ties (10,000 nodes: 0.04 seconds). A ne
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

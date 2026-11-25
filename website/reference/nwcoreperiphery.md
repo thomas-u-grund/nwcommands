@@ -16,9 +16,9 @@ Discrete core-periphery detection
 ```stata
 nwcoreperiphery
 [netlist]
-[,
+,
 generate(newvarname)
-replace
+[replace
 measure(string)
 maxiter(int)
 rest:arts(#)
@@ -52,7 +52,7 @@ The classical model does not distinguish incoming from outgoing ties, so it is d
 
 ## Limits
 
-Above 2,000 nodes the search runs on the stored ties (the sums of the correlation with the ideal pattern are taken from the ties; the cores found are those of the matrix version, the fitness equal up to rounding in the last digits). Measured in Stata/BE on a random undirected network with 10 ties drawn per node: 10,000 nodes 0.3 seconds and 0.2 GB, 20,000 nodes 0.6 seconds.
+Above 2,000 nodes the search runs on the stored ties (the sums of the correlation with the ideal pattern are taken from the ties; the cores found are those of the matrix version, the fitness equal up to rounding in the last digits).
 
 A network with no ties at all is rejected (there is no structure to fit a core-periphery pattern to); an isolate is assigned to the periphery.
 
@@ -92,4 +92,4 @@ Borgatti, S.P., Everett, M.G. (1999). Models of core/periphery structures. *Soci
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

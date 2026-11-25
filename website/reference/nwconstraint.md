@@ -46,13 +46,13 @@ The diagonal (self-constraint) is not meaningful and is not part of the returned
 
 ## Limits
 
-The result is a dense *n*-by-*n* network. 20,000 nodes: 9 seconds in Stata/BE.
+The result is a dense *n*-by-*n* network.
 
-Above 2,000 nodes a network held as stored ties gets its constraint network from the list of its cells that are not zero (the direct ties and the two-step paths, about the sum of the squared degrees), without an *n*-by-*n* matrix; only `name()` and `replace` are accepted then. Measured in Stata/BE with 5 ties drawn per node (mean degree 10 when undirected) and 100,000 nodes: 0.7 seconds for a directed network and 2.2 seconds for an undirected one (11 million cells).
+Above 2,000 nodes a network held as stored ties gets its constraint network from the list of its cells that are not zero (the direct ties and the two-step paths, about the sum of the squared degrees), without an *n*-by-*n* matrix; only `name()` and `replace` are accepted then.
 
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
 
-The cells are computed in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same values (to the last digits). The kernel itself takes about one second at 100,000 nodes with mean degree 10; the rest of the time of a large network (1 second in Stata/BE for an undirected network) goes into storing the result as a network.
+The cells are computed in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same values (to the last digits).
 
 ## Examples
 
@@ -74,4 +74,4 @@ Ronald S. Burt (1992). *Structural Holes: The Social Structure of Competition*. 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

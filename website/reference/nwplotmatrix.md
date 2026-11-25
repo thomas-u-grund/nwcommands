@@ -93,7 +93,11 @@ All normal `options for lines` can be applied as well.
 
 ## Limits
 
-One box (five points) is drawn for every pair of nodes, so memory and time grow with the square of the number of nodes: 1,000 nodes 5 seconds and 0.8 GB, 2,000 nodes 19 seconds and 2.6 GB. Networks of more than 2,500 nodes are refused; plot a part of the network or use [nwplot](nwplot).
+One box (five points) is drawn for every pair of nodes, so memory and time grow with the square of the number of nodes: 1,000 nodes need about 0.8 GB, 2,000 nodes 2.6 GB. Networks of more than 2,500 nodes are refused; plot a part of the network or use [nwplot](nwplot).
+
+## Stored results
+
+`nwplotmatrix` stores no results of its own in `r()`.
 
 ## See also
 
@@ -101,4 +105,4 @@ One box (five points) is drawn for every pair of nodes, so memory and time grow 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

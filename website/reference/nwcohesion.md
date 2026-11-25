@@ -16,9 +16,9 @@ Moody-White structural cohesion hierarchy
 ```stata
 nwcohesion
 [netlist]
-[,
-sym
+,
 generate(newvarname)
+[sym
 replace
 silent
 force]
@@ -48,9 +48,9 @@ With more than one network in the *netlist*, a number is appended to the variabl
 
 ## Limits
 
-The search runs in compiled code on the list of ties, never on an N-by-N matrix. It is more expensive than a single [nwkcomponents](nwkcomponents) call, since every block found is searched again at the next connectivity level; the time grows with the number of nodes squared times the connectivity level of the deepest block. Measured in Stata/BE on a random network with 10 ties drawn per node (about 20 per node once symmetrized): 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 / 1.4 seconds. `r(cohesion_matrix)` has one row per block and one column per node. On a platform whose plugin file has not been built yet, a Mata routine runs instead (same results, about 20 seconds at 300 nodes).
+The search runs in compiled code on the list of ties, never on an N-by-N matrix. It is more expensive than a single [nwkcomponents](nwkcomponents) call, since every block found is searched again at the next connectivity level; the time grows with the number of nodes squared times the connectivity level of the deepest block. `r(cohesion_matrix)` has one row per block and one column per node. On a platform whose plugin file has not been built yet, a Mata routine runs instead (same results, much slower).
 
-Measured in Stata/BE on a random undirected network with 10 ties drawn per node: 10,000 nodes 6 seconds, 20,000 nodes 27 seconds and 2.9 GB. When the estimated time is more than 2 minutes (about 40,000 nodes) the command stops at once with r(484) and a message; option `force` runs it anyway.
+With 10 ties drawn per node, 20,000 nodes need about 2.9 GB. When the estimated time is more than 2 minutes (about 40,000 nodes) the command stops at once with r(484) and a message; option `force` runs it anyway.
 
 ## Examples
 
@@ -82,4 +82,4 @@ Even, S. (1979). *Graph Algorithms*. Computer Science Press. (the vertex-splitti
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

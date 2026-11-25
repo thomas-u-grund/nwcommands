@@ -45,12 +45,12 @@ silent
 
 ## Limits
 
-Counts, minimum, maximum and density of a network held as stored ties are read from the ties: 20,000 nodes 0.02 seconds and 0.2 GB in Stata/BE.
+Counts, minimum, maximum and density of a network held as stored ties are read from the ties: 20,000 nodes need about 0.2 GB.
 
 ## Examples
 
 ```stata
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . nwsummarize flomarriage
 --------------------------------------------------
    Network name:  flomarriage
@@ -140,4 +140,4 @@ With a *netlist*, the results are those of the last network. The other results o
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

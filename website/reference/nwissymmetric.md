@@ -33,7 +33,7 @@ For example, [nwimport](nwimport) automatically checks if a network (e.g. Ucinet
 ## Examples
 
 ```stata
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . nwissymmetric flomarriage
 . return list
 
@@ -49,4 +49,4 @@ Note: **r(issymmetric)** is a plain numeric 0/1 scalar - unlike the **true**/**f
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

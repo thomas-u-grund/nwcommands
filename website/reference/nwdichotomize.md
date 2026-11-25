@@ -44,7 +44,7 @@ As with [nwrecode](nwrecode) (and following the package's general convention for
 
 ## Limits
 
-See [nwrecode](nwrecode): 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.07 / 0.3 seconds, random directed network with 10 ties per node.
+See [nwrecode](nwrecode).
 
 ## Examples
 
@@ -64,4 +64,4 @@ Instead of the in-place call, keep the original valued network and save the bina
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

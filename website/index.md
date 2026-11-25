@@ -17,14 +17,6 @@ network models, from the Stata command line or from dialog boxes.
 [Which package do I need?](which-package/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Teaching and slides](teaching/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
-## News
-
-- **Latest release, 24 November 2026.** nwergm 1.16.1 (a repeated `nwergm simulate ..., generate()` with the same name gave wrong networks in 1.15.2 and 1.16.0; please update and rerun such simulations). Before it, on 23 November: nwcommands 3.36.1 (reading data sets of hundreds of networks is about three times faster in Stata 19), nwsbm 1.1.0 (the default number of random starts for the plain Bernoulli model is 2, about twice as fast, same blocks in our checks), nwrem 1.7.2 (`estat vce`, `estat summarize` and `estat ic` work after `nwrem`) and nwergm 1.16.0 (`nwergm simulate` with many draws: about twice as fast, and the new option `output(stats)` is about ten times faster still). Before it, on 22 November: nwcommands 3.36.0 (creating many networks is much faster; the networkdata reader needs no R) with nwsaom 1.9.2, nwergm 1.15.1, nwdynam 1.11.1 and nwrem 1.7.1 (rebuilt for it). Also on the same day: nwcommands 3.35.1 (documentation only: the networkdata collection page is rewritten, licence wording of the data set readers). Also on the same day: nwergm 1.15.0 (repeated fits in one session no longer slow down; the pseudolikelihood setup is faster) and nwergm 1.14.0 (`nwergm simulate` is much faster), nwcommands 3.35.0, nwlsm 1.0.6 and nwalaam 1.4.0; [release notes](releases/).
-- **Sunbelt 2027, Montreal (21 to 26 June 2027).** Two workshops are planned (nwcommands in general; statistical network models in Stata), to be confirmed by INSNA; [details are on the news page](news/), conference information on the [Sunbelt 2027 website](https://www.insna.org/events/sunbelt-2027-montreal).
-- **Teaching.** [Slides for every week and day of the three course outlines](book/teaching/outlines/) (two 12-week courses and a five-day workshop) and [workshop slides](book/teaching/workshop/) for three three-hour sessions, in PowerPoint and PDF with speaker notes, free to use.
-
-All releases: [Release notes](releases/), with the current version of every package. Announcements: [News](news/). nwcommands is a family of eight packages, the core and seven model packages; which one you need is on [Which package do I need?](which-package/), together with the versions.
-
 ## Install in two steps
 {: #install-in-two-steps }
 

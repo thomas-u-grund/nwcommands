@@ -28,6 +28,13 @@ nwwebuse glasgow, nwclear
 nwplot glasgow1, color(smoke1) symbol(sport1) scheme(s1network) interactive noopen fname(interactive_plot)
 display "`r(fname)'"
 
+* Pictograms: color and symbol by gender, then choose man and woman in the
+* two drop-downs of the page (pictograms exist in the browser view only)
+nwwebuse lazega, nwclear
+quietly nwdegree lazega_adv, generate(outdeg indeg)
+set seed 42
+nwplot lazega_adv, color(gender) symbol(gender) size(indeg) edgefactor(0.4) interactive noopen fname(lazega_pictograms)
+
 * The interactive workflow in four steps, with the advice network of the
 * 71 lawyers of the Lazega law firm (colour = office, shape = practice,
 * size = indegree).  1. Build the page; fname() names the file and noopen

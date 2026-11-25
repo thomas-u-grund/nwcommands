@@ -316,6 +316,26 @@ with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as
 	{cmd:. nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)}
 
 {pstd}
+{it:Pictograms.} The shape drop-downs of the interactive view also offer pictograms: people (person,
+woman, man, child, senior, couple, family, group), places and organisations (house, building, factory,
+school, hospital, bank, church, shop), work and communication (briefcase, laptop, phone, envelope,
+document, book, chat), transport and symbols (car, airplane, flag, star, heart, shield, lightbulb) and
+nature (tree, paw, fish). None is assigned automatically. A pictogram takes the color of its group and
+follows {opt size()} and the node size slider; it is drawn somewhat larger than an ordinary shape. When
+{opt color()} and {opt symbol()} group the nodes differently, shapes and pictograms have rows of their
+own; with a single color group each of these rows has its own color picker. For example, choose
+{it:man} and {it:woman} in the page written by
+
+	{cmd:. nwwebuse lazega, nwclear}
+	{cmd:. nwplot lazega_adv, color(gender) symbol(gender) interactive}
+
+{pstd}
+Pictograms are shown only in the interactive view and in its PNG export, because Stata has no such marker
+symbols. {bf:Save do-file} and the saved CSV files hold the ordinary shape of each node. A Stata graph
+has one color per group of {opt color()}, so colors picked separately for the pictograms of one color
+group are not kept in it. The choice of pictograms is not stored: it has to be made again in a new page.
+
+{pstd}
 The button {bf:Save do-file} does all of this in one step. It saves {bf:nwedit_plot.do}, which writes the two
 files ({bf:nwedit_nodes.csv} and {bf:nwedit_edges.csv}) into the working directory and then calls {cmd:nwplot}
 with the network, {help if} / {help in} and options of the call that wrote the page, completed with
@@ -578,4 +598,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 		{help nwplotmatrix}, {help nwegoplot}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

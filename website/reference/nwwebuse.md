@@ -65,10 +65,10 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 - Load the [Florentine network dataset](netexample) that is stored at
 - https://nwcommands.org/examples
-- `. nwwebuse florentine`
+- `. nwwebuse florentine, nwclear`
 
 - Equivalent to above command
-- `. nwwebuse https://nwcommands.org/examples/florentine`
+- `. nwwebuse https://nwcommands.org/examples/florentine, nwclear`
 
 ## See also
 
@@ -76,4 +76,4 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

@@ -72,7 +72,7 @@ The four per-node measures are computed from the stored ties (the sum of the squ
 
 `direction(both)` (the default) is Burt's convention described above: both directions of a tie count, the strength of the tie is *z_ij* + *z_ji*. `direction(out)` uses only the ties that ego sends: the contacts of *i* are the nodes *j* with *z_ij* > 0, the proportions are *p_ij* = *z_ij* / sum_*k* *z_ik*, and a contact *q* of ego links to *j* by *z_qj*. `direction(in)` uses only the ties that ego receives (the measures of the transposed network: the contacts of *i* are the nodes *j* with *z_ji* > 0). The formulas for effective size, efficiency, constraint and hierarchy are the same; with the options `dyadredundancy` and `dyadconstraint` the two dyadic networks follow the same direction (cell (*i*,*j*): ego *i*, contact *j*). For a valued network the marginal strength of the tie of *q* to *j* is *z_qj* divided by the largest tie value that *q* sends (receives, with `direction(in)`).
 
-The substantive reading differs by direction. In an advice network, `direction(out)` measures the structural holes in the advice that ego seeks (ego's own options), `direction(in)` those among the people who seek ego's advice (whom ego is available to). `direction(out)` reproduces the results printed by versions of `nwcommands` before 3.33.0 for a binary directed network. On an **undirected** network the option has no effect (all three values are accepted and give the same results; the line about directed networks is not printed). Any other value stops the command with error 198. The stored result `r(direction)` holds the value.
+The substantive reading differs by direction. In an advice network, `direction(out)` measures the structural holes in the advice that ego seeks (ego's own options), `direction(in)` those among the people who seek ego's advice (whom ego is available to). On an **undirected** network the option has no effect (all three values are accepted and give the same results; the line about directed networks is not printed). Any other value stops the command with error 198. The stored result `r(direction)` holds the value.
 
 ## Network types
 
@@ -80,7 +80,7 @@ The substantive reading differs by direction. In an advice network, `direction(o
 
 ## Limits
 
-The four measures are computed from the stored ties, in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it and in Mata otherwise; both give the same values (to the last digits). The work grows with the sum of the squared degrees, not with *n*^3. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.03 seconds, 20,000 nodes 0.05 seconds, 100,000 nodes 0.2 seconds (the Mata route needs 1.2, 4.4 and 26 seconds). On a directed network the weighted kernel is used. The options `dyadredundancy` and `dyadconstraint` build *n*-by-*n* networks and take the dense route.
+The four measures are computed from the stored ties, in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it and in Mata otherwise; both give the same values (to the last digits). The work grows with the sum of the squared degrees, not with *n*^3. On a directed network the weighted kernel is used. The options `dyadredundancy` and `dyadconstraint` build *n*-by-*n* networks and take the dense route.
 
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
 
@@ -121,4 +121,4 @@ Burt, R. S. (1992). *Structural Holes: The Social Structure of Competition*. Cam
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

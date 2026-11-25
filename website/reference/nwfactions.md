@@ -16,9 +16,9 @@ Partition nodes into a specified number of cohesive factions
 ```stata
 nwfactions
 [netname]
-[,
-groups(int)
+,
 gen:erate(newvarname)
+[groups(int)
 replace
 measure(binary|valued)
 maxiter(int)
@@ -50,7 +50,7 @@ Optimized via greedy local search, the same general shape [nwcommunity](nwcommun
 
 ## Limits
 
-Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes with `groups(3)` take 0.014 / 0.019 / 0.05 seconds. The memory needed is proportional to the number of ties; no N-by-N matrix is built.
+The memory needed is proportional to the number of ties; no N-by-N matrix is built.
 
 ## Examples
 
@@ -84,4 +84,4 @@ Borgatti, S.P., Everett, M.G., Freeman, L.C. (2002). *UCINET for Windows: Softwa
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

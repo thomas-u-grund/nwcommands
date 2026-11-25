@@ -16,9 +16,9 @@ k-core decomposition
 ```stata
 nwkcore
 [netlist]
-[,
+,
 gen:erate(newvarname)
-replace
+[replace
 silent]
 ```
 
@@ -68,4 +68,4 @@ Batagelj, V., Zaversnik, M. (2003). An O(m) Algorithm for Cores Decomposition of
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

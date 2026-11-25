@@ -9,7 +9,7 @@ permalink: /nwcommands/
 # nwcommands (core)
 {: .no_toc }
 
-The core package, version 3.36.1, handles networks in Stata: it imports and exports them, generates
+The core package, version 3.37.0, handles networks in Stata: it imports and exports them, generates
 them, describes and analyzes them, and plots them. It is the base for the model packages
 ([nwsaom](../nwsaom/), [nwergm](../nwergm/), [nwdynam](../nwdynam/), [nwrem](../nwrem/), [nwalaam](../nwalaam/), [nwlsm](../nwlsm/), [nwsbm](../nwsbm/)), which need
 it but are installed separately.
@@ -68,6 +68,6 @@ representation and compiled C kernels, are chosen automatically.
 
 ## Version and license
 
-The core is version 3.36.1 (23 November 2026). It is free software under the GNU General Public License,
+The core is version 3.37.0 (25 November 2026). It is free software under the GNU General Public License,
 version 3; the source is on [GitHub](https://github.com/thomas-u-grund/nwcommands). The model packages
 are separate packages under the same license.

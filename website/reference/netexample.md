@@ -469,7 +469,7 @@ David Schoch's R package *networkdata* (https://github.com/schochastics/networkd
 Look at the collection (overview, list of all data sets, one data set) and load a network:
 
 ```stata
-. nwwebuse networkdata
+. nwwebuse networkdata, nwclear
 . nwwebuse networkdata list
 . nwwebuse networkdata describe karate
 . nwwebuse networkdata karate, nwclear
@@ -497,4 +497,4 @@ The networks of Game of Thrones (`got`, one per season), 54 tennis networks (`at
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

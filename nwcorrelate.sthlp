@@ -20,6 +20,7 @@
 [,
 {opt context}({it:{help nwcontext##context:context}})
 {opth name(newnetname)}
+{opt replace}
 {opt undirected} {opt directed}]
 
 
@@ -56,6 +57,7 @@
 {synoptline}
 {synopt:{opt context}({it:{help nwcontext##context:context})}}Determines whether incoming or outgoing ties should be considered when correlating two nodes: {it:outgoing}, {it:incoming} or {it:both}; default = {it:outgoing}{p_end}
 {synopt:{opth name(newnetname)}}Name of new network with node correlations; default = {it:_corr}. With two networks, {opt name()} names the graph of the permutations in memory{p_end}
+{synopt:{opt replace}}Node-correlation mode: replace an existing network of the name given in {opt name()}; the default {it:_corr} is overwritten without it (alias: {opt nwreplace}){p_end}
 {synopt:{opt noplot}}Two networks or {opt attribute()}, {opt permutations()} > 1: do not draw the density plot of the permutations (it is drawn by default){p_end}
 {synopt:{opt sav:ing(filename)}}Save the density plot to a {cmd:.gph} file{p_end}
 {synopt:{opt exp:ort(filename[, options])}}Write the density plot with {helpb graph export}; the file extension sets the format{p_end}
@@ -336,4 +338,4 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 	{help nwtabulate}, {help nwexpand}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

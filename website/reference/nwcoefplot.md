@@ -38,7 +38,7 @@ namelist holds names of results saved with estimates store; a period (.) stands 
 
 ## Description
 
-`nwcoefplot` draws point estimates with confidence intervals of the coefficients in `e(b)` and `e(V)` of the last estimation or of stored results. It works after `nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwlsm` and after any other command that leaves `e(b)` and `e(V)`. The coefficients are labelled with their names. The intervals are *b* c +- *z* se, with a *t* quantile when the command stores `e(df_r)`. For `nwlsm` the coefficients are posterior means with posterior standard deviations, so the intervals are normal approximations; the credible intervals of the fit are in the output of `nwlsm`. Coefficients that were omitted or have no variance are not drawn.
+`nwcoefplot` draws point estimates with confidence intervals of the coefficients in `e(b)` and `e(V)` of the last estimation or of stored results. It works after `nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwlsm` and after any other command that leaves `e(b)` and `e(V)`. The coefficients are labelled with their names. The intervals are *b* +/- *z* se, with a *t* quantile when the command stores `e(df_r)`. For `nwlsm` the coefficients are posterior means with posterior standard deviations, so the intervals are normal approximations; the credible intervals of the fit are in the output of `nwlsm`. Coefficients that were omitted or have no variance are not drawn.
 
 Equations are never mixed on one axis unless `mixeq` is given: a model with several equations (for example the network and outcome equations of `nwlsm` with `influence()`) gets one panel for each, with its own scale. The axis of a panel always contains all intervals and the reference line (0, or 1 with `eform`), with a margin; with `eform` the axis is logarithmic and labelled at 1, 2, 5 times powers of ten.
 
@@ -80,4 +80,4 @@ With a list of models the coefficients of different models are drawn in one row 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

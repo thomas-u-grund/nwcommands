@@ -92,4 +92,4 @@ arXiv:cs/0310049.
 	{help nwcomponents}, {help nwcommunity}, {help nwdegree}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

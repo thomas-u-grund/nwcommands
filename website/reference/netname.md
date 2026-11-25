@@ -45,11 +45,11 @@ For most network commands a netname is optional. When no netname is explicitly s
 
 ## Examples
 
-- `. nwuse florentine`
+- `. nwwebuse florentine, nwclear`
 - `. nwset`
-- `. nwdegree flobusiness`
-- `. nwcomponents *marriage`
+- `. nwdegree flobusiness, generate(deg)`
+- `. nwcomponents *marriage, generate(comp)`
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

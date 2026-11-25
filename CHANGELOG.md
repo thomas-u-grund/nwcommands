@@ -6,12 +6,17 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
-**Summary.** Fixes from a test of the commands at their limits: input checks, error messages, help files and dialog boxes. The core Mata library and the plugins are unchanged.
+## [3.37.0] - 2026-11-25
+
+**Summary.** Pictograms in the interactive view of `nwplot`, and fixes from a test of the commands at their limits: input checks, error messages, help files and dialog boxes. Some results and behaviour change (below). The core Mata library and the plugins are unchanged; the model packages need no update.
 
 ### Results that change
 - `nwtabulate network, attribute()`: the **E-I index** counted only the diagonal of the table as internal ties and could have the wrong sign. When every tie joins different groups it is now +1 (before: -1). Recompute E-I values and their p-values obtained with earlier versions.
 - `nwtabulate network, attribute()` on an **undirected** network: the table no longer depends on the order of the nodes. Each tie is entered with the lower attribute value as the row, so cells can differ from earlier versions.
 - `nwgeodesic`: the distance network is marked as valued when it holds distances above 1.
+
+### New
+- `nwplot, interactive`: node groups can be drawn as pictograms (33, chosen in the shape drop-downs of the page), colored and sized like other nodes. Shape groups that do not match the color groups now have rows of their own, with a color picker when there is a single color group. Pictograms are in the page and its PNG export only; Save do-file and the CSV files keep the ordinary shapes.
 
 ### Behaviour that changes
 - `nwuse` (and `nwwebuse`) no longer discards data with unsaved changes: use the new option `clear`, or `nwclear`; `nwappend` keeps the data.
@@ -24,6 +29,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 - Impossible input is refused with a message: `nwrandom`, `nwlattice`, `nwpref`, `nwqap`.
 
 ### Fixed
+- Interactive view: the size legend keeps the ratio of the node sizes at any zoom and follows the node size slider; an invalid selector that caused a browser console warning is removed.
+- `nwplot`: node-size legend labels no longer show long binary fractions (9.870000000000001).
 - `nwset ..., clear` works when no network is loaded.
 - `nwimport`: file names with other characters give a valid network name; an edge list with a single line can be read.
 - Network expressions with `-` and `!` written without spaces (`nwgen c = 1-a`), and `~=`.

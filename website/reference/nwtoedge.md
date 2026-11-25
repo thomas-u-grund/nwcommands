@@ -53,7 +53,7 @@ agg:regate]
 
 ## Description
 
-`nwtoedge` makes an edgelist from a network or a list of networks.
+`nwtoedge` makes an edgelist from a network or a list of networks. The edgelist **replaces the data in memory**, also data with unsaved changes: save them first.
 
 An edgelist of a single network [netname](netname) produced by `nwtoedge` is a set of three variables representing the relations in the network. The first variable (*_ego*) gives the [nodeid](nodeid) of the sending node *i* of a relationship; the second variable (*_alter*) gives the [nodeid](nodeid) of the receiving node *j*. Lastly, the variable *netname* saves information about the dyad pair (*i*,*j*) in the network *netname*.
 
@@ -66,7 +66,7 @@ One can also include node attributes (saved as normal Stata variables) in the ed
 For example,
 
 ```stata
-. nwwebuse glasgow1
+. nwwebuse glasgow, nwclear
 . nwtoedge glasgow1, egovars(sport1)
 . list
 
@@ -97,12 +97,20 @@ For two-mode networks see [introduction to two-mode networks](nw2set)) and [nw2t
 **Temporal networks.** A network declared with `time()`, `interval()` or `eventtime()` in [nwset](nwset) holds times that the list of ties above does not have: that list holds each tie once, aggregated over all times (for an event network every pair with at least one event), and the command says so in a note. `aggregate` states the aggregation and leaves the note out. With `time` the data in memory are replaced by one row for every event of an event network (in the order given), every observation of a tie of a snapshot network, or every interval of an interval network, for a single one-mode network: the variables *_ego* and *_alter* (or the names in `ego()` and `alter()`), *_time* (event and snapshot networks) or *_start* and *_end* (interval networks), and *_value* for a valued event network. An undirected snapshot or interval network lists each tie once. [nwset](nwset) with `eventtime()`, `time()` or `interval()` turns the rows into the network again. `time` cannot be combined with `aggregate` or with the options of the list of ties above (except `ego()` and `alter()`); error 198.
 
 ```stata
+. nwclear
+. input from to when
+.   1 2 1
+.   2 3 2
+.   1 2 3
+. end
+. nwset from to, eventtime(when) name(calls) directed
 . nwtoedge calls, time
 . nwset _ego _alter, eventtime(_time) name(calls2) directed
 ```
 The command can also transform two (or more) networks in edgelists at the same time.
 
 ```stata
+. nwwebuse glasgow, nwclear
 . nwtoedge glasgow1 glasgow2
 ```
 This generates a dataset with one variable for each network, *glasgow1* and *glasgow2*:
@@ -137,6 +145,7 @@ This generates a dataset with one variable for each network, *glasgow1* and *gla
 ```stata
 . nwwebuse glasgow, nwclear
 . nwtoedge glasgow1, comparevars(sport1) comparemode(same)
+. nwwebuse glasgow, nwclear
 . nwtoedge glasgow1, comparevars(sport1) comparemode(dist)
 ```
 
@@ -146,7 +155,7 @@ This generates a dataset with one variable for each network, *glasgow1* and *gla
 
 ## Limits
 
-The list of *all* dyads (without `compress`) has one row for every pair of nodes, so its size grows with the square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 nodes (1,000,000 rows) 0.5 seconds, 5,000 nodes (25,000,000 rows) 20 seconds and 3.2 GB; above 50,000,000 rows (7,072 nodes, 10,000 for an undirected network) the command stops with an error that recommends `compress`. With `compress` only the ties are listed: 1,000 / 5,000 / 20,000 nodes in 0.08 / 0.24 / 0.9 seconds. For a two-mode network `compress` lists only the ties between the two modes (as [nw2toedge](nw2toedge) does), never the pairs of nodes inside one mode.
+The list of *all* dyads (without `compress`) has one row for every pair of nodes, so its size grows with the square of the number of nodes. 5,000 nodes (25,000,000 rows) need about 3.2 GB; above 50,000,000 rows (7,072 nodes, 10,000 for an undirected network) the command stops with an error that recommends `compress`. With `compress` only the ties are listed. For a two-mode network `compress` lists only the ties between the two modes (as [nw2toedge](nw2toedge) does), never the pairs of nodes inside one mode.
 
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
 
@@ -156,4 +165,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page [Ho
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

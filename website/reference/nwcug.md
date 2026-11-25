@@ -94,12 +94,13 @@ The means and standard deviations of the null distributions agree with those of 
 
 ## Limits
 
-Every draw of the null distribution is a new random network ([nwrandom](nwrandom)) and the statistic is computed on it. With `condition(density)` above 5,000 nodes a draw is made in a fraction of a second (the positions of the ties are drawn directly), so the time is that of the statistic: 5 draws with `nwcomponents` as the statistic take 2 seconds at 20,000 nodes. `condition(census)` works on the matrix.
+Every draw of the null distribution is a new random network ([nwrandom](nwrandom)) and the statistic is computed on it. With `condition(density)` above 5,000 nodes the positions of the ties are drawn directly, so the time is mainly that of the statistic. `condition(census)` works on the matrix.
 
 ## Saving and exporting the graph
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
 
+- `. nwwebuse florentine, nwclear`
 - `. nwcug flomarriage, stat(nwclustering) rname(cluster_global) condition(degrees) reps(500) seed(3) plot export(cug.png, width(1200))`
 
 ## Stored results
@@ -125,4 +126,4 @@ Anderson, B.S., Butts, C., Carley, K. (1999). The interaction of size and densit
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

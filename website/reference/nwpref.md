@@ -25,7 +25,9 @@ undirected
 name(newnetname)
 labs(lab1, lab2, ...)
 xvars
-ntimes(int)]
+ntimes(int)
+vars(string)
+stub(string)]
 ```
 
 | | |
@@ -41,6 +43,8 @@ ntimes(int)]
 | `xvars` | generate Stata variables for the network |
 | `ntimes(int)` | number of preferential-attachment networks to be generated (named *name*_1, *name*_2, ...); default = 1 |
 | `noreplace` | reserved; currently a no-op - the create/replace collision guard on `name()` already applies regardless |
+| `vars(string)` | accepted; has no effect |
+| `stub(string)` | accepted; has no effect |
 
 ## Description
 
@@ -62,7 +66,7 @@ Generates a one-mode network. **Directed:** directed by default, `undirected` fo
 
 ## Limits
 
-Above 2,000 nodes the ties are written as a list, with the same draws as the matrix version up to 10,000 nodes (the same seed gives the same network); above 10,000 nodes the picks, proportional to the degrees, are uniformly chosen end points of the ties made so far (a different stream; `rdiscrete()` takes at most 10,000 probabilities). 20,000 nodes: 0.2 seconds. `weights()` uses the matrix.
+Above 2,000 nodes the ties are written as a list, with the same draws as the matrix version up to 10,000 nodes (the same seed gives the same network); above 10,000 nodes the picks, proportional to the degrees, are uniformly chosen end points of the ties made so far (a different stream; `rdiscrete()` takes at most 10,000 probabilities). `weights()` uses the matrix.
 
 ## Examples
 
@@ -92,4 +96,4 @@ Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. *Sci
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

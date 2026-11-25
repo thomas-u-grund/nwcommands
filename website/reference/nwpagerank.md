@@ -16,9 +16,9 @@ PageRank centrality
 ```stata
 nwpagerank
 [netname]
-[,
+,
 gen:erate(newvarname)
-replace
+[replace
 damp:ing(real)
 maxiter(int)
 tol(real)
@@ -50,7 +50,7 @@ Computed via sparse power iteration - no dense n x n matrix is ever materialized
 
 ## Limits
 
-The power iteration runs in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same scores (to the last digits). The work is the number of ties times the number of iterations. Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.03 seconds, 20,000 nodes 0.1 seconds, 100,000 nodes 0.3 seconds (the Mata route needs 0.12, 0.43 and 1.9 seconds). The weighted walk is about twice as fast as its Mata route (10,000 nodes with 30,000 ties: 0.05 against 0.09 seconds).
+The power iteration runs in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same scores (to the last digits). The work is the number of ties times the number of iterations.
 
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
 
@@ -60,7 +60,7 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page [Ho
 . nwwebuse florentine, nwclear
 . nwpagerank flomarriage, generate(_pagerank)
 . gsort -_pagerank
-. list _name _pagerank in 1/5
+. list _nwnode _pagerank in 1/5
 ```
 
 ## Stored results
@@ -78,4 +78,4 @@ Page, L., Brin, S., Motwani, R., Winograd, T. (1998). The PageRank Citation Rank
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

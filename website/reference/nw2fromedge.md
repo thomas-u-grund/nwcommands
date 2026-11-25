@@ -20,9 +20,18 @@ level2
 [tievalue]
 [if]
 [,
+name(newnetname)
+xvars
+replace
 nwfromedge_options
 ]
 ```
+
+| | |
+|---|---|
+| `name`(*[newnetname](newnetname)*) | name of the new network |
+| `xvars` | generate Stata variables for the network |
+| `replace` | if a network named in `name()` exists, replace it; without `replace` the command stops |
 
 ## Description
 
@@ -136,7 +145,7 @@ Peter - Thomas  - 5 years
 
 ## Limits
 
-Above 20,000 nodes in both modes together the command stops at once with r(484). A network of 20,000 nodes (13,333 + 6,667) takes 11 seconds and 3.4 GB; [nw2degree](nw2degree), [nw2clustering](nw2clustering), [nwmatching](nwmatching), [nwproject](nwproject) and [nw2project](nw2project) then take 1.7 to 12 seconds at that size.
+Above 20,000 nodes in both modes together the command stops at once with r(484). A network of 20,000 nodes (13,333 + 6,667) needs about 3.4 GB.
 
 ## Also see
 
@@ -144,4 +153,4 @@ Above 20,000 nodes in both modes together the command stops at once with r(484).
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

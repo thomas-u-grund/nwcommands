@@ -46,7 +46,7 @@ For a DIRECTED network, capacities are directional (a tie A->B only lets flow mo
 
 ## Limits
 
-A network held as stored ties is handled arc by arc, without *n*-by-*n* capacity and flow matrices: 100,000 nodes with 10 ties per node take 1.7 seconds. The result (flow value, source side of the minimum cut, number of cut ties) is the same as that of the matrix route.
+A network held as stored ties is handled arc by arc, without *n*-by-*n* capacity and flow matrices. The result (flow value, source side of the minimum cut, number of cut ties) is the same as that of the matrix route.
 
 ## Examples
 
@@ -78,4 +78,4 @@ Edmonds, J., Karp, R.M. (1972). Theoretical improvements in algorithmic efficien
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

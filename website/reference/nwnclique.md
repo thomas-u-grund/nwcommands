@@ -16,15 +16,14 @@ Maximal n-clique enumeration
 ```stata
 nwnclique
 [netlist]
-[,
-sym
+,
+gen:erate(newvarname) | count:only
+[sym
 n(int)
-gen:erate(newvarname)
 replace
 minsize(int)
 max:cliques(#)
 maxt:ime(#)
-count:only
 nom:atrix
 silent]
 ```
@@ -56,7 +55,7 @@ Like cliques, n-cliques genuinely overlap - a node can belong to several at once
 
 ## Limits
 
-**Feasible sizes.** The graph "distance at most *n*" is built as bitsets by a breadth-first search from every node and searched with the same pivoting Bron-Kerbosch rule, in compiled code. What limits the command is the number of maximal n-cliques, not the size of the network: with `n(2)` almost every node reaches almost every other within two steps, the "distance at most 2" graph is dense, and its maximal cliques are very many. Measured in Stata/BE on a random network with 10 ties drawn per node and `n(2)`: 100 nodes already have 46,580,136 maximal 2-cliques of at least 3 nodes (up to 64 nodes each; counting them with `countonly` takes 33 seconds, and the result matrix would need 37 GB), so the output of the command, not its running time, is out of reach from about 100 nodes on. Sparser or smaller networks, a larger `minsize()` and path-like networks (long distances, few short cycles) are fine.
+**Feasible sizes.** The graph "distance at most *n*" is built as bitsets by a breadth-first search from every node and searched with the same pivoting Bron-Kerbosch rule, in compiled code. What limits the command is the number of maximal n-cliques, not the size of the network: with `n(2)` almost every node reaches almost every other within two steps, the "distance at most 2" graph is dense, and its maximal cliques are very many. In a random network with 10 ties drawn per node and `n(2)`, 100 nodes already have 46,580,136 maximal 2-cliques of at least 3 nodes (up to 64 nodes each; the result matrix would need 37 GB), so the output of the command, not its running time, is out of reach from about 100 nodes on. Sparser or smaller networks, a larger `minsize()` and path-like networks (long distances, few short cycles) are fine.
 
 **Guards.** The command stops at once with r(484) and a message that names the option to raise when it has found more than `maxcliques()` maximal n-cliques (default 100,000), when the result matrix would be too large to build (more than 50 million numbers; use `nomatrix`), or when the search has run for `maxtime()` seconds (default 60). `countonly` counts and tabulates the sets by size without storing them.
 
@@ -94,4 +93,4 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

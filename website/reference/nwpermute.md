@@ -41,7 +41,7 @@ Produces a random permutation of the network [netname](netname). In such a permu
 With `swap`, the ties are rewired instead: two ties a-b and c-d, picked at random, become a-d and c-b (in an undirected network, a-d and c-b or a-c and b-d, at random), unless that would make a self-loop or tie a pair that is tied already. Every node keeps its degree (in a directed network its out-degree and its in-degree), a tie keeps its value, and everything else about the network is randomized. `swaps()` sets the number of attempted exchanges (some are refused). This is the rewiring of R's `igraph::rewire(g, keeping_degseq())`: a random network with the degrees of the observed one, the usual baseline for a pattern that may follow from the degrees alone (see [nwcug](nwcug) with `condition(degrees)`, and [nwrandom](nwrandom) with `degree()` for a network drawn from a list of degrees). Self-loops and ties with a missing value stay where they are. For a one-mode network, `swap` uses the native plugin; the exchanges are drawn from the seed (`set seed`).
 
 ```stata
-. nwuse glasgow, nwclear
+. nwwebuse glasgow, nwclear
 . nwpermute glasgow1, swap generate(glasgow1_swapped)
 ```
 A simple example illustrates what the command does. First, we generate a regular lattice network.
@@ -91,7 +91,7 @@ The structure of the network remains exactly the same, however, the nodes have a
 
 ## Limits
 
-A network held as stored ties is relabelled tie by tie, with the same permutation for the same seed. 20,000 nodes 0.2 seconds in Stata/BE.
+A network held as stored ties is relabelled tie by tie, with the same permutation for the same seed.
 
 ## Example
 
@@ -109,4 +109,4 @@ A network held as stored ties is relabelled tie by tie, with the same permutatio
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

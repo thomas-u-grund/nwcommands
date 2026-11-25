@@ -16,9 +16,9 @@ CONCOR structural-equivalence blockmodel
 ```stata
 nwconcor
 [netlist]
-[,
+,
 generate(newvarname)
-replace
+[replace
 splits(int)
 measure(string)
 maxiter(int)
@@ -52,7 +52,7 @@ A node with no ties at all (in any direction) has no tie profile to compare agai
 
 ## Limits
 
-Every iteration correlates the complete node-by-node matrix, so the work grows with the cube of the number of nodes in each iteration. Measured in Stata/BE, random undirected network with 10 ties per node (one split): 1,000 nodes 4 seconds, 2,000 nodes 16 seconds, 3,000 nodes 57 seconds, 5,000 nodes more than 180 seconds, 10,000 nodes more than 300 seconds. Above 2,000 nodes the command prints a note; above 6,000 nodes it stops with r(484) unless `force` is given. The correlation matrix is dense after the first iteration, so there is no sparse form of the method.
+Every iteration correlates the complete node-by-node matrix, so the work grows with the cube of the number of nodes in each iteration. Above 2,000 nodes the command prints a note; above 6,000 nodes it stops with r(484) unless `force` is given. The correlation matrix is dense after the first iteration, so there is no sparse form of the method.
 
 ## Examples
 
@@ -88,4 +88,4 @@ Breiger, R.L., Boorman, S.A., Arabie, P. (1975). An algorithm for clustering rel
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

@@ -77,7 +77,7 @@ The statistics are computed on the dense network and three *n*-by-*n* matrices a
 This example loads the Florentine marriage data. The variable *wealth* indicates how rich each family is. ** nwcontext** generates different variables: *w_avg* = average wealth of network neighbors,  *w_min* = wealth of poorest network neighbor, *w_max* = wealth of richest network neighbor, *w_sd* = standard deviation of wealth over network neighbors.
 
 ```stata
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . nwcontext flomarriage, attribute(wealth) generate(w_avg)
 . nwcontext flomarriage, attribute(wealth) generate(w_min) stat(min)
 . nwcontext flomarriage, attribute(wealth) generate(w_max) stat(max)
@@ -121,4 +121,4 @@ You can plot the florentine marriage network with *wealth* as node label to bett
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

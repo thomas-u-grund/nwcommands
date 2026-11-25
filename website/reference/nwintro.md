@@ -90,7 +90,7 @@ Many commands work like the Stata commands they are named after. The full list o
 - c | `tabulate` c | [nwtabulate](nwtabulate) c | Tabulate networks c |
 - c | `correlate` c | [nwcorrelate](nwcorrelate) c | Correlate networks c |
 - c | `expand` c | [nwexpand](nwexpand) c | Expand variable to network c |
-- c | `syntax` c | `_nwsyntax` c | Parse network syntax c |
+- c | `syntax` c | [_nwsyntax](nwprogramming) c | Parse network syntax c |
 - hline 14c BThline 16c BThline 31
 
 ## Statistical network models
@@ -155,4 +155,4 @@ None of the figures on this page are promises for every possible network shape o
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))
