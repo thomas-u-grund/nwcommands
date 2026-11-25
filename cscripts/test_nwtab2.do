@@ -8,8 +8,10 @@ nwrandom 5, prob(0) name(net2)
 
 nwtabulate net1 net2
 
-assert         r(EI_pvalue) == 0
-assert         r(EI_index)  == -1
+* every dyad differs (1 in net1, 0 in net2): the E-I index is +1 (it was -1 up to 3.36.1, which took the only
+* cell of the table for the diagonal), and every permutation gives the same value
+assert         r(EI_pvalue) == 1
+assert         r(EI_index)  == 1
 assert         r(c)         == 1
 assert         r(r)         == 1
 assert         r(N)         == 20

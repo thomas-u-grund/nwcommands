@@ -43,7 +43,7 @@ compared, not only the presence of ties. {bf:Two-mode:} same as for the bipartit
 
 {title:Examples}
 
-	{cmd:. nwwebuse florentine}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwissymmetric flomarriage}
 	{cmd:. return list}
 
@@ -62,4 +62,4 @@ since it is a computed test result rather than a stored network property.
 	{help nwsym}, {help nwname}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

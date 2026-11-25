@@ -148,9 +148,8 @@ network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 {title:Limits}
 
 {pstd}
-The breadth-first searches run in the plugin, 128 sources per call (the ties are read once per call). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 2.7 seconds,
-20,000 nodes 10 seconds and
-6.4 GB; the result is a dense {it:n}-by-{it:n} network. For the sums of the distances alone use {help nwcloseness} or {help nwkatz}, which do
+The breadth-first searches run in the plugin, 128 sources per call (the ties are read once per call). The result is a dense {it:n}-by-{it:n} network (about 6.4 GB at 20,000 nodes). For the sums of the distances alone use {help nwcloseness} or
+{help nwkatz}, which do
 not build the matrix.
 
 {pstd}
@@ -259,4 +258,4 @@ networks, and centrality. {it:Physical Review E} 64, 016132.
 	{help nwcloseness}, {help nwreach}, {help nwpath}, {help nwcomponents}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -39,7 +39,8 @@ Sometimes one wants to collapse a two-mode network to a one-mode network. This i
 For example, this loads a two-mode network and projects it onto level 1:
 
 ```stata
-. nw2project mynet, project(1) name(myproject1)
+. nwwebuse davis, nwclear
+. nw2project davis, project(1) name(myproject1)
 ```
 By default, a one-mode projection on one level generates ties between nodes (on this level) when they have at least one network neighbor on the other level in common.
 
@@ -110,4 +111,4 @@ The projected network's provenance (which network and mode it was projected from
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

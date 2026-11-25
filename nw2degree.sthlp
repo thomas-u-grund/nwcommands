@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nw2degree}
 [{it:{help netlist}}]
-[{cmd:,}
+{cmd:,}
 {opth generate(newvarname)}
-{opt replace}
+[{opt replace}
 {opt silent}
 {opt alpha(#)}
 {opt binary}
@@ -127,4 +127,4 @@ degree and shortest paths. {it:Social Networks} 32(3), 245-251.
 	{help nwdegree}, {help nw2set}, {help nw2project}, {help nw2clustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

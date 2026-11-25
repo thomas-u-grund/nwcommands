@@ -16,7 +16,7 @@ END
 DIALOG main, title("nworder - Reorder networks in dataset")
 BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
-  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem append
 END
 
 LIST netlist

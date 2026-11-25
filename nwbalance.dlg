@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 48, label("Options")
-  TEXT tx_ed_generate 20 54 260 ., label("Up to 3 names, for the per-node balance ratio, count of balanced")
+  TEXT tx_ed_generate 20 54 260 ., label("Up to 3 variable names for per-node results")
   EDIT ed_generate 290 54 190 ., nomem option(generate)
 END
 

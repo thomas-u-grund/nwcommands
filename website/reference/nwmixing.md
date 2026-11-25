@@ -56,6 +56,7 @@ With `permutations()` greater than 1 (the default, 100), `nwmixing` also runs a 
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. `plotoptions()` and `eiplotoptions()` remain the way to pass options to the two graphs (`twoway_options` cannot be used here: other options go to `tabulate`).
 
+- `. nwwebuse florentine, nwclear`
 - `. nwmixing flomarriage, attribute(priorates) plot eiplot name(mix) export(mix.png, width(1200))`
 
 ## Remarks on plot
@@ -68,9 +69,9 @@ The `plot` option draws the table with a built-in bar plot (the same plot the us
 
 ## Limits
 
-The mixing table counts ties, so only the ties are listed (not all dyads). Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.3 seconds. The significance test (`permutations()`) permutes the attribute on the dense adjacency matrix; its running time at 5,000 nodes has not been measured.
+The mixing table counts ties, so only the ties are listed (not all dyads). The significance test (`permutations()`) permutes the attribute on the dense adjacency matrix.
 
-The permutations of `permutations()` act on the stored ties of a network that is held that way (a tie (u,v) lands in the cell (inv u, inv v) of the permuted matrix, O(ties) per draw). 20,000 nodes with 20 permutations: 1.2 seconds.
+The permutations of `permutations()` act on the stored ties of a network that is held that way (a tie (u,v) lands in the cell (inv u, inv v) of the permuted matrix, O(ties) per draw).
 
 ## Examples
 
@@ -104,4 +105,4 @@ Krackhardt, D., Stern, R.N. (1988). Informal networks and organizational crises:
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

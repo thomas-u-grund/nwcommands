@@ -67,7 +67,7 @@ This is the so called MAN notation. As in [nwdyads](nwdyads) it characterized a 
 
 ## Limits
 
-The census is counted in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same counts. It follows Batagelj and Mrvar (2001, *Social Networks* 23: 237-243): triads with at least two ties are enumerated from the neighbours of each node, the empty triads **_003** are obtained by subtraction. Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.08 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 1 second (the Mata route needs 3.4, 13 and 73 seconds). A network with self-loops always takes the Mata route. The count of empty triads **r(_003)** is an exact integer.
+The census is counted in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same counts. It follows Batagelj and Mrvar (2001, *Social Networks* 23: 237-243): triads with at least two ties are enumerated from the neighbours of each node, the empty triads **_003** are obtained by subtraction. A network with self-loops always takes the Mata route. The count of empty triads **r(_003)** is an exact integer.
 
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
 
@@ -104,12 +104,14 @@ This example shows, e.g. that in the *glasgow3* network, there are 12 triads whe
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
 
+- `. nwwebuse florentine, nwclear`
 - `. nwtriads flomarriage, plot export(triads.png, width(1200))`
 
 ## Expected counts
 
 `expected` adds, under every count of the `plot`, the number of triads of that type expected when the three kinds of dyad (mutual, asymmetric, null) are placed at random on the node pairs with the dyad census of the network fixed, and an asymmetric tie points either way with probability 1/2. This is the uniform distribution over the networks with the same dyad census (Holland, P. W., and S. Leinhardt. 1976. Local structure in social networks. *Sociological Methodology* 7: 1-45), the null model of [nwcug](nwcug) with `condition(census)` and of [nwrandom](nwrandom) with `census()`. With D = n(n-1)/2 dyads, M mutual, A asymmetric and N null ones, a type with m mutual, a asymmetric and k null dyads (the digits of its name) and w labelled forms (1, 6, 3, 3, 3, 6, 6, 6, 6, 2, 3, 3, 3, 6, 6, 1 in the order of the table above) has the expected count C(n,3) w (M)m (A)a (N)k / (2^a (D)3), where (x)j = x(x-1)...(x-j+1). The formula is exact, not an approximation by simulation. [nwcug](nwcug) compares one statistic at a time with a null distribution; `expected` shows all types at once, without simulation. A two-mode and a valued network stop with error 198 ([nwdichotomize](nwdichotomize) first). `expected` needs `plot`.
 
+- `. nwwebuse florentine, nwclear`
 - `. nwtriads flomarriage, plot expected export(triads_expected.png, width(1100))`
 
 ## Stored results
@@ -129,4 +131,4 @@ This example shows, e.g. that in the *glasgow3* network, there are 12 triads whe
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

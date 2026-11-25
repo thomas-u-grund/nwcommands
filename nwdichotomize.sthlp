@@ -62,7 +62,7 @@ any other value below {opt threshold()}. See {help nwnetworktypes}.{p_end}
 {title:Limits}
 
 {pstd}
-See {help nwrecode}: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.07 / 0.3 seconds, random directed network with 10 ties per node.
+See {help nwrecode}.
 
 
 {title:Examples}
@@ -82,4 +82,4 @@ Instead of the in-place call, keep the original valued network and save the bina
 	{cmd:. nwdichotomize trade, threshold(100) generate(trade_binary)}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

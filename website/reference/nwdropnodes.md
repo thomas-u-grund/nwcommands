@@ -84,7 +84,7 @@ Note the opposite default polarity between the two interfaces: [nwdrop](nwdrop) 
 
 ## Limits
 
-A network held as stored ties stays so: the ties between the remaining nodes are the new network. Measured in Stata/BE, random directed network with 10 ties per node: 5,000 nodes 0.6 seconds, 20,000 nodes 0.9 seconds and 0.3 GB. The node labels of the remaining network are passed on in Mata.
+A network held as stored ties stays so: the ties between the remaining nodes are the new network. With 10 ties per node, 20,000 nodes need about 0.3 GB. The node labels of the remaining network are passed on in Mata.
 
 ## See also
 
@@ -92,4 +92,4 @@ A network held as stored ties stays so: the ties between the remaining nodes are
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

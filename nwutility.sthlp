@@ -64,7 +64,7 @@ generate a new network that holds information on whether two nodes have the same
 {pstd}
 Then one can use {opt intrvalue()} in {cmd:nwutility}:
 
-	{cmd:. nwutility network, benefit(.5) cost(.3) intrvalue(same)}
+	{cmd:. nwutility random, benefit(.5) cost(.3) intrvalue(same)}
 
 {pstd}
 {bf:Important}: the w_ii term (a node's intrinsic self-value) is read from {opt intrvalue()}'s own network diagonal. {help nwset} treats the diagonal as "no self-tie" (missing) by default for any
@@ -89,8 +89,7 @@ graph read as a one-mode network. {bf:Signed:} not checked. See {help nwnetworkt
 {title:Limits}
 
 {pstd}
-The utility is computed from the matrix of shortest paths and holds about 4 matrices of {it:n}-by-{it:n} (10,000 nodes: 24 seconds and
-3.3 GB). Above about 19,300 nodes the command stops at once with r(484) and a message with the memory needed (12.8 GB at 20,000 nodes);
+The utility is computed from the matrix of shortest paths and holds about 4 matrices of {it:n}-by-{it:n} (10,000 nodes: 3.3 GB). Above about 19,300 nodes the command stops at once with r(484) and a message with the memory needed (12.8 GB at 20,000 nodes);
 option {opt force} runs it anyway.
 
 
@@ -100,4 +99,4 @@ option {opt force} runs it anyway.
 Jackson, M. and Wolinsky, A. (1996) A Strategic Model of Social and Economic Networks. {it:Journal of Economic Theory}, 71, pp. 44-74.
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

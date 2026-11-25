@@ -35,7 +35,7 @@ One name per node goes into a Stata macro. When the *nodes* names do not fit int
 
 ```stata
 . nwclear
-. nwwebuse gang
+. nwwebuse gang, nwclear
 . nwvalidvars 10, stub(g)
 . return list
 ```
@@ -52,4 +52,4 @@ One name per node goes into a Stata macro. When the *nodes* names do not fit int
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

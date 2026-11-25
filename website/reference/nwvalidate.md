@@ -16,7 +16,13 @@ Validate a network name
 ```stata
 nwvalidate 
 netname
+[,
+self(netname)]
 ```
+
+| | |
+|---|---|
+| `self(netname)` | if the checked name equals this name (for example the current name of the network that is renamed), it counts as free: **r(validname)** is the name itself and **r(exists)** is "false" |
 
 ## Description
 
@@ -30,7 +36,7 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 ```stata
 . nwclear
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . nwvalidate flobusiness
 . return list
 ```
@@ -43,4 +49,4 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

@@ -18,8 +18,8 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network:")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 346, label("Options")
-  TEXT tx_method 20 54 260 ., label("Method (required; one-mode: global, disparity, lans, mlf; two-mode: the others)")
-  COMBOBOX cb_method 290 54 190 ., dropdown contents(list_method) nomem option(method)
+  TEXT tx_method 20 54 260 ., label("Method (required); the first four are one-mode")
+  COMBOBOX cb_method 290 54 190 ., dropdown contents(list_method) nomem option(method) error("Method")
   TEXT tx_alpha 20 82 260 ., label("Significance level alpha (default 0.05)")
   EDIT ed_alpha 290 82 90 ., nomem numonly option(alpha)
   TEXT tx_mtc 20 110 260 ., label("Multiple-testing correction")
@@ -85,6 +85,10 @@ END
 
 PROGRAM command
 BEGIN
+	require main.cb_method
+	if main.cb_method.iseq("global") & main.ed_threshold.iseq("") {
+		stopbox stop "method global needs a value in the field for threshold()."
+	}
 	put "nwbackbone " main.cb_net
 	beginoptions
 		optionarg main.cb_method

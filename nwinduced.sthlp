@@ -16,9 +16,9 @@
 {cmdab: nwinduced}
 [{it:{help netname}}]
 {cmd:,}
+{opth gen:erate(stub)}
 {opt measure(string)}
-[{opth gen:erate(stub)}
-{opt replace}
+[{opt replace}
 {opt silent}
 {opt bin:ary}]
 
@@ -91,12 +91,9 @@ of the two directions of a tie). {cmd:measure(degree)} stops with an error on a 
 
 {pstd}
 {bf:measure(degree)} has a closed form - removing a node takes away its own degree and one tie from each neighbour -
-so the induced value is twice the node's number of ties, computed without any loop (300 / 1,000 / 5,000 nodes:
-0.02 / 0.03 / 0.09 seconds). The other measures have
+so the induced value is twice the node's number of ties, computed without any loop. The other measures have
 no such shortcut: the measure is recomputed on the network without each node in turn, so the time is the number
-of nodes times the time of the measure itself. Measured in Stata/BE on a random network with 10 ties drawn per node:
-{bf:betweenness} 1.2 / 2.1 / 4.8 seconds at 50 / 100 / 200 nodes, {bf:closeness} 2.8 / 20 / 8 seconds (the time of
-{help nwcloseness} depends on the network), {bf:evcent} 6 seconds at 50 and 26 seconds at 100 nodes; plan for
+of nodes times the time of the measure itself; with {bf:betweenness}, {bf:closeness} or {bf:evcent} plan for
 minutes at a few hundred nodes.
 
 
@@ -143,4 +140,4 @@ Everett, M.G., Borgatti, S.P. (2010). Induced, endogenous and exogenous centrali
 	{help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwneighbor}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

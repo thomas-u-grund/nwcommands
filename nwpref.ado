@@ -10,6 +10,13 @@ program nwpref
 		exit 125
 	}
 
+	if `m0' < 1 | `m0' > `nodes' | `m' < 1 | `ntimes' < 1 {
+		di "{err}{p 0 0 2}{bf:m0()} must lie between 1 and the number of nodes; {bf:m()} and {bf:ntimes()} must be 1 or more.{p_end}"
+		exit 198
+	}
+
+	if `m' > `m0' di "{txt}(note: {bf:m(`m')} is larger than {bf:m0(`m0')}; a new node gets at most `m0' ties)"
+
 	local directed = ("`undirected'" == "")
 
 	// Generate valid network name and valid varlist

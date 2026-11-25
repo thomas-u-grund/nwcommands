@@ -153,7 +153,7 @@ This example loads the Florentine marriage data. The variable {it:wealth} indica
 generates different variables: {it:w_avg} = average wealth of network neighbors,  {it:w_min} = wealth of poorest network neighbor,
 {it:w_max} = wealth of richest network neighbor, {it:w_sd} = standard deviation of wealth over network neighbors.
 
-	{com}. nwwebuse florentine
+	{com}. nwwebuse florentine, nwclear
 	{com}. nwcontext flomarriage, attribute(wealth) generate(w_avg)
 	{com}. nwcontext flomarriage, attribute(wealth) generate(w_min) stat(min)
 	{com}. nwcontext flomarriage, attribute(wealth) generate(w_max) stat(max)
@@ -196,4 +196,4 @@ You can plot the florentine marriage network with {it:wealth} as node label to b
    {help nwneighbor}, {help nwegoplot}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

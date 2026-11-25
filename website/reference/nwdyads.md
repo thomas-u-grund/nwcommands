@@ -60,12 +60,12 @@ The command also returns the reciprocity of the network.
 
 ## Limits
 
-A network held as stored ties is counted from its ties (each tie is matched with its reverse): 20,000 nodes 0.08 seconds and 0.2 GB in Stata/BE.
+A network held as stored ties is counted from its ties (each tie is matched with its reverse): 20,000 nodes need about 0.2 GB.
 
 ## Examples
 
 ```stata
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . nwdyads flomarriage
 
     Dyad census:  flomarriage
@@ -76,7 +76,7 @@ A network held as stored ties is counted from its ties (each tie is matched with
 
 . nwdyads flomarriage, plot
 
-. nwwebuse glasgow
+. nwwebuse glasgow, nwclear
 . nwdyads glasgow3
 
     Dyad census:  glasgow3
@@ -90,6 +90,7 @@ A network held as stored ties is counted from its ties (each tie is matched with
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
 
+- `. nwwebuse florentine, nwclear`
 - `. nwdyads flomarriage, plot export(dyads.png, width(1200))`
 
 ## Stored results
@@ -110,4 +111,4 @@ A network held as stored ties is counted from its ties (each tie is matched with
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

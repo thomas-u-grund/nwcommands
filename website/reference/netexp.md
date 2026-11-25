@@ -18,7 +18,7 @@ A network expression is similar to a normal expression in Stata or Mata, except 
 Network expressions accept [netnames](netname), `varnames` and almost all operators that one knows from Stata or Mata. Here, the network expression consists of the simple network *flomarriage* and is assigned it to *mynet1*.
 
 ```stata
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . nwgen mynet1 = flomarriage
 ```
 But one can also include other elements in a network expression, e.g.:
@@ -41,7 +41,7 @@ Network expressions basically provide easy access to the underlying adjacency ma
 Network expressions can also be used in `if` conditions (see e.g. [nwreplace](nwreplace)). In this case, a network expression is again evaluated on an element-by-element basis and operations are only performed for the dyads for which the expression is true. For example:
 
 ```stata
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . nwgen overlap2 = flobusiness
 . nwreplace overlap2 = flomarriage if flobusiness == 1
 ```
@@ -57,4 +57,4 @@ This evaluates whatever is in *netexp* and generates a new mata matrix *matatrix
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

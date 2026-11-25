@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwclique}
 [{it:{help netlist}}]
-[{cmd:,}
-{opt sym}
+{cmd:,}
 {opth generate(newvarname)}
+[{opt sym}
 {opt replace}
 {opth minsize(int)}
 {opt nomatrix}
@@ -84,12 +84,10 @@ network).
 Only the maximal cliques of at least {opt minsize()} nodes are stored (the maximal cliques of one or two nodes of a sparse network
 are as many as its ties and would be the bulk of the work). The search (Bron and Kerbosch with pivoting) runs in the compiled graph plugin
 (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise; both find the same cliques in the
-same order. Measured in Stata/BE on a random undirected network with 10 ties drawn per node and {opt minsize(3)}: 5,000 nodes 0.1 seconds,
-20,000 nodes 1.0 second (the Mata route needs 0.35 and 3.3 seconds). From about 40,000 nodes on, most of the time is spent in Stata itself,
+same order. From about 40,000 nodes on, most of the time is spent in Stata itself,
 which needs time growing with the square of the number of columns to store the clique matrix {cmd:r(clique_matrix)} (one row per clique,
-one column per node): 100,000 nodes take about one minute, of which the search is 0.6 seconds. A network with many cliques also needs a lot
-of memory for that matrix. With option {opt nomatrix} the matrix is not built or stored: the variable and {cmd:r(cliques)} are the same, and
-100,000 nodes take about a quarter of a second.{p_end}
+one column per node). A network with many cliques also needs a lot
+of memory for that matrix. With option {opt nomatrix} the matrix is not built or stored: the variable and {cmd:r(cliques)} are the same.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
@@ -130,4 +128,4 @@ University Press. (cliques and cohesive subgroups)
 {p 4 4 2}{help nwkplex}, {help nwnclique}, {help nwnclan}, {help nwkcomponents}, {help nwkcore}, {help nwcomponents}, {help nwcommunity}, {help nwconcor}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -50,15 +50,16 @@ Solved EXACTLY via the standard linear system this quantity satisfies (not simul
 
 ## Limits
 
-Up to 1,500 nodes the hitting times come from the dense linear system (LU decomposition). Above that the system, which is symmetric and positive definite for the walk on an undirected or symmetrized network, is solved by conjugate gradients on the stored ties (relative residual 1e-13; the result agrees with the dense solution to better than 1e-13 relative, and the dense route is still the fallback if the iteration does not converge). Measured in Stata/BE, random directed network with 10 ties per node: 10,000 nodes 0.15 seconds and 0.2 GB (65 seconds and 4 GB with the dense solution).
+Up to 1,500 nodes the hitting times come from the dense linear system (LU decomposition). Above that the system, which is symmetric and positive definite for the walk on an undirected or symmetrized network, is solved by conjugate gradients on the stored ties (relative residual 1e-13; the result agrees with the dense solution to better than 1e-13 relative, and the dense route is still the fallback if the iteration does not converge).
 
 ## Examples
 
 ```stata
 . nwwebuse florentine, nwclear
+. nwdropnodes flomarriage, nodes(pucci)
 . nwrandomwalk flomarriage, target(medici) generate(_hitting)
 . gsort _hitting
-. list _name _hitting in 1/5
+. list _nwnode _hitting in 1/5
 ```
 
 ## Stored results
@@ -78,4 +79,4 @@ Lovasz, L. (1993). Random walks on graphs: A survey. *Combinatorics, Paul Erdos 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

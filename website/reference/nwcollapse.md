@@ -35,7 +35,7 @@ By default, an existing network is replaced, unless option `generate(newnetname)
 
 ## Limits
 
-The collapse is done on the list of all dyads of the network (see [nwtoedge](nwtoedge)), so the time and the memory grow with the square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node and 5 groups: 1,000 nodes 8 seconds, 5,000 nodes 61 seconds and 4.5 GB; above 7,071 nodes (50,000,000 dyads) the command stops at once with r(484), a message that says why and what to do instead.
+The collapse is done on the list of all dyads of the network (see [nwtoedge](nwtoedge)), so the time and the memory grow with the square of the number of nodes. With 10 ties per node and 5 groups, 5,000 nodes need about 4.5 GB; above 7,071 nodes (50,000,000 dyads) the command stops at once with r(484), a message that says why and what to do instead.
 
 ## Examples
 
@@ -54,4 +54,4 @@ This collapses the first and the second node of a random network. The collapsed 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

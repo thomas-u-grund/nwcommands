@@ -15,10 +15,10 @@
 {p 8 17 2}
 {cmdab: nwkatz} 
 [{it:{help netname}}]
-[{cmd:,}
-{opt alpha(real)}
-{opt walks}
+{cmd:,}
 {opt gen:erate}({it:{help varname}})
+[{opt alpha(real)}
+{opt walks}
 {opt replace}
 {opt sym}
 {opt nosym}
@@ -100,13 +100,11 @@ network. {bf:Signed:} not checked. See {help nwnetworktypes}.{p_end}
 
 {pstd}
 The distance-decay score (without {opt walks}) is summed over breadth-first searches from every node in the plugin, without a
-matrix of distances, unless {it:geodesic_options} are given or the platform has no plugin (then the matrix of {help nwgeodesic} is used). Measured in Stata/BE on a random directed network with 10 ties
-per node: 20,000 nodes 10 seconds and 0.35 GB
-(99 seconds and 6.4 GB through the matrix). {opt walks} solves a dense linear system and needs the matrix.
+matrix of distances, unless {it:geodesic_options} are given or the platform has no plugin (then the matrix of {help nwgeodesic} is used, which needs much more memory). {opt walks} solves a dense linear system and needs the matrix.
 
 {pstd}
-Without {opt walks} the time grows with the number of nodes times the number of ties like that of {help nwcloseness}: when the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties
-per node, 5 minutes at 100,000 nodes) the command stops at once with r(484) and a message; option {opt force} runs it anyway. With {opt walks} the matrix is dense and a network of more than 20,000
+Without {opt walks} the time grows with the number of nodes times the number of ties like that of {help nwcloseness}: when the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties per node) the command stops at once with r(484) and
+a message; option {opt force} runs it anyway. With {opt walks} the matrix is dense and a network of more than 20,000
 nodes is refused.
 
 
@@ -128,4 +126,4 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. {it:Psychome
 	{help nwcloseness}, {help nwbetween}, {help nwdegree}, {help nwcloseness}, {help nwevcent}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

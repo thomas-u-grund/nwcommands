@@ -67,7 +67,7 @@ values. {bf:Two-mode:} not applicable - the command always creates a one-mode ne
 {title:Limits}
 
 {pstd}
-Above 2,000 nodes the ring is written as a list of ties (20,000 nodes with {opt k(5)}: 0.2 seconds).
+Above 2,000 nodes the ring is written as a list of ties.
 {opt weights()} still uses the matrix.
 
 
@@ -91,4 +91,4 @@ Above 2,000 nodes the ring is written as a list of ties (20,000 nodes with {opt 
 	{help nwpref}, {help nwrandom}, {help nwlattice}, {help nwsmall}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

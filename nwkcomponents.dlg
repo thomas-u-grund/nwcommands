@@ -20,7 +20,7 @@ BEGIN
   GROUPBOX gb_opt 10 44 520 216, label("Options")
   TEXT tx_sp_k 20 54 260 ., label("Minimum vertex connectivity required; default = 2")
   SPINNER sp_k 290 54 70 ., default(2) max(999999) min(1) nomem option(k)
-  TEXT tx_ed_generate 20 82 260 ., label("Required. Variable for each node's largest qualifying k-component size")
+  TEXT tx_ed_generate 20 82 260 ., label("Required. Variable for largest k-component size")
   EDIT ed_generate 290 82 190 ., nomem option(generate)
   TEXT tx_cx_replace 20 110 260 ., label("Replace existing variable")
   CHECKBOX cx_replace 290 110 190 ., label("replace") option(replace)
@@ -28,9 +28,9 @@ BEGIN
   CHECKBOX cx_silent 290 138 190 ., label("silent") option(silent)
   TEXT tx_cx_force 20 166 260 ., label("Run despite the time or memory guard")
   CHECKBOX cx_force 290 166 190 ., label("force") option(force)
-  TEXT tx_cx_nomatrix 20 194 260 ., label("Do not store the k-component matrix (much faster for large networks)")
+  TEXT tx_cx_nomatrix 20 194 260 ., label("Do not store the k-component matrix (faster)")
   CHECKBOX cx_nomatrix 290 194 190 ., label("nomatrix") option(nomatrix)
-  TEXT tx_cx_sym 20 222 260 ., label("directed network: analyse the symmetrized network (default: refused)")
+  TEXT tx_cx_sym 20 222 260 ., label("Directed: analyse symmetrized (default: refused)")
   CHECKBOX cx_sym 290 222 190 ., label("sym") option(symmetrize)
 END
 

@@ -145,6 +145,8 @@ program define _nw_gfinish, rclass
 			if inlist(substr(`"`ex0'"', 1, 1), char(34), char(96)) gettoken ex0 : ex0
 		}
 		local exrest = trim(substr(`"`exrest'"', 2, .))
+		// graph export below always replaces: a typed ", replace" is dropped
+		local exrest = trim(subinword(`"`exrest'"', "replace", "", .))
 		if `"`sv0'"' != "" _nw_gfinish_file `"`sv0'"', what(saving) svver(`svver')
 		if `"`ex0'"' != "" _nw_gfinish_file `"`ex0'"', what(export) svver(`svver')
 		local ng : word count `glist'

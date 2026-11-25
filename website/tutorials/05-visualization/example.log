@@ -89,6 +89,23 @@ Plotting network...
 .../interactive_plot.html
 
 . 
+. * Pictograms: color and symbol by gender, then choose man and woman in the
+. * two drop-downs of the page (pictograms exist in the browser view only)
+. nwwebuse lazega, nwclear
+
+. quietly nwdegree lazega_adv, generate(outdeg indeg)
+
+. set seed 42
+
+. nwplot lazega_adv, color(gender) symbol(gender) size(indeg) edgefactor(0.4) inte
+> ractive noopen fname(lazega_pictograms)
+Calculating node coordinates...
+Generating splines...
+Preparing interactive view...
+Interactive view written to .../lazega_pictograms.html
+Plotting network...
+
+. 
 . * The interactive workflow in four steps, with the advice network of the
 . * 71 lawyers of the Lazega law firm (colour = office, shape = practice,
 . * size = indegree).  1. Build the page; fname() names the file and noopen

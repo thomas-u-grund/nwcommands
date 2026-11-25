@@ -74,7 +74,7 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 
 ## Limits
 
-Above 2,000 nodes the ties are kept in a hash and written as a list, with the same draws as the matrix version (the same seed gives the same network). 20,000 nodes with `k(5)`: 1 second. `weights()` uses the matrix.
+Above 2,000 nodes the ties are kept in a hash and written as a list, with the same draws as the matrix version (the same seed gives the same network). `weights()` uses the matrix.
 
 ## Examples
 
@@ -109,4 +109,4 @@ Watts, D. J., Strogatz, S. H. (1998). Collective dynamics of 'small-world' netwo
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

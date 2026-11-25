@@ -67,7 +67,7 @@ The networks in the dataset can be reordered with {help nworder}.
 {marker examples}{...}
 {title:Examples}
 
-	{cmd:. nwuse glasgow}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwset}
 
 {pstd}The next four commands are all equivalent.
@@ -82,4 +82,4 @@ The networks in the dataset can be reordered with {help nworder}.
    {help netname}, {help nwsummarize}, {help nworder}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

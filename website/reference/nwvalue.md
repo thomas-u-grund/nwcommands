@@ -39,7 +39,7 @@ The value of one cell of a network held as stored ties is read from the sparse i
 ## Examples
 
 ```stata
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . nwvalue flobusiness, ego("medici") alter("pazzi")
 . nwvalue flobusiness, egoid(2) alterid(9)
 . nwvalue flobusiness[2,9]
@@ -65,4 +65,4 @@ The value of one cell of a network held as stored ties is read from the sparse i
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

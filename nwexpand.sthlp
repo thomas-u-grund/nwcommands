@@ -54,7 +54,7 @@
 
 {pstd}
 This command generates a new network by expanding an existing variable. When option {bf:nodes()} is unspecified, the 
-command generates a network with one node per observation ({help _N} nodes); with {it:if}, one node per observation that
+command generates a network with one node per observation ({help _variables:_N} nodes); with {it:if}, one node per observation that
 satisfies the condition, in the order of the data. The data in memory are not changed.
  
 {pstd}
@@ -173,7 +173,7 @@ Builds a new one-mode network from a node attribute. {bf:Directed:} undirected f
 
 {pstd}
 The expanded network is built row by row (one {it:n}-by-{it:n} matrix):
-10,000 nodes 1.8 seconds and 1.7 GB, 20,000 nodes 7 seconds and 6.3 GB (the network itself is dense by nature: 3.2 GB for the matrix).
+10,000 nodes need about 1.7 GB, 20,000 nodes 6.3 GB (the network itself is dense by nature: 3.2 GB for the matrix).
 
 {pstd}
 The result is a network with a tie for every pair of nodes. Above about 27,000 nodes (12 GB) the command stops at once with r(484); expand a part of the nodes ({opt nodes()} or {opt if}), or use
@@ -184,4 +184,4 @@ The result is a network with a tie for every pair of nodes. Above about 27,000 n
 	{help nwcorrelate}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

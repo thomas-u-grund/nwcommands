@@ -50,6 +50,10 @@ program nwimport, rclass
 		local name = subinstr(`"`name'"',".xlsx", ".xls", .)
 		local name = subinstr(`"`name'"',".xls", "", .)
 		local name = subinstr(`"`name'"', char(34), "", .)
+		// any other extension goes too, and what is left is made a valid name (my-net.gml: my_net)
+		local name = regexr(`"`name'"', "\.(gml|dl|paj|graphml|tsv)$", "")
+		local name = strtoname(`"`name'"')
+		if inlist("`name'", "_all", "_n", "_N", "if", "in", "using", "byte", "int", "long") local name "net_`name'"
 	}
 	
 	capture qui nwset
@@ -1081,6 +1085,11 @@ program _nwimport_edgelist
 		else {
 			local success = 1
 		}
+	}
+	
+	// a file with a single line is read as variable names without data: read it again as data
+	if `excel' == 0 & "`delimiter'" == "" & `success' == 1 & _N == 0 {
+		capture insheet using `anything' `insheet_opt' nonames
 	}
 	
 	// an explicit delimiter() (text files)

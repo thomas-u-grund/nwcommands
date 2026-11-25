@@ -42,6 +42,7 @@
 {p2col:{opt lab}}display node labels{p_end}
 {p2col:{opth label(varname)}}display axis labels from variable{p_end}
 {p2col:{opt labelopt}({it:{help axis_label_options:suboptions}})}suboptions of both axis labels, for example {cmd:labelopt(labsize(tiny))}; {opt ylabel()} and {opt xlabel()} change one axis{p_end}
+{p2col:{opt legend}({it:{help legend_options:legend_options}})}the options of {helpb twoway} {opt legend()}, used instead of the automatic legend (for example {cmd:legend(off)}){p_end}
 {p2col:{opt legendopt}({it:{help legend_options:legend_options}})}options added to the legend, for example {cmd:legendopt(rows(2))}; they replace the default rows(1), position(6) and size(small) of the automatic legend{p_end}
 
 
@@ -49,7 +50,7 @@
 {p2col:{it:patch_options}}Description{p_end}
 {marker patch_options}{...}
 {p2line}
-{p2col:{opt co:lorpalette}({it:{help colstyle:colstyle...}})}list of colors for patches (representing tie values){p_end}
+{p2col:{opt co:lorpalette}({it:{help colorstyle:colorstyle...}})}list of colors for patches (representing tie values){p_end}
 {p2col:{opth lc:olor(colorstyle)}}overwrite color of lines between patches{p_end}
 {p2col:{opth ba:ckground(colorstyle)}}overwrite background color{p_end}
 {synopt:{opt tievalue}}show tie values as text inside patches{p_end}
@@ -142,12 +143,17 @@ are not treated specially. See {help nwnetworktypes}.{p_end}
 
 {pstd}
 One box (five points) is drawn for every pair of nodes, so memory and time grow with the square of the number of nodes:
-1,000 nodes 5 seconds and 0.8 GB, 2,000 nodes 19 seconds and 2.6 GB. Networks of more than 2,500 nodes
+1,000 nodes need about 0.8 GB, 2,000 nodes 2.6 GB. Networks of more than 2,500 nodes
 are refused; plot a part of the network or use {help nwplot}.
+
+{title:Stored results}
+
+{pstd}
+{cmd:nwplotmatrix} stores no results of its own in {cmd:r()}.
 
 {title:See also}
 
 	{help nwplot}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

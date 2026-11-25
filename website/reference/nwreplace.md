@@ -34,7 +34,7 @@ One can also change the entire adjaceny matrix of a network with an existing Mat
 
 Only replace dyad (2,1) to a constant:
 
-- **. nwset, mat((0,0,1\1,0,0\1,10)) name(mynet)**
+- **. nwset, mat((0,0,1\1,0,0\1,1,0)) name(mynet)**
 - **. nwreplace mynet[2,1] = 55**
 
 Set all dyads x_ij of an existing network *mynet* to a constant:
@@ -64,6 +64,10 @@ Basically, one can do all sorts of calculations using network expressions. See m
 ## Network subsets
 
 Set a subnetwork to a constant:
+
+**. nwclear**
+
+**. nwrandom 6, prob(.2) name(mynet)**
 
 **. nwreplace mynet[(1::4),(1::4)] = 55**
 
@@ -114,4 +118,4 @@ Again, one can limit such a nwreplace command by using network subsetting. Furth
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

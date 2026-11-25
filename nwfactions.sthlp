@@ -15,9 +15,9 @@
 {p 8 17 2}
 {cmdab: nwfactions}
 [{it:{help netname}}]
-[{cmd:,}
-{opt groups(int)}
+{cmd:,}
 {opth gen:erate(newvarname)}
+[{opt groups(int)}
 {opt replace}
 {opt measure(binary|valued)}
 {opt maxiter(int)}
@@ -80,8 +80,7 @@ first). {bf:Signed:} negative values are not treated specially. See {help nwnetw
 {title:Limits}
 
 {pstd}
-Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes with
-{opt groups(3)} take 0.014 / 0.019 / 0.05 seconds. The memory needed is proportional to the number of ties; no N-by-N matrix is built.
+The memory needed is proportional to the number of ties; no N-by-N matrix is built.
 
 
 {title:Examples}
@@ -116,4 +115,4 @@ Borgatti, S.P., Everett, M.G., Freeman, L.C. (2002). {it:UCINET for Windows: Sof
 	{help nwcoreperiphery}, {help nwcommunity}, {help nwconcor}, {help nwlambda}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

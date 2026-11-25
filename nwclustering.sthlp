@@ -88,8 +88,7 @@ Robins and Alexander (2004). {bf:Signed:} not checked. See {help nwnetworktypes}
 {pstd}
 For {opt measure(binary)} the closed and potential triples are counted in the compiled graph plugin (the native kernel of
 {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise; both give identical coefficients.
-The work grows with the sum of the squared degrees. Measured in Stata/BE, random undirected network with 10 ties per node:
-5,000 nodes 0.06 seconds, 20,000 nodes 0.2 seconds, 100,000 nodes 0.7 seconds (the Mata route needs 1.1, 4.9 and 26 seconds).
+The work grows with the sum of the squared degrees.
 The weighted measures (arithmetic, geometric, maximum, minimum) still run in Mata.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
@@ -151,4 +150,4 @@ Watts, D.J., Strogatz, S.H. (1998). Collective dynamics of 'small-world' network
 	{help nw2clustering}, {help nwtriads}, {help nwbrokerage}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

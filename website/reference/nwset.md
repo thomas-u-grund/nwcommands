@@ -90,9 +90,10 @@ In this dummy example, we create 5 new variables v1-v5 and set a network from th
 
 ```stata
 . nwclear
+. set obs 5
 . forvalues i = 1/5 {
-     gen v = 0
-}
+.     generate v`i' = 0
+. }
 . nwset v*
 ```
 After that we can display the networks that have been set (see also [nwsummarize](nwsummarize) or [nwds](nwds))
@@ -289,4 +290,4 @@ Options `time()` and `interval()` keep the times as a list with one entry per ro
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

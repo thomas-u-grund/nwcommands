@@ -52,8 +52,7 @@ not applicable. See {help nwnetworktypes}.{p_end}
 {title:Limits}
 
 {pstd}
-The reachability network is one n-by-n matrix, made from the distances in place. Measured in Stata/BE, random directed network with
-10 ties per node: 10,000 nodes 3 seconds, 20,000 nodes 11 seconds and 6.4 GB.
+The reachability network is one n-by-n matrix, made from the distances in place. At 20,000 nodes it needs about 6.4 GB.
 
 {pstd}
 Reachability of all pairs of nodes is an {it:n}-by-{it:n} matrix; two matrices are held at once. Above about 27,000 nodes (12 GB) the command stops at once with r(484), and {opt force} runs it
@@ -90,4 +89,4 @@ In this example, there is basically one isolate node (node 8) who is unconnected
 	{help nwgeodesic}, {help nwpath}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

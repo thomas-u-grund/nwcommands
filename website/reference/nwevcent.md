@@ -16,9 +16,9 @@ Eigenvector centrality
 ```stata
 nwevcent
 [netname]
-[,
+,
 gen:erate(varname)
-sym
+[sym
 nosym
 out
 weighted
@@ -50,7 +50,7 @@ Eigenvector centrality is only defined for connected networks; for a directed ne
 
 ## Limits
 
-The power iteration runs in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same result (they differ by less than 1e-10 relative). Measured in Stata/BE, random undirected network with 10 ties per node: 5,000 nodes 0.05 seconds, 20,000 nodes 0.1 seconds, 100,000 nodes 0.5 seconds (the Mata route needs 0.6, 2.6 and 14 seconds).
+The power iteration runs in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both give the same result (they differ by less than 1e-10 relative).
 
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
 
@@ -75,4 +75,4 @@ Bonacich, P. (1972). Factoring and weighting approaches to status scores and cli
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

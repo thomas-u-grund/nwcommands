@@ -79,12 +79,12 @@ There is exactly one shortest path between *medici* and *peruzzi*, so a single n
 
 ## Limits
 
-The paths are enumerated from the stored ties and `generate()` writes each path as a network of its ties; neither builds a matrix. 20,000 nodes 0.25 seconds in Stata/BE for two nodes at 4 steps. The number of walks examined grows with the degree to the power of the path length.
+The paths are enumerated from the stored ties and `generate()` writes each path as a network of its ties; neither builds a matrix. The number of walks examined grows with the degree to the power of the path length.
 
 ## Examples
 
 ```stata
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . nwpath flobusiness, ego(medici) alter(peruzzi)
 
 ----------------------------------------
@@ -118,4 +118,4 @@ The paths are enumerated from the stored ties and `generate()` writes each path 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

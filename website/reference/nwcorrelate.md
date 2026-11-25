@@ -21,6 +21,7 @@ netname
 [,
 context(context)
 name(newnetname)
+replace
 undirected directed]
      2) Correlate two networks with each other
 nwcorrelate 
@@ -49,6 +50,7 @@ kdensity_options]
 |---|---|
 | `context`(*[context](nwcontext))* | Determines whether incoming or outgoing ties should be considered when correlating two nodes: *outgoing*, *incoming* or *both*; default = *outgoing* |
 | `name(newnetname)` | Name of new network with node correlations; default = *_corr*. With two networks, `name()` names the graph of the permutations in memory |
+| `replace` | Node-correlation mode: replace an existing network of the name given in `name()`; the default *_corr* is overwritten without it (alias: `nwreplace`) |
 | `noplot` | Two networks or `attribute()`, `permutations()` > 1: do not draw the density plot of the permutations (it is drawn by default) |
 | `sav:ing(filename)` | Save the density plot to a `.gph` file |
 | `exp:ort(filename[, options])` | Write the density plot with `graph export`; the file extension sets the format |
@@ -185,6 +187,7 @@ There is hardly any correlation. Similarity on doing sports does not seem to mat
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. `noplot` switches the plot off; `name()` (with two networks), `saving()` and `export()` need the plot.
 
+- `. nwwebuse florentine, nwclear`
 - `. nwcorrelate flomarriage flobusiness, permutations(500) export(corr.png, width(1200))`
 
 ## Network types
@@ -193,11 +196,11 @@ There is hardly any correlation. Similarity on doing sports does not seem to mat
 
 ## Limits
 
-When the native plugin of your platform has this kernel, the correlations between the nodes of one network are formed from the stored ties and take 0.45 seconds at 5,000 nodes (the Mata code: 3.2 seconds); the results agree to 1e-13. A network with missing tie values and a platform whose plugin lacks this kernel use the Mata code described next.
+When the native plugin of your platform has this kernel, the correlations between the nodes of one network are formed from the stored ties; the results agree with those of the Mata code to 1e-13. A network with missing tie values and a platform whose plugin lacks this kernel use the Mata code described next.
 
-The Mata code computes the correlations between the nodes of one network (`nwcorrelate` *netname*) with about 25 dense node-by-node matrices at once: Stata/BE, random directed network with 10 ties per node, 5,000 nodes 10 seconds and 5.1 GB; the command stops with r(484) above 7,000 nodes (10,000 nodes needed more than 12 GB). The correlation of two networks (with `permutations()`) takes 16 seconds and 7 GB at 10,000 nodes.
+The Mata code computes the correlations between the nodes of one network (`nwcorrelate` *netname*) with about 25 dense node-by-node matrices at once (about 5.1 GB at 5,000 nodes); the command stops with r(484) above 7,000 nodes (10,000 nodes need more than 12 GB). The correlation of two networks (with `permutations()`) needs about 7 GB at 10,000 nodes.
 
-The correlation of two networks holds about 9 matrices of *n*-by-*n* (10,000 nodes with 5 permutations: 16 seconds and 7.2 GB) and stops at once with r(484) above about 12,900 nodes; option `force` runs it anyway. The correlation of the nodes of one network needs about 25 matrices and is refused above 7,000 nodes.
+The correlation of two networks holds about 9 matrices of *n*-by-*n* (10,000 nodes: 7.2 GB) and stops at once with r(484) above about 12,900 nodes; option `force` runs it anyway. The correlation of the nodes of one network needs about 25 matrices and is refused above 7,000 nodes.
 
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
 
@@ -239,4 +242,4 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

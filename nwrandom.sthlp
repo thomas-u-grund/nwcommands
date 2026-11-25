@@ -125,7 +125,7 @@ degree 2. {opt degree()} cannot be combined with {opt prob()}, {opt density()}, 
 {opt selfloop}. The draws use the native plugin.
 
 	{cmd:. nwrandom 8, degree(3 3 2 2 2 2 1 1)}
-	{cmd:. nwuse glasgow, nwclear}
+	{cmd:. nwwebuse glasgow, nwclear}
 	{cmd:. nwdegree glasgow1, generate(od id)}
 	{cmd:. nwrandom 50, outdegree(od) indegree(id) name(glasgow_null)}
 
@@ -144,9 +144,7 @@ tie values. {bf:Two-mode:} not applicable. {bf:Signed:} not checked. See {help n
 {opt prob()} above 2,000 nodes draws the ties as a list from the same random numbers as the matrix version (the same seed gives
 the same network). {opt density()} above 5,000 nodes draws the positions of the ties directly instead of shuffling all {it:n}^2
 cells: a different random-number stream (and the same distribution); with 5,000 nodes or fewer the shuffle is used.
-{opt weights()} and {opt census()} work on the matrix. Measured in Stata/BE, density 0.0001: 5,000
-nodes 11 seconds (shuffle), 10,000 nodes 0.1 seconds, 20,000 nodes 0.2 seconds ({opt density(.0002)});
-{opt prob(.0002)} at 20,000 nodes 2.8 seconds.
+{opt weights()} and {opt census()} work on the matrix.
 
 
 {title:Examples}
@@ -175,4 +173,4 @@ nodes 11 seconds (shuffle), 10,000 nodes 0.1 seconds, 20,000 nodes 0.2 seconds (
 	{help nwsmall}, {help nwpref}, {help nwlattice}, {help nwring}, {help nwcug}, {help nwpermute}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -58,7 +58,7 @@ The program needs no additional packages: the weighted sampling of ties is built
 
 ## Limits
 
-With `mat()` the probabilities are an *n*-by-*n* matrix held by you plus three copies in the command: 20,000 nodes 3.1 seconds. `density()` weights all dyads and is refused above 7,071 nodes.
+With `mat()` the probabilities are an *n*-by-*n* matrix held by you plus three copies in the command. `density()` weights all dyads and is refused above 7,071 nodes.
 
 ## Example
 
@@ -111,7 +111,7 @@ In the next step, we generate a network *dyadweight* on the basis of *same_gende
 As an example, we want that in the final network 1) ties between nodes with the same gender are overrepresented and 2) ties between nodes with the same race are underrepresented. This generates tie probabilitities according to this request.
 
 ```stata
-. nwgen dyadweight = exp(5 * same_gender) * exp((-5) * same_race)
+. nwgen dyadweight = exp(5 * same_gender) * exp(-5 * same_race)
 ```
 Check out the tie values created in this way:
 
@@ -139,4 +139,4 @@ The result can be nicely plotted in the following way:
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

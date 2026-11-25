@@ -22,6 +22,7 @@ program nwtranspose
 	local netobj1 `netobj'
 
 	if ("`generate'" != ""){
+		_nwreservedname `"`generate'"'
 		mata: nw_assert_netname(st_local("generate"))
 		capture _nwsyntax `generate', other(_check)
 		local __tr_exists = (_rc == 0)

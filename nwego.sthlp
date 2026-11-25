@@ -15,10 +15,9 @@
 {p 8 17 2}
 {cmdab: nwego}
 [{it:{help netlist}}]
-[{cmd:,}
-{opth sizevar(newvarname)}
-{opth densvar(newvarname)}
-{opt replace}
+{cmd:,}
+{opth sizevar(newvarname)} {opth densvar(newvarname)}
+[{opt replace}
 {opt silent}]
 
 
@@ -89,4 +88,4 @@ Press. (ego-network density as used in structural holes analysis - see also {hel
 	{help nwdegree}, {help nwaltergen}, {help nwconstraint}, {help nwburt}, {help nwegoplot}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

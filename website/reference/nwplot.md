@@ -53,7 +53,8 @@ One can change the layout where nodes should be plotted:
 . nwplot, layout(grid, columns(20))
 . nwplot, layout(kk)
 . nwplot, layout(hierarchy)
-. nwplot, layout(bipartite)
+. nwwebuse davis, nwclear
+. nwplot davis, layout(bipartite)
 . nwplot, layout(bipartite, vertical)
 ```
 Or obtain coordinates from layout and plot with coordinates. The option **nodexy** can be used to write your own network layout functions, return coordinates and plot a network with these coordinates. Because `generate()` and `nodexy()` are a matched pair - one exports the node coordinates a layout produced, the other forces a later plot to reuse them - this is also how to plot several different networks (e.g. the same set of people observed at several waves) at identical node positions, so the reader can compare panels directly instead of re-deriving a fresh, unrelated layout for each one:
@@ -64,8 +65,9 @@ Or obtain coordinates from layout and plot with coordinates. The option **nodexy
 . nwplot, nodexy(xcoord ycoord)
 
 . * fixed coordinates across two waves of the same network
-. nwplot wave1, generate(x1 y1)
-. nwplot wave2, nodexy(x1 y1)
+. nwwebuse glasgow, nwclear
+. nwplot glasgow1, generate(x1 y1)
+. nwplot glasgow2, nodexy(x1 y1)
 ```
 When the coordinates are longitude and latitude, `basemap()` draws a map under the network. The example data include the outlines of the US states (`usmap`); a shapefile of your own becomes such a file with `spshape2dta`. The picture takes the proportions of the map unless `aspectratio()` is given; for longitude and latitude a degree of longitude is drawn at its width at the middle latitude of the map, so that the map keeps its familiar shape. Many ties are best drawn thin and transparent, for example `lineopt(lcolor(gs6%15)) edgefactor(0.1) arrowfactor(0)`.
 
@@ -88,6 +90,14 @@ The lower 48 states only (the variable **state** of `usmap` holds the postal cod
 . * drag nodes / edit the legend in the browser, then save both CSVs, then:
 . nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)
 ```
+*Pictograms.* The shape drop-downs of the interactive view also offer pictograms: people (person, woman, man, child, senior, couple, family, group), places and organisations (house, building, factory, school, hospital, bank, church, shop), work and communication (briefcase, laptop, phone, envelope, document, book, chat), transport and symbols (car, airplane, flag, star, heart, shield, lightbulb) and nature (tree, paw, fish). None is assigned automatically. A pictogram takes the color of its group and follows `size()` and the node size slider; it is drawn somewhat larger than an ordinary shape. When `color()` and `symbol()` group the nodes differently, shapes and pictograms have rows of their own; with a single color group each of these rows has its own color picker. For example, choose *man* and *woman* in the page written by
+
+```stata
+. nwwebuse lazega, nwclear
+. nwplot lazega_adv, color(gender) symbol(gender) interactive
+```
+Pictograms are shown only in the interactive view and in its PNG export, because Stata has no such marker symbols. **Save do-file** and the saved CSV files hold the ordinary shape of each node. A Stata graph has one color per group of `color()`, so colors picked separately for the pictograms of one color group are not kept in it. The choice of pictograms is not stored: it has to be made again in a new page.
+
 The button **Save do-file** does all of this in one step. It saves **nwedit_plot.do**, which writes the two files (**nwedit_nodes.csv** and **nwedit_edges.csv**) into the working directory and then calls `nwplot` with the network, `if` / `in` and options of the call that wrote the page, completed with `nodexy()`, `importcoords()` and `edgeimport()` (the options of the page itself, of exporting and of saving coordinates are left out). Run it with the same data in memory as when the page was written:
 
 ```stata
@@ -203,6 +213,7 @@ The look and feel of node labels is changed with labelopt():
 The command draws on normal scatter plots to plot nodes. Once can send all sorts of options directly to these underlying scatter plots. Here, the color and symbol of nodes is overwritten.
 
 ```stata
+. nwwebuse florentine, nwclear
 . nwplot flomarriage, scatteropt(mfcolor(green) msymbol(D))
 . nwplot flomarriage, lineopt(lwidth(10) lcolor(green))
 ```
@@ -222,19 +233,20 @@ Alternative to display the largest component only:
 **Publication-quality vector export.** `export()` saves the plot directly to a file, inferring the format from the extension - exactly what a manual `graph export` call afterward would do, since `nwplot` produces an ordinary Stata graph and never replaces or bypasses it. SVG and PDF are both scalable vector formats: the plot stays crisp at any zoom level or print size, and both open cleanly in standard vector-graphics editors (e.g. Adobe Illustrator, Inkscape) for further touch-up - node/edge/label elements remain separate, editable objects rather than a fixed-resolution image.
 
 ```stata
-. nwplot flomarriage, export("flomarriage.svg")
+. nwwebuse florentine, nwclear
+. nwplot flomarriage, export("flomarriage.svg") replace
 . nwplot flomarriage, export("flomarriage.pdf") replace
 ```
 Raster formats (PNG, TIF, ...) are also supported the same way; `exportopt()` passes options straight through to the underlying `graph export` call, most commonly `width()`/`height()` to control resolution:
 
 ```stata
-. nwplot flomarriage, export("flomarriage.png") exportopt(width(2000))
+. nwplot flomarriage, export("flomarriage.png") replace exportopt(width(2000))
 ```
 The graph itself is unaffected by `export()` - it remains the normal, currently active Stata graph afterward, so the Graph Editor, stata graph save, and a second `graph export` in a different format all continue to work exactly as they would without `export()`.
 
 ## Valued networks and layouts
 
-On a valued network (one-mode, all tie values positive) the default layout `kk` and the layout `frucht` use the tie values as tie strengths, as `igraph::plot()` does for a graph with a `weight` edge attribute (`layout_with_fr(weights=)`, `layout_with_kk(weights=)`): strongly tied nodes end up close together. `frucht`: the attraction along a tie is multiplied by its value. `kk`: the ideal distance of two nodes is the shortest path between them with the edge length 1/value (igraph's `layout_with_kk()` takes its weights as edge lengths, so for tie strengths one passes 1/value). Unlike igraph, the values are first divided by their mean, so the layout does not depend on the unit of the values; a valued network whose ties all have the same value gets the unweighted layout. A tie in both directions counts with its larger value. `binary` lays the nodes out as for an unvalued network. If a tie value is not positive (a signed network) the layout ignores the values and says so in a note, as `igraph::plot()` does (`layout_with_fr()` and `layout_with_kk()` refuse non-positive weights). Two-mode networks, and the layouts `mds`, `mdsclassical`, `hierarchy`, `bipartite`, `circle` and `grid`, do not use the values. `kk` with values needs the shortest weighted paths and runs in Mata rather than in compiled code: about 1.5 seconds for 1,000 nodes, 18 seconds for 5,000 nodes (10 ties per node, default iterations).
+On a valued network (one-mode, all tie values positive) the default layout `kk` and the layout `frucht` use the tie values as tie strengths, as `igraph::plot()` does for a graph with a `weight` edge attribute (`layout_with_fr(weights=)`, `layout_with_kk(weights=)`): strongly tied nodes end up close together. `frucht`: the attraction along a tie is multiplied by its value. `kk`: the ideal distance of two nodes is the shortest path between them with the edge length 1/value (igraph's `layout_with_kk()` takes its weights as edge lengths, so for tie strengths one passes 1/value). Unlike igraph, the values are first divided by their mean, so the layout does not depend on the unit of the values; a valued network whose ties all have the same value gets the unweighted layout. A tie in both directions counts with its larger value. `binary` lays the nodes out as for an unvalued network. If a tie value is not positive (a signed network) the layout ignores the values and says so in a note, as `igraph::plot()` does (`layout_with_fr()` and `layout_with_kk()` refuse non-positive weights). Two-mode networks, and the layouts `mds`, `mdsclassical`, `hierarchy`, `bipartite`, `circle` and `grid`, do not use the values. `kk` with values needs the shortest weighted paths and runs in Mata rather than in compiled code.
 
 ## Network types
 
@@ -242,7 +254,7 @@ On a valued network (one-mode, all tie values positive) the default layout `kk` 
 
 ## Limits
 
-**Limits of layout(kk).** The layout needs the distance between every pair of nodes, so memory and time grow with the square of the number of nodes (about 8 bytes per pair for the matrix of the network). The distances and the iterations run in compiled code. With 10 iterations, random undirected network with 10 ties drawn per node, in Stata/BE: 1,000 nodes 4 seconds in total, 5,000 nodes 21 seconds and 2.2 GB. Above a few thousand nodes use `layout(circle)`, `layout(grid)` or `layout(frucht)`.
+**Limits of layout(kk).** The layout needs the distance between every pair of nodes, so memory and time grow with the square of the number of nodes (about 8 bytes per pair for the matrix of the network). The distances and the iterations run in compiled code. With 10 ties drawn per node, 5,000 nodes need about 2.2 GB. Above a few thousand nodes use `layout(circle)`, `layout(grid)` or `layout(frucht)`.
 
 Drawing needs the network as an *n*-by-*n* matrix and about 10 copies of it: above about 12,200 nodes the command stops at once with r(484) (32 GB at 20,000 nodes); option `force` runs it anyway. A picture of that many nodes is not readable: plot a part of the network ([nwsubset](nwsubset), [nwego](nwego), [nwkcore](nwkcore)).
 
@@ -270,4 +282,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page [Ho
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

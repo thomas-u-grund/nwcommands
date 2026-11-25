@@ -98,7 +98,8 @@ program _nwsyntax
 				}
 			}
 		}
-		di "{err}Network {bf:`anything'} not found"
+		if "`anything'" == "" di "{err}No network found. Declare or load one first (see {help nwset}, {help nwuse})."
+		else di "{err}Network {bf:`anything'} not found"
 	    exit `errNWsNotFound'
 	}
 

@@ -42,7 +42,7 @@ The command saves all bridges as a new network *newnetname*.
 
 ## Limits
 
-`type(global)` of an undirected network writes the bridges as ties (one depth-first search, no matrix): 20,000 nodes 0.4 seconds and 0.3 GB in Stata/BE. `type(local)` and `type(distance)` work on the matrix.
+`type(global)` of an undirected network writes the bridges as ties (one depth-first search, no matrix). `type(local)` and `type(distance)` work on the matrix.
 
 ## Examples
 
@@ -70,4 +70,4 @@ Burt, R. S. (1992). *Structural Holes: The Social Structure of Competition*. Cam
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

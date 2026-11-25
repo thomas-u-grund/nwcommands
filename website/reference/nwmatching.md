@@ -16,9 +16,9 @@ Maximum-cardinality bipartite matching
 ```stata
 nwmatching
 [netname]
-[,
+,
 gen:erate(newvarname)
-replace
+[replace
 silent
 bin:ary]
 ```
@@ -44,16 +44,24 @@ Requires a genuine two-mode network (`twomode`/`bipartite` in [nwset](nwset), or
 
 ## Limits
 
-The maximum matching is computed on the sparse network (Edmonds-Karp with the same augmenting-path order as the Mata code, so the same matching comes out) by a kernel of the native plugin; a platform without the plugin uses the Mata code, which builds two (n+2)-by-(n+2) matrices. Measured in Stata/BE, random two-mode network with 5,000 mode-1 and 2,500 mode-2 nodes and 10 ties per mode-1 node: 0.7 seconds with the plugin kernel (the Mata code did not finish in 180 seconds and used 4 GB).
+The maximum matching is computed on the sparse network (Edmonds-Karp with the same augmenting-path order as the Mata code, so the same matching comes out) by a kernel of the native plugin; a platform without the plugin uses the Mata code, which builds two (n+2)-by-(n+2) matrices and needs much more memory and time.
 
-The matching of largest total tie value (valued networks) is computed by the Hungarian method in a kernel of the native plugin, with the same result as the Mata routine (the same matching also when several matchings have the same total value, up to 1,500 nodes in the larger mode; beyond that a matching of the same total value). Measured: two modes of 300 nodes 0.013 seconds (Mata 0.33 seconds); 455 and 5,092 nodes 0.2 seconds, which the Mata routine cannot do (it needs a dense matrix of the larger mode squared).
+The matching of largest total tie value (valued networks) is computed by the Hungarian method in a kernel of the native plugin, with the same result as the Mata routine (the same matching also when several matchings have the same total value, up to 1,500 nodes in the larger mode; beyond that a matching of the same total value). The Mata routine cannot handle large modes such as 455 and 5,092 nodes (it needs a dense matrix of the larger mode squared).
 
 ## Examples
 
 ```stata
+. nwclear
+. input str8 person str8 org
+.   Anna Acme
+.   Anna Beta
+.   Ben Acme
+.   Carl Beta
+.   Carl Gamma
+. end
 . nwset person org, twomode name(assign)
 . nwmatching assign, generate(_match)
-. list person _match if _match > 0
+. list _nwnode _match if _match > 0
 ```
 
 ## Stored results
@@ -75,4 +83,4 @@ Hopcroft, J.E., Karp, R.M. (1973). An n^2.5 algorithm for maximum matchings in b
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

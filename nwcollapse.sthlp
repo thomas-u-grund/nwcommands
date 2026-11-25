@@ -48,8 +48,8 @@ supported (error 6088; use {help nwproject} first). {bf:Signed:} not checked. Se
 
 {pstd}
 The collapse is done on the list of all dyads of the network (see {help nwtoedge}), so the time and the memory grow with the
-square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node and 5 groups: 1,000
-nodes 8 seconds, 5,000 nodes 61 seconds and 4.5 GB; above 7,071 nodes (50,000,000 dyads) the command stops at once with r(484),
+square of the number of nodes. With 10 ties per node and 5 groups,
+5,000 nodes need about 4.5 GB; above 7,071 nodes (50,000,000 dyads) the command stops at once with r(484),
 a message that says why and what to do instead.
 
 
@@ -69,4 +69,4 @@ This collapses the first and the second node of a random network. The collapsed 
 	{help collapse}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

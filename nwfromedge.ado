@@ -18,6 +18,7 @@ program nwfromedge
 	// two-mode network and are rejected explicitly rather than silently
 	// ignored. Must run before `unw_defs' below, which sets up
 	// one-mode-specific state this branch never needs.
+	if `"`name'"' != "" _nwreservedname `"`name'"'
 	if `"`name'"' != "" mata: nw_assert_netname(st_local("name"))
 	if "`twomode'" != "" {
 		if "`directed'" != "" | "`undirected'" != "" | "`forcedirected'" != "" | "`forceundirected'" != "" {
@@ -52,6 +53,18 @@ program nwfromedge
 		if _rc {
 			di "{err}variable {bf:_nodeoriginal} already defined; option {bf:keeporiginal} creates it"
 			exit 110
+		}
+	}
+	if _N == 0 {
+		di "{err}{p 0 0 2}There are no observations; an edge list needs one row per tie.{p_end}"
+		exit 2000
+	}
+	if wordcount("`varlist'") == 3 {
+		local __nwfe_v : word 3 of `varlist'
+		capture confirm numeric variable `__nwfe_v'
+		if _rc {
+			di "{err}{p 0 0 2}The tie-value variable {bf:`__nwfe_v'} must be numeric.{p_end}"
+			exit 109
 		}
 	}
 	tempname __nwfe_orig

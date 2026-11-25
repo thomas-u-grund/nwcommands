@@ -29,10 +29,6 @@ new(new_nwnode)
 
 The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)).
 
-## Limits
-
-20,000 nodes: 0.13 seconds in Stata/BE.
-
 ## Examples
 
 ```stata
@@ -74,4 +70,4 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

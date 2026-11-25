@@ -36,7 +36,7 @@ BEGIN
   CHECKBOX cx_nopaths 290 250 190 ., label("nopaths") option(nopaths)
   TEXT tx_cx_binary 20 278 260 ., label("Ignore the tie values of a valued network (default: use them)")
   CHECKBOX cx_binary 290 278 190 ., label("binary") option(binary)
-  TEXT tx_ed_alpha 20 306 260 ., label("Cost of a step along a tie of value w: 1/w^alpha (valued network; default 1)")
+  TEXT tx_ed_alpha 20 306 260 ., label("Step cost 1/w^alpha (valued network; default 1)")
   EDIT ed_alpha 290 306 100 ., numonly nomem option(alpha)
 END
 
@@ -55,7 +55,7 @@ PROGRAM command
 BEGIN
 	// number fields: refuse text before the command runs
 	if main.ed_alpha.isneq("") & !main.ed_alpha.isnumlist() {
-		stopbox stop "Cost of a step along a tie of value w: 1/w^alpha (valued ...: enter a number (or numbers)."
+		stopbox stop "alpha: enter a number."
 	}
 	put "nwpath " main.cb_net
 	beginoptions

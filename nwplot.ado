@@ -607,6 +607,13 @@ program nwplot, rclass
 	local __size_raw "`size'"
 	local 0 = "`size'"
 	syntax [varlist(min=0 max=1 default=none)][, norescale legendoff forcekeys(string) sizebin(integer 1) mlcolor(string) mlwidth(string) *]
+	if "`varlist'" != "" {
+		capture confirm numeric variable `varlist'
+		if _rc {
+			di "{err}{p 0 0 2}{bf:size()} needs a numeric variable; {bf:`varlist'} is a string.{p_end}"
+			exit 109
+		}
+	}
 	// see the BUGFIX comment above `__sizebin_toplevel' - only fall back
 	// to the top-level sizebin() value when size() itself didn't supply
 	// its own; a genuine size(var, sizebin(#)) sub-option must still win.
@@ -631,8 +638,12 @@ program nwplot, rclass
 		local nodefactor = `nodefactor' / 2
 		qui sum `varlist' if _n <= `nodes'
 		local sizekeys_legendoff "`legendoff'"
-		local sizekeys "`=round(`r(min)',0.01)' `=round(`r(max)',0.01)'"
-		local sizekeys_size "`=round(`r(min)',0.01)' `=round(`r(max)',0.01)'"
+		// string() with a format: a bare `=round(x,0.01)' puts values such as
+		// 9.870000000000001 into the legend labels
+		local _nwp_keymin = strtrim(string(round(`r(min)', 0.01), "%12.0g"))
+		local _nwp_keymax = strtrim(string(round(`r(max)', 0.01), "%12.0g"))
+		local sizekeys "`_nwp_keymin' `_nwp_keymax'"
+		local sizekeys_size "`_nwp_keymin' `_nwp_keymax'"
 		
 		if "`forcekeys'" != "" {
 			local sizekeys "`forcekeys'"
@@ -2224,6 +2235,12 @@ program nwplot, rclass
 	// (chiefly raster width()/height() for PNG/TIF quality); anything
 	// more exotic is still one manual "graph export" call away.
 	if "`export'" != "" {
+		// export(file, replace) works like option replace
+		if regexm(`"`export'"', ",[ ]*replace[ ]*$") {
+			local export = trim(regexr(`"`export'"', ",[ ]*replace[ ]*$", ""))
+			local replace "replace"
+		}
+		local export = subinstr(`"`export'"', char(34), "", .)
 		// SVG export needs Stata 16 or later - check explicitly rather
 		// than let "graph export" itself fail with a generic error (or,
 		// on an older Stata that silently accepts the option but

@@ -40,7 +40,7 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 ```stata
 . nwwebuse glasgow, nwclear
 . nwunab nets : glasg*
-. di `nets'
+. di "`nets'"
 glasgow1 glasgow2 glasgow3
 ```
 
@@ -56,4 +56,4 @@ glasgow1 glasgow2 glasgow3
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

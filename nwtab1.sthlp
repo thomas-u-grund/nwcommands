@@ -32,7 +32,7 @@ The command makes use of the normal {help tabulate} command, hence, all
 
 {title:Example}
 	
-   {cmd:. nwwebuse gang}
+   {cmd:. nwwebuse gang, nwclear}
    {cmd:. nwtabulate gang}
 {res}
 {txt}   Network:  {res}gang{txt}{col 24}Directed: {res}false{txt}
@@ -57,4 +57,4 @@ In the {it:gang} network, 1116 potential (undirected) co-offending ties are not 
     {help nwtab2:two-way nwtabulate}, {help tabulate}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

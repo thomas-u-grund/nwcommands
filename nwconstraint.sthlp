@@ -82,19 +82,17 @@ as a one-mode network. {bf:Signed:} not supported - negative values distort p_ij
 {title:Limits}
 
 {pstd}
-The result is a dense {it:n}-by-{it:n} network. 20,000 nodes: 9 seconds in Stata/BE.
+The result is a dense {it:n}-by-{it:n} network.
 
 {pstd}
 Above 2,000 nodes a network held as stored ties gets its constraint network from the list of its cells that are not zero (the direct ties and the two-step paths, about the sum of the squared degrees),
-without an {it:n}-by-{it:n} matrix; only {opt name()} and {opt replace} are accepted then. Measured in Stata/BE with 5 ties drawn per node (mean degree 10 when undirected) and 100,000 nodes: 0.7
-seconds for a directed network and 2.2 seconds for an undirected one (11 million cells).{p_end}
+without an {it:n}-by-{it:n} matrix; only {opt name()} and {opt replace} are accepted then.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
 
 {pstd}
 The cells are computed in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your platform has it, and in Mata otherwise;
-both give the same values (to the last digits). The kernel itself takes about one second at 100,000 nodes with mean degree 10; the rest of the time of a large network
-(1 second in Stata/BE for an undirected network) goes into storing the result as a network.
+both give the same values (to the last digits).
 
 
 {title:Examples}
@@ -118,4 +116,4 @@ Press.
 	{help nwburt}, {help nwdegree}, {help nwbetween}, {help nwcloseness}, {help nwevcent}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

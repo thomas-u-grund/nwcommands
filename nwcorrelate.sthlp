@@ -20,6 +20,7 @@
 [,
 {opt context}({it:{help nwcontext##context:context}})
 {opth name(newnetname)}
+{opt replace}
 {opt undirected} {opt directed}]
 
 
@@ -56,6 +57,7 @@
 {synoptline}
 {synopt:{opt context}({it:{help nwcontext##context:context})}}Determines whether incoming or outgoing ties should be considered when correlating two nodes: {it:outgoing}, {it:incoming} or {it:both}; default = {it:outgoing}{p_end}
 {synopt:{opth name(newnetname)}}Name of new network with node correlations; default = {it:_corr}. With two networks, {opt name()} names the graph of the permutations in memory{p_end}
+{synopt:{opt replace}}Node-correlation mode: replace an existing network of the name given in {opt name()}; the default {it:_corr} is overwritten without it (alias: {opt nwreplace}){p_end}
 {synopt:{opt noplot}}Two networks or {opt attribute()}, {opt permutations()} > 1: do not draw the density plot of the permutations (it is drawn by default){p_end}
 {synopt:{opt sav:ing(filename)}}Save the density plot to a {cmd:.gph} file{p_end}
 {synopt:{opt exp:ort(filename[, options])}}Write the density plot with {helpb graph export}; the file extension sets the format{p_end}
@@ -257,6 +259,7 @@ friendship ties. Notice that the previous command is equivalent to:
 other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. {opt noplot} switches the plot off; {opt name()} (with
 two networks), {opt saving()} and {opt export()} need the plot.
 
+{phang2}{cmd:. nwwebuse florentine, nwclear}{p_end}
 {phang2}{cmd:. nwcorrelate flomarriage flobusiness, permutations(500) export(corr.png, width(1200))}{p_end}
 
 {title:Network types}
@@ -271,17 +274,17 @@ like any value. See {help nwnetworktypes}.{p_end}
 {title:Limits}
 
 {pstd}
-When the native plugin of your platform has this kernel, the correlations between the nodes of one network are formed from the stored ties and take 0.45 seconds at 5,000 nodes (the Mata code: 3.2
-seconds); the results agree to 1e-13. A network with missing tie values and a platform whose plugin lacks this kernel use the Mata code described next.
+When the native plugin of your platform has this kernel, the correlations between the nodes of one network are formed from the stored ties; the results agree with those of the Mata code to 1e-13. A network with missing tie values and a platform whose
+plugin lacks this kernel use the Mata code described next.
 
 {pstd}
 The Mata code computes the correlations between the nodes of one network ({cmd:nwcorrelate} {it:netname}) with about 25 dense
-node-by-node matrices at once: Stata/BE, random directed network with 10 ties per node, 5,000 nodes 10 seconds and 5.1 GB;
-the command stops with r(484) above 7,000 nodes (10,000 nodes needed more than 12 GB). The correlation of two networks
-(with {opt permutations()}) takes 16 seconds and 7 GB at 10,000 nodes.
+node-by-node matrices at once (about 5.1 GB at 5,000 nodes);
+the command stops with r(484) above 7,000 nodes (10,000 nodes need more than 12 GB). The correlation of two networks
+(with {opt permutations()}) needs about 7 GB at 10,000 nodes.
 
 {pstd}
-The correlation of two networks holds about 9 matrices of {it:n}-by-{it:n} (10,000 nodes with 5 permutations: 16 seconds and 7.2 GB)
+The correlation of two networks holds about 9 matrices of {it:n}-by-{it:n} (10,000 nodes: 7.2 GB)
 and stops at once with r(484) above about 12,900 nodes; option {opt force} runs it anyway. The correlation of the nodes of one
 network needs about 25 matrices and is refused above 7,000 nodes.
 
@@ -335,4 +338,4 @@ Zachary, W. (1977). An information flow model for conflict and fission in small 
 	{help nwtabulate}, {help nwexpand}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

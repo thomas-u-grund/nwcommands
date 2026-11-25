@@ -32,7 +32,7 @@ Returns the [nodeid](nodeid) of a node given its node label specified in *nodela
 ## Examples
 
 ```stata
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . _nwnodeid flomarriage, nodelab(medici) detail
 
         ----------------------------------------
@@ -68,4 +68,4 @@ macros:
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

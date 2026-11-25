@@ -149,9 +149,10 @@ In this dummy example, we create 5 new variables v1-v5 and set a network from th
 are no ties).
 
 	{cmd:. nwclear}
-	{cmd:. forvalues i = 1/5} {
-	{cmd:     gen v = 0}
-	{cmd:  }}
+	{cmd:. set obs 5}
+	{cmd:. forvalues i = 1/5 {c -(}}
+	{cmd:.     generate v`i' = 0}
+	{cmd:. {c )-}}
 	{cmd:. nwset v*}
 
 {pstd}
@@ -469,4 +470,4 @@ time per pair and take 80 GB each at 100,000 nodes.
 {help nwattime}, {help nwintro##limits:feasible network sizes}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

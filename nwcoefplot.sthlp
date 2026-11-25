@@ -43,7 +43,7 @@
 {pstd}
 {cmd:nwcoefplot} draws point estimates with confidence intervals of the coefficients in {cmd:e(b)} and {cmd:e(V)} of the last estimation or of stored results. It works after {helpb nwsaom}, {helpb nwergm},
 {helpb nwdynam}, {helpb nwrem}, {helpb nwalaam}, {helpb nwlsm} and after any other command that leaves {cmd:e(b)} and {cmd:e(V)}. The coefficients are labelled with their names. The intervals are {it:b}
-{c +-} {it:z} se, with a {it:t} quantile when the command stores {cmd:e(df_r)}. For {cmd:nwlsm} the coefficients are posterior means with posterior standard deviations, so the intervals are normal approximations;
++/- {it:z} se, with a {it:t} quantile when the command stores {cmd:e(df_r)}. For {cmd:nwlsm} the coefficients are posterior means with posterior standard deviations, so the intervals are normal approximations;
 the credible intervals of the fit are in the output of {helpb nwlsm}. Coefficients that were omitted or have no variance are not drawn.
 
 {pstd}
@@ -99,4 +99,4 @@ forms are {cmd:Oh Dh Th Sh}); at most one symbol per model is allowed, and a sym
 {help nwcompare}, {help nwergm}, {help nwsaom}, {help nwdynam}, {help nwrem}, {help nwalaam}, {help nwlsm}, {help estimates}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

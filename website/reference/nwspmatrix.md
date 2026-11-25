@@ -44,7 +44,7 @@ Observation *i* of the data set in memory must hold node *i* of the network, as 
 
 `weights(binary|valued)`: `binary` (default) uses 1 for every tie; `valued` uses the tie values. Values must not be negative. Self-loops are removed.
 
-`direction()` applies to directed networks only (an undirected network is symmetric already). `out` (default): *W*sub:ij refers to the tie from *i* to *j*, so node *i* is influenced by the nodes it names. `in`: the transpose, so node *i* is influenced by the nodes that name it. `symmetric`: a tie in either direction counts (the larger of the two values with valued weights). `mutual`: only reciprocated ties count (the smaller of the two values).
+`direction()` applies to directed networks only (an undirected network is symmetric already). `out` (default): *W_ij* refers to the tie from *i* to *j*, so node *i* is influenced by the nodes it names. `in`: the transpose, so node *i* is influenced by the nodes that name it. `symmetric`: a tie in either direction counts (the larger of the two values with valued weights). `mutual`: only reciprocated ties count (the smaller of the two values).
 
 `normalize()`: `row` (default) divides each row by its sum, so that rows sum to 1; `none` leaves the matrix as it is; `spectral` and `minmax` are done by Stata as described in `spmatrix normalize`. Note that Stata's own default is `spectral`, not `row`.
 
@@ -105,4 +105,4 @@ Leenders, R. T. A. J. 2002. Modeling social influence through network autocorrel
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

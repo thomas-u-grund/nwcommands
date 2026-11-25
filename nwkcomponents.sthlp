@@ -15,10 +15,10 @@
 {p 8 17 2}
 {cmdab: nwkcomponents}
 [{it:{help netlist}}]
-[{cmd:,}
-{opt sym}
-{opth k(int)}
+{cmd:,}
 {opth gen:erate(newvarname)}
+[{opt sym}
+{opth k(int)}
 {opt replace}
 {opt nom:atrix}
 {opt silent}
@@ -108,17 +108,15 @@ bipartite graph read as a one-mode network. {bf:Signed:} not checked. See {help 
 {pstd}
 The search for vertex cuts runs in compiled code and the network is not turned into a matrix. For k(2), the default, the search needs a
 single pass over the ties (the blocks of the network, one depth-first search) instead of one max-flow computation per node; for k(3) and
-higher it is one max-flow computation per node and per level. Measured in Stata/BE on a random undirected network with 10 ties drawn
-per node and k(2): 1,000 / 5,000 / 20,000 nodes in 0.02 / 0.1 / 1.0 seconds. Both routes give the same
+higher it is one max-flow computation per node and per level. Both routes give the same
 components in the same order. Without the compiled plugin for the platform the Mata code is used and is much slower. For large k or many
 cuts the time is longer.
 
 {pstd}
 Every level of the recursion looks for a vertex cut, so the time grows with the number of cuts. From about 40,000 nodes on, most of the time
 is spent in Stata itself, which needs time growing with the square of the number of columns to store the matrix {cmd:r(kcomp_matrix)}
-(one row per component, one column per node): 100,000 nodes take about one minute. Option {opt nomatrix} leaves the matrix out; the variable and {cmd:r(kcomponents)} are the same. When the estimated
-time is more than 2 minutes (about 31,000 nodes, an estimate made
-for the slower route) the command stops at once with r(484) and a message; option {opt force}
+(one row per component, one column per node). Option {opt nomatrix} leaves the matrix out; the variable and {cmd:r(kcomponents)} are the same. When the estimated
+time is more than 2 minutes (about 31,000 nodes) the command stops at once with r(484) and a message; option {opt force}
 runs it anyway. For components use {help nwcomponents}, for cores {help nwkcore}.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
@@ -165,4 +163,4 @@ University Press. (k-components and structural cohesion)
 	{help nwcomponents}, {help nwclique}, {help nwkplex}, {help nwnclique}, {help nwnclan}, {help nwkcore}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

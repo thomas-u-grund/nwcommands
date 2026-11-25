@@ -64,7 +64,7 @@ recovers exactly the two intuitive lambda sets, **A,B,C** and **D,E,F**.
 
 ## Limits
 
-The edge connectivity of every pair is read from an equivalent-flow tree (Gusfield 1990): *n*-1 maximum flows on the sparse network instead of *n*(*n*-1)/2, each stopped as soon as it reaches the smaller degree of the two ends. The result is a dense *n*-by-*n* valued network, which is what takes the memory: it is held twice while the network is registered (20,000 nodes: 30 seconds and 6.5 GB). Measured on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take 0.02 / 0.09 / 2.2 seconds.
+The edge connectivity of every pair is read from an equivalent-flow tree (Gusfield 1990): *n*-1 maximum flows on the sparse network instead of *n*(*n*-1)/2, each stopped as soon as it reaches the smaller degree of the two ends. The result is a dense *n*-by-*n* valued network, which is what takes the memory: it is held twice while the network is registered (20,000 nodes: 6.5 GB).
 
 ## Examples
 
@@ -96,4 +96,4 @@ The result is an *n*-by-*n* network and two matrices are held at once: above abo
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

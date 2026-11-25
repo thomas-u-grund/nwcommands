@@ -46,7 +46,7 @@ selfloop]
 | `selfloop` | keep the ties of a node with itself (rows with *fromid* = *toid*); by default they are dropped |
 | `keeporiginal` | generate variable *_nodeoriginal* with the original identifier of each node (from *fromid*/*toid*) on the node's row |
 | `replace` | if a network named *newnetname* already exists, drop it and use this name anyway (see [nwset](nwset) for the same convention) |
-| `labprefix`(*string*) | prefix used for auto-generated node labels when `fromid` / `toid` are numeric and `labs()` is not specified; default = **n** - named `labprefix()`, not `prefix()`, to avoid colliding with [nwrecode](nwrecode)'s unrelated `prefix()` (which prefixes new *network* names, not node labels) |
+| `labprefix`(*string*) | prefix used for auto-generated node labels when *fromid* / *toid* are numeric and `labs()` is not specified; default = **n** - named `labprefix()`, not `prefix()`, to avoid colliding with [nwrecode](nwrecode)'s unrelated `prefix()` (which prefixes new *network* names, not node labels) |
 | `overwrite` | forwarded to [nwload](nwload) governing whether this command's own generated Stata variables overwrite existing ones of the same name - unrelated to `replace` above, which is about the *network*, not Stata variables |
 
 ## Description
@@ -96,7 +96,7 @@ After a network has been declared, one can refer to it by its [netname](netname)
 Or alternatively, this calculates the [betweenness centrality](nwbetween) of the nodes in *mynet*.
 
 ```stata
-. nwbetween mynet
+. nwbetween mynet, generate(between)
 ```
 By default, **nwfromedge** recognizes if a network is directed or undirected, i.e. for each dyad entry (i,j) there is also a dyad entry (j,i). However, this automatic detection can be overwritten with the options `undirected` and `directed`. With `undirected`, a tie that is listed in only one direction is stored as it is (a negative value stays negative); if both directions are listed with different values, the larger value is kept.
 
@@ -128,4 +128,4 @@ This loads a network dataset from the internet and transforms the network *glasg
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

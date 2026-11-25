@@ -755,7 +755,7 @@ program nwinstall_menu
 	window menu append item "Positions and Equivalence" "Generate node dissimilarities" "db nwdissimilar"
 	window menu append item "Positions and Equivalence" "Hierarchical clustering of nodes (role/position analysis)" "db nwhierarchy"
 	window menu append item "Positions and Equivalence" "E-I index and mixing table for a categorical node attribute" "db nwmixing"
-	window menu append item "Positions and Equivalence" "Calculate number of shared neighbors between nodes and..." "db nwshared"
+	window menu append item "Positions and Equivalence" "Number of shared neighbors between nodes" "db nwshared"
 	window menu append item "Positions and Equivalence" "Classes of regularly equivalent nodes" "db nwregular"
 	window menu append item "Positions and Equivalence" "Generate node similarities" "db nwsimilar"
 	window menu append item "Positions and Equivalence" "Common-neighbor similarity indices between all node pairs" "db nwsimindex"
@@ -767,11 +767,12 @@ program nwinstall_menu
 	window menu append item "Statistical Models" "Conditional Uniform Graph (CUG) test" "db nwcug"
 	window menu append item "Statistical Models" "Multivariate QAP regression" "db nwqap"
 	window menu append item "Statistical Models" "Spatial weighting matrix from a network, for spregress" "db nwspmatrix"
-	window menu append item "Statistical Models" "Calculate utility scores according to Jackson and Wollinsky..." "db nwutility"
+	window menu append item "Statistical Models" "Utility scores (Jackson and Wolinsky 1996)" "db nwutility"
 
-	// Model packages: ONE menu entry per package (nwsaom, nwergm, nwalaam, nwsbm); every other dialog of a package (Bayes, several networks,
+	// Model packages: ONE menu entry per package (nwsaom, nwergm, nwalaam, nwsbm, nwlsm); every other dialog of a package (Bayes, several networks,
 	// postestimation, simulation, ...) opens from a button inside the main dialog. An entry is listed only when the
-	// package's dialog file is installed (nwdynam and nwrem have no dialogs)
+	// package is installed, that is, its command (.ado) and its dialog are both found: nwalaam.dlg ships with the
+	// core, so the dialog file alone does not show it (nwdynam and nwrem have no dialogs)
 	local __nwmodeldlg ""
 	local __nwmodeldlg `"`__nwmodeldlg' "nwsaom|Stochastic actor-oriented model (nwsaom)""'
 	local __nwmodeldlg `"`__nwmodeldlg' "nwergm|Exponential random graph model (nwergm)""'
@@ -782,8 +783,10 @@ program nwinstall_menu
 	foreach __nwd of local __nwmodeldlg {
 		gettoken __nwdn __nwdl : __nwd, parse("|")
 		local __nwdl = substr(`"`__nwdl'"', 2, .)
+		capture findfile `__nwdn'.ado
+		local __nwrc = _rc
 		capture findfile `__nwdn'.dlg
-		if _rc == 0 {
+		if _rc == 0 & `__nwrc' == 0 {
 			if `__nwfirst' window menu append separator "Statistical Models"
 			local __nwfirst = 0
 			window menu append item "Statistical Models" `"`__nwdl'"' "db `__nwdn'"
@@ -804,7 +807,7 @@ program nwinstall_menu
 	window menu append item "Import and Export" "Convert two-mode network to edgelist" "db nw2toedge"
 	window menu append item "Import and Export" "Append network dataset" "db nwappend"
 	window menu append item "Import and Export" "Export network as Pajek or Ucinet file" "db nwexport"
-	window menu append item "Import and Export" "Imports network data from edgelist" "db nwfromedge"
+	window menu append item "Import and Export" "Import network data from an edge list" "db nwfromedge"
 	window menu append item "Import and Export" "Import network" "db nwimport"
 	window menu append item "Import and Export" "Save network data in file" "db nwsave"
 	window menu append item "Import and Export" "Declare data to be network data" "db nwset"

@@ -37,7 +37,7 @@ Simply transposes a network, i.e. a directed tie from node *i* to node *j* is tr
 
 ## Limits
 
-A network held as stored ties is transposed tie by tie. Measured in Stata/BE on a random directed network with 10 ties per node: 20,000 nodes 0.2 seconds.
+A network held as stored ties is transposed tie by tie.
 
 ## Examples
 
@@ -70,4 +70,4 @@ A network held as stored ties is transposed tie by tie. Measured in Stata/BE on 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

@@ -2,8 +2,8 @@ v 3
 d nwcommands-dlg. Social Network Analysis Using Stata - Dialog Boxes (part 1)
 d Thomas U. Grund, RWTH Aachen University, www.grund.co.uk
 d email: thomas.u.grund@gmail.com
-d Distribution-Date: 23nov2026
-d Version: 3.36.1
+d Distribution-Date: 25nov2026
+d Version: 3.37.0
 f nwtostata.dlg
 f nwexport.dlg
 f nwmovie.dlg
@@ -58,7 +58,6 @@ f nwkcore.dlg
 f nwrename.dlg
 f nwsimindex.dlg
 f nwcug.dlg
-f nwplot_color_opt.dlg
 f nwplot.dlg
 f nwneighbor.dlg
 f nwclear.dlg
@@ -84,3 +83,4 @@ f nwspmatrix.dlg
 f nw_edges_size.dlg
 f nwcontext.dlg
 f nw2toedge.dlg
+f nwds.dlg

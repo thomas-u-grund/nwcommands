@@ -61,7 +61,7 @@ newmode2desc(string)
 This loads the Florentine data and returns various information about the *flobusiness* network.
 
 ```stata
-. nwwebuse florentine
+. nwwebuse florentine, nwclear
 . nwname flobusiness
 . return list
 ```
@@ -109,4 +109,4 @@ This changes the name of the network *flobusiness* into *flob*. This could also 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

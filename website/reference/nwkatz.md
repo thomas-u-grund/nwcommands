@@ -16,10 +16,10 @@ Katz-style distance-decay centrality
 ```stata
 nwkatz 
 [netname]
-[,
-alpha(real)
-walks
+,
 gen:erate(varname)
+[alpha(real)
+walks
 replace
 sym
 nosym
@@ -60,9 +60,9 @@ where *dist(i,j)* is the [geodesic (shortest-path) distance](nwgeodesic) between
 
 ## Limits
 
-The distance-decay score (without `walks`) is summed over breadth-first searches from every node in the plugin, without a matrix of distances, unless *geodesic_options* are given or the platform has no plugin (then the matrix of [nwgeodesic](nwgeodesic) is used). Measured in Stata/BE on a random directed network with 10 ties per node: 20,000 nodes 10 seconds and 0.35 GB (99 seconds and 6.4 GB through the matrix). `walks` solves a dense linear system and needs the matrix.
+The distance-decay score (without `walks`) is summed over breadth-first searches from every node in the plugin, without a matrix of distances, unless *geodesic_options* are given or the platform has no plugin (then the matrix of [nwgeodesic](nwgeodesic) is used, which needs much more memory). `walks` solves a dense linear system and needs the matrix.
 
-Without `walks` the time grows with the number of nodes times the number of ties like that of [nwcloseness](nwcloseness): when the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties per node, 5 minutes at 100,000 nodes) the command stops at once with r(484) and a message; option `force` runs it anyway. With `walks` the matrix is dense and a network of more than 20,000 nodes is refused.
+Without `walks` the time grows with the number of nodes times the number of ties like that of [nwcloseness](nwcloseness): when the estimated time is more than 2 minutes (about 63,000 nodes with 10 ties per node) the command stops at once with r(484) and a message; option `force` runs it anyway. With `walks` the matrix is dense and a network of more than 20,000 nodes is refused.
 
 ## Examples
 
@@ -82,4 +82,4 @@ Katz, L. (1953). A New Status Index Derived from Sociometric Index. *Psychometri
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

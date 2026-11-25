@@ -15,15 +15,14 @@
 {p 8 17 2}
 {cmdab: nwnclique}
 [{it:{help netlist}}]
-[{cmd:,}
-{opt sym}
+{cmd:,}
+{c -(}{opth gen:erate(newvarname)} | {opt count:only}{c )-}
+[{opt sym}
 {opth n(int)}
-{opth gen:erate(newvarname)}
 {opt replace}
 {opth minsize(int)}
 {opt max:cliques(#)}
 {opt maxt:ime(#)}
-{opt count:only}
 {opt nom:atrix}
 {opt silent}]
 
@@ -93,9 +92,8 @@ negative values are not treated specially. See {help nwnetworktypes}.{p_end}
 node and searched with the same pivoting Bron-Kerbosch rule, in compiled code.
 What limits the command is the number of maximal n-cliques, not the size of the network: with {opt n(2)} almost every
 node reaches almost every other within two steps, the "distance at most 2" graph is dense, and its maximal cliques
-are very many. Measured in Stata/BE on a random network with 10 ties drawn per node and {opt n(2)}: 100 nodes already
-have 46,580,136 maximal 2-cliques of at least 3 nodes (up to 64 nodes each; counting them with {opt countonly} takes
-33 seconds, and the result matrix would need 37 GB), so the output of the command, not its running time, is out of
+are very many. In a random network with 10 ties drawn per node and {opt n(2)}, 100 nodes already
+have 46,580,136 maximal 2-cliques of at least 3 nodes (up to 64 nodes each; the result matrix would need 37 GB), so the output of the command, not its running time, is out of
 reach from about 100 nodes on.
 Sparser or smaller networks, a larger {opt minsize()} and path-like networks (long distances, few short cycles) are
 fine.
@@ -148,4 +146,4 @@ University Press. (cliques and cohesive subgroups)
 	{help nwnclan}, {help nwclique}, {help nwkplex}, {help nwkcomponents}, {help nwgeodesic}, {help nwkcore}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

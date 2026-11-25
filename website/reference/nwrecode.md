@@ -64,14 +64,13 @@ If generate() is not specified, the input networks are overwritten; Overwriting 
 
 ## Limits
 
-The recode is applied to the distinct tie values and then to the stored ties, so the time depends on the number of ties. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 / 5,000 / 20,000 nodes in 0.03 / 0.1 / 0.3 seconds. A rule that gives the empty dyads a value, or turns ties into missing values, recodes the whole matrix (guarded at 20,000 nodes).
+The recode is applied to the distinct tie values and then to the stored ties, so the time depends on the number of ties. A rule that gives the empty dyads a value, or turns ties into missing values, recodes the whole matrix (guarded at 20,000 nodes).
 
 ## Examples
 
 **Setup**
 
-- `. nwwebuse gang`
-- `. nwwebuse glasgow`
+- `. nwwebuse gang, nwclear`
 
 - List the network adjacency matrix
 - `. nwsummarize gang, mat`
@@ -98,13 +97,11 @@ The recode is applied to the distinct tie values and then to the stored ties, so
 
 - For *glasgow1*, *glasgow2*, and *glasgow3*, change dyad values 1 to 99 and store the
 - transformed networks in *new_glasgow1*, *new_glasgow2*, and *new_glasgow3*.
-- `. nwrecode glasgow1-glasgow3 (1=99) ,`
+- `. nwwebuse glasgow, nwclear`
+- `. nwrecode glasgow1-glasgow3 (1=99), prefix(new) test`
 
-```stata
-prefix(new) test
-```
 - List the network adjacency matrices
-- `. nwsummarize glasgow1-3 new_glasgow1-3, mat`
+- `. nwsummarize glasgow1-glasgow3 newglasgow1-newglasgow3, mat`
 
 ## See also
 
@@ -112,4 +109,4 @@ prefix(new) test
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

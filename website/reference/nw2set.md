@@ -123,7 +123,7 @@ From a two-mode network one can also produce a one-mode projection (see [nw2proj
 
 ## Limits
 
-A two-mode network is stored as one dense matrix over the nodes of both modes (the cells between nodes of the same mode are missing), so the memory grows with the square of the total number of nodes. Measured in Stata/BE, random edge list with 10 ties per mode-1 node and half as many mode-2 nodes: 7,500 nodes (5,000 + 2,500) 1.1 GB, 15,000 nodes (10,000 + 5,000) 6.6 seconds and 7 GB. The commands that work on the two modes ([nw2project](nw2project), [nwmatching](nwmatching), [nw2degree](nw2degree), [nw2clustering](nw2clustering)) take 1 to 10 seconds at 15,000 nodes. [nw2toedge](nw2toedge) without `compress` lists every pair of nodes of the two modes and is refused above 50,000,000 rows.
+A two-mode network is stored as one dense matrix over the nodes of both modes (the cells between nodes of the same mode are missing), so the memory grows with the square of the total number of nodes. With 10 ties per mode-1 node and half as many mode-2 nodes, 7,500 nodes (5,000 + 2,500) need about 1.1 GB and 15,000 nodes (10,000 + 5,000) about 7 GB. [nw2toedge](nw2toedge) without `compress` lists every pair of nodes of the two modes and is refused above 50,000,000 rows.
 
 ## See also
 
@@ -131,4 +131,4 @@ A two-mode network is stored as one dense matrix over the nodes of both modes (t
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

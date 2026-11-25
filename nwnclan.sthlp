@@ -15,15 +15,14 @@
 {p 8 17 2}
 {cmdab: nwnclan}
 [{it:{help netlist}}]
-[{cmd:,}
-{opt sym}
+{cmd:,}
+{c -(}{opth gen:erate(newvarname)} | {opt count:only}{c )-}
+[{opt sym}
 {opth n(int)}
-{opth gen:erate(newvarname)}
 {opt replace}
 {opth minsize(int)}
 {opt max:cliques(#)}
 {opt maxt:ime(#)}
-{opt count:only}
 {opt nom:atrix}
 {opt silent}]
 
@@ -94,12 +93,10 @@ prints a note). {bf:Two-mode:} same as for the bipartite graph read as a one-mod
 inside the group. The search does not list all maximal n-cliques first: it drops a branch as soon as a member
 already in the group is more than {it:n} steps from the newest member inside the group plus its remaining
 candidates (distances only grow in the subsets a clan below the branch can be), which leaves the clans found, and
-their order, unchanged. Measured in Stata/BE on a random network with 10 ties drawn per node and {opt n(2)}: 100 /
-300 / 1,000 nodes take 0.006 / 2.0 / 1.8 seconds (no / 114 / 5,777 clans); at 5,000 nodes there are 165,097
-clans, found in 2.5 seconds with {opt nomatrix}, but the clans-by-nodes matrix (165,097 x 5,000) is too large to build, which the
-default says.
+their order, unchanged. For example, a random network of 5,000 nodes with 10 ties drawn per node has 165,097 2-clans: they can be found with {opt nomatrix}, but the
+clans-by-nodes matrix (165,097 x 5,000) is too large to build.
 Larger {opt n()} makes the "distance at most {it:n}" graph denser and the search much longer: at 1,000 nodes
-and {opt n(3)} the search took 197 seconds (and found no clan), so the default limit of 60 seconds stops it.
+and {opt n(3)} the default limit of 60 seconds ({opt maxtime()}) already stops the search.
 
 {pstd}
 {bf:Guards.} The command stops with r(484) and a message that names the option to raise when more than
@@ -148,4 +145,4 @@ University Press. (cliques and cohesive subgroups)
 	{help nwnclique}, {help nwclique}, {help nwkplex}, {help nwkcomponents}, {help nwgeodesic}, {help nwkcore}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

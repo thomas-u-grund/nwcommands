@@ -58,7 +58,7 @@ The command makes use of the normal {help tabulate} command, hence, all
 
 {title:Example}
 	
-   {cmd:. nwwebuse gang}
+   {cmd:. nwwebuse gang, nwclear}
    {cmd:. nwtabulate gang}
 {res}
 {txt}   Network:  {res}gang{txt}{col 24}Directed: {res}false{txt}
@@ -82,19 +82,17 @@ In the {it:gang} network, 1116 potential (undirected) co-offending ties are not 
 
 {pstd}
 The table of one network counts the dyads of each value without listing them, so the time depends on the number of ties,
-not on the square of the number of nodes. Measured in Stata/BE, random directed network with 10 ties per node: 1,000 /
-5,000 / 20,000 nodes in 0.01 / 0.01 / 0.03 seconds.
+not on the square of the number of nodes.
 The tabulation of a network by an attribute lists the ties only; the permutation test ({opt permutations()}, default 100) permutes the attribute on the dense
-matrix and takes most of the time: 10,000 nodes with 100 permutations 47 seconds and 4.8 GB. The tabulation of two
+matrix and takes most of the time (10,000 nodes: 4.8 GB). The tabulation of two
 networks uses the dyad list and the full matrix.
 
 {pstd}
-With {opt attribute()} the permutation test acts on the stored ties of a network that is held that way (20,000 nodes with the default 100
-permutations: 1.6 seconds). The test of two networks works on the matrices.
+With {opt attribute()} the permutation test acts on the stored ties of a network that is held that way. The test of two networks works on the matrices.
 
 {pstd}
 Frequency weights of Stata stop at 2,147,483,647: a directed network of more than about 46,000 nodes (an undirected one of 65,000) has more dyads than that. The table is then written by
-{cmd:nwtabulate} itself (value, frequency, percent, cumulative percent; the options of {help tabulate} are ignored). A network of 100,000 nodes takes 0.1 seconds.
+{cmd:nwtabulate} itself (value, frequency, percent, cumulative percent; the options of {help tabulate} are ignored).
 
 {title:See also}
 
@@ -377,4 +375,4 @@ further options in {opt plotoptions()} are passed to {help twoway}. The built-in
 {p 4 4 2}{help nwtab1:one-way nwtabulate}, {help nwtab2:two-way nwtabulate network}, {help nwcorrelate}, {help nwqap}, {help tabulate}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

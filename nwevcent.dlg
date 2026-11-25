@@ -18,9 +18,9 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("Network(s):")
   COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
   GROUPBOX gb_opt 10 44 520 188, label("Options")
-  TEXT tx_cx_sym 20 54 260 ., label("symmetrize a directed network before calculation (the larger of the two directions of a tie)")
+  TEXT tx_cx_sym 20 54 260 ., label("Symmetrize first (larger of the two tie values)")
   CHECKBOX cx_sym 290 54 190 ., label("sym") option(symmetrize)
-  TEXT tx_cx_weighted 20 82 260 ., label("calculate on tie values instead of dichotomizing a valued network")
+  TEXT tx_cx_weighted 20 82 260 ., label("Use the tie values of a valued network")
   CHECKBOX cx_weighted 290 82 190 ., label("weighted") option(weighted)
   TEXT tx_vr_generate 20 110 260 ., label("Required. Variable name for eigenvector centrality scores")
   VARNAME vr_generate 290 110 190 ., nomem option(generate)
@@ -28,7 +28,7 @@ BEGIN
   CHECKBOX cx_replace 290 138 190 ., label("replace") option(replace)
   TEXT tx_cx_binary 20 166 260 ., label("Ignore the tie values of a valued network (default: use them)")
   CHECKBOX cx_binary 290 166 190 ., label("binary") option(binary)
-  TEXT tx_cx_out 20 194 260 ., label("directed network: centrality from the nodes it sends ties to (default: from the nodes that send ties to it)")
+  TEXT tx_cx_out 20 194 260 ., label("Directed: use outgoing ties (default: incoming)")
   CHECKBOX cx_out 290 194 190 ., label("out") option(out)
 END
 

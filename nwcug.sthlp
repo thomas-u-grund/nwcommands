@@ -160,9 +160,8 @@ same nodes (conditions above). {bf:Signed:} depends on the command in {opt stat(
 {title:Limits}
 
 {pstd}
-Every draw of the null distribution is a new random network ({help nwrandom}) and the statistic is computed on it. With
-{cmd:condition(density)} above 5,000 nodes a draw is made in a fraction of a second (the positions of the ties are drawn
-directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents} as the statistic take 2 seconds at 20,000 nodes.
+Every draw of the null distribution is a new random network ({help nwrandom}) and the statistic is computed on it. With {cmd:condition(density)} above 5,000 nodes the positions of the ties are drawn
+directly, so the time is mainly that of the statistic.
 {cmd:condition(census)} works on the matrix.
 
 
@@ -173,6 +172,7 @@ directly), so the time is that of the statistic: 5 draws with {cmd:nwcomponents}
 other {cmd:graph export} options follow a comma. A graph or file of the same name is replaced; a trailing {cmd:, replace} is accepted and ignored. Other options go to {helpb twoway} and come last, so they
 replace the defaults. 
 
+{phang2}{cmd:. nwwebuse florentine, nwclear}{p_end}
 {phang2}{cmd:. nwcug flomarriage, stat(nwclustering) rname(cluster_global) condition(degrees) reps(500) seed(3) plot export(cug.png, width(1200))}{p_end}
 
 {title:Stored results}
@@ -204,4 +204,4 @@ indices. {it:Social Networks} 21(3), 239-267.
 	{help nwrandom}, {help nwdyads}, {help nwpermute}, {help nwqap}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

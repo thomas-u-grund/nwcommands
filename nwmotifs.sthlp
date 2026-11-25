@@ -123,8 +123,7 @@ stars, paths, 4-cycles, triangles with a pendant tie, diamonds and complete 4-se
 degrees, the triangles on each tie and the common neighbours of node pairs (time proportional to the number of ties
 times the largest degree), and turned into counts of {it:induced} subgraphs with the exact inclusion relations between
 the six connected shapes; the disconnected count is the remainder of the total. The result is identical to the
-enumeration. Measured in Stata/BE on a random network with 10 ties drawn per node: 300 / 1,000 / 5,000 nodes take
-0.007 / 0.015 / 0.06 seconds. Counts are exact up to the
+enumeration. Counts are exact up to the
 size of a 64-bit integer; stored as Stata scalars they are exact up to 9 x 10^15 (about 20,000 nodes' worth of
 four-node sets).
 
@@ -188,4 +187,4 @@ Motifs: Simple Building Blocks of Complex Networks. {it:Science} 298(5594), 824-
     {help nw2motifs} (the bipartite motifs of a two-mode network, the two-mode counterpart), {help nwtriads}, {help nwcug}, {help nwclustering}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

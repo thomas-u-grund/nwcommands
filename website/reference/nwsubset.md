@@ -48,7 +48,7 @@ However, the last command does not copy the node labels of network *flomarriage*
 
 ## Limits
 
-A network held as stored ties keeps the ties between the remaining nodes without an *n*-by-*n* matrix: 50,000 of 100,000 nodes in about 1 second. The same holds for [nwdrop](nwdrop), [nwkeep](nwkeep), [nwdropnodes](nwdropnodes) and [nwkeepnodes](nwkeepnodes).
+A network held as stored ties keeps the ties between the remaining nodes without an *n*-by-*n* matrix. The same holds for [nwdrop](nwdrop), [nwkeep](nwkeep), [nwdropnodes](nwdropnodes) and [nwkeepnodes](nwkeepnodes).
 
 ## See also
 
@@ -56,4 +56,4 @@ A network held as stored ties keeps the ties between the remaining nodes without
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

@@ -41,8 +41,8 @@ BEGIN
   CHECKBOX cx_fracexp 230 184 150 ., label("fractionexposure(q)")
   EDIT ed_fracexp 385 184 40 ., nomem
   CHECKBOX cx_shareexp 440 184 120 ., label("shareexposure")
-  TEXT tx_par 20 210 540 ., label("k: positive integer (default 2); q: share above 0 up to 1 (default 0.5); leave blank for the default.")
-  TEXT tx_dir 20 226 540 ., label("Directed network only:")
+  TEXT tx_par 20 207 540 ., label("k: positive integer (default 2); q: share above 0 up to 1 (default 0.5); leave blank for the default.")
+  TEXT tx_dir 20 227 540 ., label("Directed network only:")
   CHECKBOX cx_sender 20 246 130 ., label("sender")
   CHECKBOX cx_receiver 160 246 130 ., label("receiver")
   CHECKBOX cx_reciprocity 300 246 130 ., label("reciprocity")

@@ -47,7 +47,8 @@ to which one wants to collapse is specified in option {bf:project()}.
 {pstd}
 For example, this loads a two-mode network and projects it onto level 1:
 
-	{cmd:. nw2project mynet, project(1) name(myproject1)}
+	{cmd:. nwwebuse davis, nwclear}
+	{cmd:. nw2project davis, project(1) name(myproject1)}
 
 {pstd}
 By default, a one-mode projection on one level generates ties between nodes (on this level) when they
@@ -140,4 +141,4 @@ which {opt stat()}) is recorded on the new network itself, not just printed - se
 {p 4 4 2}{help nwproject} (an exact alias for this command), {help nw2set}, {help nw2fromedge}, {help nw2toedge}, {help nw2clustering}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

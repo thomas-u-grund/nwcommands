@@ -16,9 +16,9 @@ Maximal clique enumeration
 ```stata
 nwclique
 [netlist]
-[,
-sym
+,
 generate(newvarname)
+[sym
 replace
 minsize(int)
 nomatrix
@@ -50,7 +50,7 @@ With more than one network in the *netlist*, a number is appended to the variabl
 
 ## Limits
 
-Only the maximal cliques of at least `minsize()` nodes are stored (the maximal cliques of one or two nodes of a sparse network are as many as its ties and would be the bulk of the work). The search (Bron and Kerbosch with pivoting) runs in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both find the same cliques in the same order. Measured in Stata/BE on a random undirected network with 10 ties drawn per node and `minsize(3)`: 5,000 nodes 0.1 seconds, 20,000 nodes 1.0 second (the Mata route needs 0.35 and 3.3 seconds). From about 40,000 nodes on, most of the time is spent in Stata itself, which needs time growing with the square of the number of columns to store the clique matrix `r(clique_matrix)` (one row per clique, one column per node): 100,000 nodes take about one minute, of which the search is 0.6 seconds. A network with many cliques also needs a lot of memory for that matrix. With option `nomatrix` the matrix is not built or stored: the variable and `r(cliques)` are the same, and 100,000 nodes take about a quarter of a second.
+Only the maximal cliques of at least `minsize()` nodes are stored (the maximal cliques of one or two nodes of a sparse network are as many as its ties and would be the bulk of the work). The search (Bron and Kerbosch with pivoting) runs in the compiled graph plugin (the native kernel of `nwcommands`) when the plugin of your platform has it, and in Mata otherwise; both find the same cliques in the same order. From about 40,000 nodes on, most of the time is spent in Stata itself, which needs time growing with the square of the number of columns to store the clique matrix `r(clique_matrix)` (one row per clique, one column per node). A network with many cliques also needs a lot of memory for that matrix. With option `nomatrix` the matrix is not built or stored: the variable and `r(cliques)` are the same.
 
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page [How large a network can I analyze?](https://nwcommands.org/nwcommands/size-limits/)
 
@@ -83,4 +83,4 @@ Wasserman, S., Faust, K. (1994). *Social Network Analysis: Methods and Applicati
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

@@ -68,7 +68,7 @@ same for every network type. See {help nwnetworktypes}.{p_end}
 {pstd}
 This loads the Florentine data and returns various information about the {it:flobusiness} network.
 	
-	{cmd:. nwwebuse florentine}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwname flobusiness}
 	{cmd:. return list}
 
@@ -115,4 +115,4 @@ This changes the name of the network {it:flobusiness} into {it:flob}. This could
 	{help nwsummarize}, {help nwset}, {help nwload}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -15,8 +15,14 @@ Generate a network from a function or a network expression
 
 ```stata
 nwgen newnetname = netfcn(arguments) [, options]
-nwgen newnetname = netexp [if] [, options]
+nwgen newnetname = netexp [if] [, xvars vars(varlist) replace options]
 ```
+
+| | |
+|---|---|
+| `replace` | overwrite an existing network (or, for a function that makes a variable, an existing variable) of the name *newnetname* |
+| `vars(varlist)` | network expression only: names for the Stata variables of the new network, one for each node (used by `xvars` and [nwload](nwload)); the functions do not take it |
+| `xvars` | generate Stata variables for the network |
 
 ## Description
 
@@ -129,4 +135,4 @@ Generate a per-node variable, one value per node, from an existing network:
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

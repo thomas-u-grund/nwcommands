@@ -34,7 +34,7 @@ old]
 
 **Directed:**, **Valued:**, **Signed:** stored as they are. **Two-mode:** yes - the file holds the ties between the modes only, the mode of every node and the node attributes (5,000 + 500 nodes take about a megabyte). See [nwnetworktypes](nwnetworktypes).
 
-**Temporal:** yes. A network declared with `time()`, `interval()` or `eventtime()` in [nwset](nwset) is saved with its times: every event of an event network (sender, receiver, time and value, in the order they were given), every observation of a tie of a snapshot network (a tie can come and go), every interval of an interval network, the temporal type and the names of the time variables. [nwuse](nwuse) brings back exactly these data. The file also holds the ties of such a network aggregated over all times, as for every network, so that an earlier version of nwcommands loads the aggregated network without times. A file that holds no temporal network has none of the time columns.
+**Temporal:** yes. A network declared with `time()`, `interval()` or `eventtime()` in [nwset](nwset) is saved with its times: every event of an event network (sender, receiver, time and value, in the order they were given), every observation of a tie of a snapshot network (a tie can come and go), every interval of an interval network, the temporal type and the names of the time variables. [nwuse](nwuse) brings back exactly these data. The file also holds the ties of such a network aggregated over all times, as for every network. A file that holds no temporal network has none of the time columns.
 
 ## Limits
 
@@ -56,7 +56,7 @@ This example creates 5 new random networks and [saves](nwsave) them as *mynets*.
 After this, one can easily load these 5 networks in a new Stata session just as if one would load a normal Stata dataset.
 
 ```stata
-. nwuse mynets
+. nwuse mynets, nwclear
 ```
 
 ## See also
@@ -65,4 +65,4 @@ After this, one can easily load these 5 networks in a new Stata session just as 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

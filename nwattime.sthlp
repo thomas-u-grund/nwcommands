@@ -91,12 +91,11 @@ specially. See {help nwnetworktypes}.{p_end}
 
 {pstd}
 The ties at the time point are taken from the stored ties and the matrix of tie times;
-{cmd:nwset, time()}/{cmd:interval()}/{cmd:eventtime()} find the node of every label in a hash. 20,000 nodes with 200,000 ties and 3
-waves: 0.3 seconds. The matrix of tie times itself is dense, 3.2 GB at 20,000 nodes.
+{cmd:nwset, time()}/{cmd:interval()}/{cmd:eventtime()} find the node of every label in a hash. The matrix of tie times itself is dense, 3.2 GB at 20,000 nodes.
 
 {pstd}
 For a temporal network of more than 2,000 nodes the times (or the starts and ends) of the ties are kept as a list of the ties that have one, not as {it:n}-by-{it:n} matrices (80 GB each at 100,000
-nodes). {cmd:nwattime} of a network with 100,000 nodes and 1 million ties takes about 2 seconds.
+nodes).
 
 
 {title:Stored results}
@@ -112,4 +111,4 @@ nodes). {cmd:nwattime} of a network with 100,000 nodes and 1 million ties takes 
 	{help nwset}, {help nwsummarize}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

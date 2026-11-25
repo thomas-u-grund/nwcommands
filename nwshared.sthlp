@@ -48,7 +48,7 @@ read as a one-mode network. {bf:Signed:} not applicable. See {help nwnetworktype
 
 {pstd}
 The two-step paths i -> k -> j are listed from the stored ties (the sum over k of in-degree times out-degree) and counted on the
-ties; no matrix is built. 20,000 nodes 1.7 seconds in Stata/BE, random directed network with 10 ties per node.
+ties; no matrix is built.
 
 
 {title:Example}
@@ -62,4 +62,4 @@ ties; no matrix is built. 20,000 nodes 1.7 seconds in Stata/BE, random directed 
 	{help nwsimmelian}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

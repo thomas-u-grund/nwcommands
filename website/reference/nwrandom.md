@@ -85,7 +85,7 @@ Not every list of degrees can be the degrees of a network: their sum must be eve
 
 ```stata
 . nwrandom 8, degree(3 3 2 2 2 2 1 1)
-. nwuse glasgow, nwclear
+. nwwebuse glasgow, nwclear
 . nwdegree glasgow1, generate(od id)
 . nwrandom 50, outdegree(od) indegree(id) name(glasgow_null)
 ```
@@ -96,7 +96,7 @@ Generates a one-mode network. **Directed:** directed by default, `undirected` fo
 
 ## Limits
 
-`prob()` above 2,000 nodes draws the ties as a list from the same random numbers as the matrix version (the same seed gives the same network). `density()` above 5,000 nodes draws the positions of the ties directly instead of shuffling all *n*^2 cells: a different random-number stream (and the same distribution); with 5,000 nodes or fewer the shuffle is used. `weights()` and `census()` work on the matrix. Measured in Stata/BE, density 0.0001: 5,000 nodes 11 seconds (shuffle), 10,000 nodes 0.1 seconds, 20,000 nodes 0.2 seconds (`density(.0002)`); `prob(.0002)` at 20,000 nodes 2.8 seconds.
+`prob()` above 2,000 nodes draws the ties as a list from the same random numbers as the matrix version (the same seed gives the same network). `density()` above 5,000 nodes draws the positions of the ties directly instead of shuffling all *n*^2 cells: a different random-number stream (and the same distribution); with 5,000 nodes or fewer the shuffle is used. `weights()` and `census()` work on the matrix.
 
 ## Examples
 
@@ -124,4 +124,4 @@ Generates a one-mode network. **Directed:** directed by default, `undirected` fo
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

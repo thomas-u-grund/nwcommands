@@ -61,6 +61,7 @@ program nwpermute
 		}
 	}
 	if "`generate'" != "" {
+		_nwreservedname `"`generate'"'
 		mata: nw_assert_netname(st_local("generate"))
 		capture _nwsyntax `generate', other(_chk)
 		local __pm_exists = (_rc == 0)

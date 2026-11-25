@@ -73,7 +73,7 @@ The adjacency matrix has *n* x *n* cells, so this is for networks of up to a few
 
 ## How networks are stored
 
-Networks are kept in Mata, next to the Stata dataset, in one object of class **NWs**. It holds the list of networks in memory (class **NWsdef**): their names, a pointer to each network and the current network. Each network is an object of class **NWdef**. The classes are compiled into the Mata library **lnwcommands.mlib**; their source is **unw_core.do** in the repository.
+Networks are kept in Mata, next to the Stata dataset, in one object of class **NWs**. It holds the list of networks in memory (class **NWsdef**): their names, a pointer to each network and the current network. Each network is an object of class **NWdef**. The classes are compiled into the Mata library **lnwcommands.mlib**.
 
 An **NWdef** object holds
 
@@ -126,7 +126,7 @@ Methods of **NWdef** that read the sparse index (node numbers run from 1 to ``no
 
 **Errors.** The return codes of nwcommands are listed in [nwerrorcodes](nwerrorcodes); use them, so that users meet the same code for the same problem.
 
-**Tests.** The commands of the package have test files in **cscripts/** of the repository, which check the results against values computed by hand or by another program. Run a new command's test against the compiled library, not only against the Mata source.
+**Tests.** Check the results of a new command against values computed by hand or by another program. Run a new command's test against the compiled library, not only against the Mata source.
 
 ## Pitfalls
 
@@ -150,4 +150,4 @@ The classes and methods described in this help file are internal: they can chang
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

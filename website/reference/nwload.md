@@ -73,7 +73,7 @@ For example, one can plot the Florentine marriage network and label the nodes ac
 . nwwebuse florentine, nwclear
 . nwplot flomarriage, label(_nwnode)
 ```
-Furthermore, **nwload** makes [netname](netname) the current network, unless option **nocurrent** is specified. Many nwcommands (although they do something with a network) do not require a network name. In the cases where no [netname](netname) is specified, a nwcommand automatically runs with the [current network](nwcurrent). For programming your own network commands with this feature see `_nwsyntax`.
+Furthermore, **nwload** makes [netname](netname) the current network, unless option **nocurrent** is specified. Many nwcommands (although they do something with a network) do not require a network name. In the cases where no [netname](netname) is specified, a nwcommand automatically runs with the [current network](nwcurrent). For programming your own network commands with this feature see [_nwsyntax](nwprogramming).
 
 By default, commands that generate a network (see [network generator](nwtopical)) do NOT also load the network as Stata variables - creating a network never silently spends Stata's own variable budget. Most network generators have the option **xvars**, which DOES invoke **nwload** after creating the new network, generating its Stata variables immediately. This is convenient for a single network at a time, but can exhaust Stata's variable limit if used while generating many networks at once.
 
@@ -95,4 +95,4 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

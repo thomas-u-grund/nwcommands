@@ -7,21 +7,21 @@ INCLUDE gr_orientation
 DIALOG edges_patternopt, title("Edge pattern")
 BEGIN
 	GROUPBOX gb_pat 10 10 380 130, label("Overwrite pattern palette")
-	TEXT     tx_pat1	20	30	280	., label("Pattern 1:") 		
+	TEXT     tx_pat1	20	30	55	., label("Pattern 1:") 		
 	COMBOBOX cb_pat1	80 30 100	., dropdownlist contents(linepatterns) nomemory
-	TEXT     tx_pat2	20	50	280	., label("Pattern 2:") 		
+	TEXT     tx_pat2	20	50	55	., label("Pattern 2:") 		
 	COMBOBOX cb_pat2	80 50 100	., dropdownlist contents(linepatterns) nomemory
-	TEXT     tx_pat3	20	70	280	., label("Pattern 3:") 		
+	TEXT     tx_pat3	20	70	55	., label("Pattern 3:") 		
 	COMBOBOX cb_pat3	80 70 100	., dropdownlist contents(linepatterns) nomemory
-	TEXT     tx_pat4	20	90	280	., label("Pattern 4:") 		
+	TEXT     tx_pat4	20	90	55	., label("Pattern 4:") 		
 	COMBOBOX cb_pat4	80 90 100	., dropdownlist contents(linepatterns) nomemory
-	TEXT     tx_pat5	210	30	280	., label("Pattern 5:") 		
+	TEXT     tx_pat5	210	30	55	., label("Pattern 5:") 		
 	COMBOBOX cb_pat5	270 30 100	., dropdownlist contents(linepatterns) nomemory
-	TEXT     tx_pat6	210	50	280	., label("Pattern 6:") 		
+	TEXT     tx_pat6	210	50	55	., label("Pattern 6:") 		
 	COMBOBOX cb_pat6	270 50 100	., dropdownlist contents(linepatterns) nomemory
-	TEXT     tx_pat7	210	70	280	., label("Pattern 7:") 		
+	TEXT     tx_pat7	210	70	55	., label("Pattern 7:") 		
 	COMBOBOX cb_pat7	270 70 100	., dropdownlist contents(linepatterns) nomemory
-	TEXT     tx_pat8	210	90	280	., label("Pattern 8:") 		
+	TEXT     tx_pat8	210	90	55	., label("Pattern 8:") 		
 	COMBOBOX cb_pat8	270 90 100	., dropdownlist contents(linepatterns) nomemory
 END
 

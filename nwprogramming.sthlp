@@ -89,8 +89,7 @@ and create the network from an edge list with {help nwfromedge} or {cmd:nwset, e
 {pstd}
 Networks are kept in Mata, next to the Stata dataset, in one object of class {bf:NWs}. It holds the list of
 networks in memory (class {bf:NWsdef}): their names, a pointer to each network and the current network. Each
-network is an object of class {bf:NWdef}. The classes are compiled into the Mata library {bf:lnwcommands.mlib};
-their source is {bf:unw_core.do} in the repository.
+network is an object of class {bf:NWdef}. The classes are compiled into the Mata library {bf:lnwcommands.mlib}.
 
 {pstd}
 An {bf:NWdef} object holds
@@ -187,8 +186,7 @@ matrices are returned in {cmd:r()} with {cmd:return scalar} and {cmd:return matr
 code for the same problem.
 
 {phang}
-{bf:Tests.} The commands of the package have test files in {bf:cscripts/} of the repository, which check the results
-against values computed by hand or by another program. Run a new command's test against the compiled library, not only
+{bf:Tests.} Check the results of a new command against values computed by hand or by another program. Run a new command's test against the compiled library, not only
 against the Mata source.
 
 
@@ -236,4 +234,4 @@ For example, {cmd:A = nwapi_matrix("flomarriage")} is an adjacency matrix withou
 {help nwapi}, {help nwprogramming##syntax:_nwsyntax}, {help nwtomata}, {help nwset}, {help nwfromedge}, {help nwunab}, {help nwerrorcodes}, {help nwinternals}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

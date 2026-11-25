@@ -15,8 +15,8 @@ END
 
 DIALOG main, title("nwmovie - Animated HTML network movie (panel or event mode)")
 BEGIN
-  TEXT tx_net 20 20 260 ., label("Network(s) - panel mode: one per wave; event mode: a single temporal network:")
-  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem
+  TEXT tx_net 20 20 260 ., label("Network(s): one per wave, or one temporal network")
+  COMBOBOX cb_net 290 20 190 ., dropdown contents(netlist) nomem append
 
   GROUPBOX gb_out 10 44 530 76, label("Output")
   TEXT tx_ed_fname 20 54 260 ., label("base filename for the output .html; default = movie")
@@ -24,34 +24,34 @@ BEGIN
   TEXT tx_cx_noopen 20 82 260 ., label("build the .html file but do not open it in a viewer")
   CHECKBOX cx_noopen 290 82 190 ., label("noopen") option(noopen)
 
-  GROUPBOX gb_lay 10 126 530 132, label("Layout")
+  GROUPBOX gb_lay 10 126 530 146, label("Layout")
   TEXT tx_cb_layout 20 136 260 ., label("Layout algorithm (panel mode); see layout() of nwplot")
   COMBOBOX cb_layout 290 136 190 ., dropdown contents(list_layout) nomem option(layout)
-  TEXT tx_cx_fixedlayout 20 164 260 ., label("compute one layout on the first network only and reuse it for every wave")
+  TEXT tx_cx_fixedlayout 20 164 260 ., label("Use the first network's layout for all waves")
   CHECKBOX cx_fixedlayout 290 164 190 ., label("fixedlayout") option(fixedlayout)
   TEXT tx_sp_iterations 20 192 260 ., label("iterations for the layout algorithm; default = 500")
   SPINNER sp_iterations 290 192 70 ., default(500) max(999999) min(1) nomem option(iterations)
   CHECKBOX cx_binary 380 192 155 ., label("binary (ignore tie values)") option(binary)
-  TEXT tx_ed_duration 20 220 260 ., label("panel mode: milliseconds per wave-to-wave transition; default = 800")
+  TEXT tx_ed_duration 20 220 260 ., label("Panel: milliseconds per transition; default = 800")
   EDIT ed_duration 290 220 100 ., numonly nomem option(duration)
-  TEXT tx_ed_easing 20 248 260 ., label("panel mode: Cytoscape.js easing name; default = ease-in-out-cubic")
+  TEXT tx_ed_easing 20 248 260 ., label("Panel: easing; default = ease-in-out-cubic")
   EDIT ed_easing 290 248 190 ., nomem option(easing)
 
-  GROUPBOX gb_evt 10 266 530 76, label("Event mode")
-  TEXT tx_ed_window 20 276 260 ., label("a tie fades out this many time units after its most recent event; omit to accumulate permanently")
-  EDIT ed_window 290 276 100 ., numonly nomem option(window)
-  TEXT tx_ed_speed 20 304 260 ., label("simulated event-time units per real second during playback; default = 1")
-  EDIT ed_speed 290 304 100 ., numonly nomem option(speed)
+  GROUPBOX gb_evt 10 276 530 76, label("Event mode")
+  TEXT tx_ed_window 20 286 260 ., label("Event mode: fade-out window (blank = no fading)")
+  EDIT ed_window 290 286 100 ., numonly nomem option(window)
+  TEXT tx_ed_speed 20 314 260 ., label("Event mode: time units per second; default = 1")
+  EDIT ed_speed 290 314 100 ., numonly nomem option(speed)
 
-  GROUPBOX gb_app 10 350 530 104, label("Appearance")
-  TEXT tx_vr_color 20 360 260 ., label("color nodes by this variable")
-  VARNAME vr_color 290 360 190 ., nomem option(color)
-  TEXT tx_vr_symbol 20 388 260 ., label("shape nodes by this variable")
-  VARNAME vr_symbol 290 388 190 ., nomem option(symbol)
-  TEXT tx_vr_size 20 416 260 ., label("size nodes by this variable")
-  VARNAME vr_size 290 416 190 ., nomem option(size)
-  TEXT tx_vr_label 20 444 260 ., label("node labels from this variable")
-  VARNAME vr_label 290 444 190 ., nomem option(label)
+  GROUPBOX gb_app 10 364 530 122, label("Appearance")
+  TEXT tx_vr_color 20 374 260 ., label("color nodes by this variable")
+  VARNAME vr_color 290 374 190 ., nomem option(color)
+  TEXT tx_vr_symbol 20 402 260 ., label("shape nodes by this variable")
+  VARNAME vr_symbol 290 402 190 ., nomem option(symbol)
+  TEXT tx_vr_size 20 430 260 ., label("size nodes by this variable")
+  VARNAME vr_size 290 430 190 ., nomem option(size)
+  TEXT tx_vr_label 20 458 260 ., label("node labels from this variable")
+  VARNAME vr_label 290 458 190 ., nomem option(label)
 
   GROUPBOX gb_pan 550 44 530 244, label("Styling by wave and edges")
   TEXT tx_cb_edgecolor 560 54 260 ., label("color edges by this other network (all waves)")
@@ -115,10 +115,10 @@ PROGRAM command
 BEGIN
 	// number fields: refuse text before the command runs
 	if main.ed_duration.isneq("") & !main.ed_duration.isnumlist() {
-		stopbox stop "panel mode: milliseconds per wave-to-wave transition: enter a number (or numbers)."
+		stopbox stop "Milliseconds per transition: enter a number."
 	}
 	if main.ed_speed.isneq("") & !main.ed_speed.isnumlist() {
-		stopbox stop "simulated event-time units per real second during playback: enter a number (or numbers)."
+		stopbox stop "Time units per second: enter a number."
 	}
 	require main.cb_net
 	put "nwmovie " main.cb_net

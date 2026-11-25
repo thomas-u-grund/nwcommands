@@ -10,6 +10,9 @@ program nwconstraint
 
 	// A network held as stored ties (large networks) gets the constraint network from the list of its non-zero cells
 	// (direct ties and two-step paths, about sum(degree^2) of them), without the n x n matrix.
+	mata: st_local("__neg", strofreal(sum(`netobj'->edgelist()[., 3] :< 0) > 0))
+	if `__neg' di "{txt}(warning: the network has negative tie values, for which Burt's constraint is not defined; the results can lie outside [0,1])"
+
 	mata: st_local("__sparse", strofreal(`nodes' > 2000 & !`netobj'->is_dense_built() & `netobj'->is_2mode_boolean() != 1))
 	if `__sparse' {
 		if `"`options'"' != "" {

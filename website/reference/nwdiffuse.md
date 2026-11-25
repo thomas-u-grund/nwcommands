@@ -62,7 +62,7 @@ adopt(varlist) one 0/1 variable for each period (in the order of the periods): 1
 
 - `cascade`: independent cascade. A node that adopted in the previous period passes the behaviour on to each of its
 - (not yet adopted) neighbours with probability `prob()`, once; it never tries again. A node influenced by *c* such
-- neighbours adopts with probability 1-(1-`prob()`)sup:*c*. Tie values are ignored.
+- neighbours adopts with probability 1-(1-`prob()`)^*c*. Tie values are ignored.
 - `threshold`: a node adopts when the number of its adopting neighbours (the sum of tie values with `valued`) reaches its threshold.
 - `fraction`: a node adopts when the share of its adopting neighbours reaches its threshold. A node without neighbours never adopts this way.
 
@@ -74,13 +74,15 @@ With `spont()`, every node that has not adopted also adopts with that probabilit
 
 `nwdiffuse curve` `graph` (or its synonym `plot`) draws the cumulative proportion of adopters. `name()` names the graph in memory (it stays unnamed when `name()`, `saving()` and `export()` are all absent), `saving()` writes a `.gph` file and `export()` writes the graph with `graph export`; the file extension sets the format and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced. Other options go to `twoway` and come last. `saving()` and `export()` need `graph` or `plot`.
 
+- `. nwwebuse glasgow, nwclear`
+- `. generate toa = cond(smoke1 > 1, 1, cond(smoke2 > 1, 2, cond(smoke3 > 1, 3, .)))`
 - `. nwdiffuse curve, toa(toa) plot export(curve.png, width(1200))`
 
 ## Remarks
 
 **Agreement with netdiffuseR.** Exposure (share and count, binary and valued, outgoing and incoming, with and without self, static and changing networks, with lags) and thresholds equal the results of `exposure()` and `threshold()` of netdiffuseR 1.25.1 to 9 digits on the test networks. Deviations: netdiffuseR takes the adoption times from a `diffnet` object and can weight exposure by node attributes, use structural-equivalence weights or group-wise exposure; `nwdiffuse` does not. With a lag, netdiffuseR (and so `nwdiffuse`) uses the network of the lagged period as well. The simulations are not a port of `rdiffnet()`; they implement the textbook models stated above.
 
-**Limits.** The network is held as a dense matrix, so the commands are meant for networks up to a few thousand nodes (3,000 nodes with 40 simulated steps take about a second; memory grows with the square of the number of nodes, and with one matrix for each period when the network changes). Exposure variables use one variable for each period. The time of adoption must be known exactly (no interval censoring); adoption cannot be undone (no recovery or forgetting); a node must not adopt before `t0()`.
+**Limits.** The network is held as a dense matrix, so the commands are meant for networks up to a few thousand nodes (memory grows with the square of the number of nodes, and with one matrix for each period when the network changes). Exposure variables use one variable for each period. The time of adoption must be known exactly (no interval censoring); adoption cannot be undone (no recovery or forgetting); a node must not adopt before `t0()`.
 
 ## Examples
 
@@ -126,4 +128,4 @@ Kempe, D., J. Kleinberg, and E. Tardos. 2003. Maximizing the spread of influence
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

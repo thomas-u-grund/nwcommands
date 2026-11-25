@@ -31,7 +31,7 @@ Network expressions accept {help netname:netnames}, {help varname:varnames} and 
 from Stata or Mata. Here, the network expression consists of the simple network {it:flomarriage} and is assigned
 it to {it:mynet1}.
 
-	{cmd:. nwwebuse florentine}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwgen mynet1 = flomarriage}
 	
 {pstd}
@@ -62,7 +62,7 @@ Network expressions can also be used in {help if} conditions (see e.g. {help nwr
 network expression is again evaluated on an element-by-element basis and operations are only performed
 for the dyads for which the expression is true. For example:
 
-	{cmd:. nwwebuse florentine}
+	{cmd:. nwwebuse florentine, nwclear}
 	{cmd:. nwgen overlap2 = flobusiness}
 	{cmd:. nwreplace overlap2 = flomarriage if flobusiness == 1}
 	
@@ -86,4 +86,4 @@ This evaluates whatever is in {it:netexp} and generates a new mata matrix {it:ma
 result of the network expression.
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

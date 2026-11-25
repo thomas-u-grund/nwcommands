@@ -146,7 +146,6 @@ is {it:z_qj} divided by the largest tie value that {it:q} sends (receives, with 
 {pstd}
 The substantive reading differs by direction. In an advice network, {opt direction(out)} measures the structural holes in the
 advice that ego seeks (ego's own options), {opt direction(in)} those among the people who seek ego's advice (whom ego is available to).
-{opt direction(out)} reproduces the results printed by versions of {cmd:nwcommands} before 3.33.0 for a binary directed network.
 On an {bf:undirected} network the option has no effect (all three values are accepted and give the same results; the line about directed networks is not printed).
 Any other value stops the command with error 198. The stored result {cmd:r(direction)} holds the value.
 
@@ -164,8 +163,7 @@ bipartite graph read as a one-mode network. {bf:Signed:} negative and missing va
 {pstd}
 The four measures are computed from the stored ties, in the compiled graph plugin (the native kernel of {cmd:nwcommands}) when the plugin of your
 platform has it and in Mata otherwise; both give the same values (to the last digits). The work grows with the sum of the squared degrees,
-not with {it:n}^3. Measured in Stata/BE, random undirected network with mean degree 10: 5,000 nodes 0.03 seconds, 20,000 nodes 0.05 seconds,
-100,000 nodes 0.2 seconds (the Mata route needs 1.2, 4.4 and 26 seconds). On a directed network the weighted kernel is used. The options {opt dyadredundancy} and {opt dyadconstraint} build
+not with {it:n}^3. On a directed network the weighted kernel is used. The options {opt dyadredundancy} and {opt dyadconstraint} build
 {it:n}-by-{it:n} networks and take the dense route.{p_end}
 {pstd}
 For all commands at network sizes of 1,000 to 100,000 nodes see the web page {browse "https://nwcommands.org/nwcommands/size-limits/":How large a network can I analyze?}
@@ -218,4 +216,4 @@ University Press.
 	{help nwconstraint}, {help nwbridges}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

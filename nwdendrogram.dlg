@@ -22,7 +22,7 @@ BEGIN
   EDIT ed_factor 290 54 190 ., nomem option(factor)
   TEXT tx_vr_label 20 82 260 ., label("label observations")
   VARNAME vr_label 290 82 190 ., nomem option(label)
-  TEXT tx_cx_lab 20 110 260 ., label("Display the node labels saved with the network (takes precedence over label())")
+  TEXT tx_cx_lab 20 110 260 ., label("Use the node labels saved with the network")
   CHECKBOX cx_lab 290 110 190 ., label("lab") option(lab)
   TEXT tx_name 20 138 260 ., label("name of the graph in memory; default = dendrogram")
   EDIT ed_name 290 138 190 ., nomem option(name)

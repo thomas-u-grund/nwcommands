@@ -46,7 +46,7 @@ A share of balanced triads cannot be judged by itself: it depends on the share o
 
 ## Limits
 
-Closed triads are found from the stored ties (for every tied pair, the common neighbours), not by probing every pair of nodes. The enumeration is a kernel of the native plugin; a platform whose plugin does not have it uses Mata code, with the same results. Measured in Stata/BE, random valued network with 10 ties per node: 5,000 nodes 0.03 seconds with the plugin kernel (71 seconds with the Mata code).
+Closed triads are found from the stored ties (for every tied pair, the common neighbours), not by probing every pair of nodes. The enumeration is a kernel of the native plugin; a platform whose plugin does not have it uses Mata code, with the same results.
 
 ## Examples
 
@@ -91,4 +91,4 @@ Cartwright, D., Harary, F. (1956). Structural balance: a generalization of Heide
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

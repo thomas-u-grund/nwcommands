@@ -54,7 +54,7 @@ With option **weights(***p1, p2,...***)** the command generates a weighted netwo
 
 ## Limits
 
-Above 2,000 nodes the ring is written as a list of ties (20,000 nodes with `k(5)`: 0.2 seconds). `weights()` still uses the matrix.
+Above 2,000 nodes the ring is written as a list of ties. `weights()` still uses the matrix.
 
 ## Examples
 
@@ -76,4 +76,4 @@ Above 2,000 nodes the ring is written as a list of ties (20,000 nodes with `k(5)
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

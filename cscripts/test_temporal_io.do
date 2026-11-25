@@ -234,7 +234,7 @@ gen str5 b = word("B C D E A C", _n)
 gen t = _n
 tempfile raw
 save `raw'
-nwset a b, name(stat) directed
+nwset a b, edgelist name(stat) directed
 tstatic stat k1
 use `raw', clear
 nwset a b, eventtime(t) name(evt) directed
@@ -259,7 +259,7 @@ clear
 set obs 4
 gen str5 a = word("A B C D", _n)
 gen str5 b = word("B C D A", _n)
-nwset a b, name(st1) directed
+nwset a b, edgelist name(st1) directed
 nwsave "`dir'/static", replace
 preserve
 use "`dir'/static.nwdta", clear
@@ -512,7 +512,7 @@ clear
 set obs 5
 gen str5 a = word("A B C D E", _n)
 gen str5 b = word("B C D E A", _n)
-nwset a b, name(plain) directed
+nwset a b, edgelist name(plain) directed
 nwexport plain, type(pajek) fname("`dir'/pl") replace
 nwexport plain, type(edgelist) fname("`dir'/pl") replace
 nwtoedge plain

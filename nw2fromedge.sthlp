@@ -19,9 +19,16 @@
 [{it:{help varname:tievalue}}]
 [{it:{help if}}]
 [{cmd:,}
+{opt name}({it:{help newnetname}})
+{opt xvars}
+{opt replace}
 {it:{help nwfromedge:nwfromedge_options}}
 ]
 
+{synoptset 21 tabbed}{...}
+{synopt:{opt name}({it:{help newnetname}})}name of the new network{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{synopt:{opt replace}}if a network named in {opt name()} exists, replace it; without {opt replace} the command stops{p_end}
 {p2colreset}{...}
 
 
@@ -207,8 +214,7 @@ with value 0 declares a node without a tie. {bf:Signed:} not checked. See {help 
 
 {pstd}
 Above 20,000 nodes in both modes together the command stops at once with r(484).
-A network of 20,000 nodes (13,333 + 6,667) takes 11 seconds and 3.4 GB; {help nw2degree}, {help nw2clustering}, {help nwmatching},
-{help nwproject} and {help nw2project} then take 1.7 to 12 seconds at that size.
+A network of 20,000 nodes (13,333 + 6,667) needs about 3.4 GB.
 
 
 {title:Also see}
@@ -216,4 +222,4 @@ A network of 20,000 nodes (13,333 + 6,667) takes 11 seconds and 3.4 GB; {help nw
 {p 4 4 2}{help nwfromedge} (whose own {opt twomode} option is an exact alias for this command), {help nw2project} ({help nwproject}), {help nw2set}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

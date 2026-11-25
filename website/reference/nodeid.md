@@ -28,6 +28,7 @@ If one wants to know the nodelab that corresponds to a nodeid one can use [_nwno
 - For example,
 
 ```stata
+. nwwebuse florentine, nwclear
 . _nwnodelab, nodeid(9) detail
 
 ----------------------------------------
@@ -39,4 +40,4 @@ If one wants to know the nodelab that corresponds to a nodeid one can use [_nwno
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

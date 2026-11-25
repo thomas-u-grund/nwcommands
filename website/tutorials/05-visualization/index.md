@@ -151,6 +151,44 @@ whole group.
 
 <iframe src="interactive_plot.html" width="100%" height="600" style="border:1px solid #d0d7de; border-radius:6px;" loading="lazy"></iframe>
 
+### Pictograms
+
+In the interactive view, a group of nodes can be drawn as a pictogram instead of a circle, square, triangle
+or diamond. Plot the attribute with `color()` and `symbol()` as usual, then choose a pictogram for each
+group in the drop-down of the panel (you can also try this in the live view above). Here are the lawyers
+of the Lazega law firm, with color and pictogram by gender and size by the number of colleagues who ask
+the lawyer for advice:
+
+```stata
+. nwwebuse lazega, nwclear
+
+. quietly nwdegree lazega_adv, generate(outdeg indeg)
+
+. set seed 42
+
+. nwplot lazega_adv, color(gender) symbol(gender) size(indeg) edgefactor(0.4) interactive
+```
+
+![Interactive view with pictograms: man and woman pictograms in two colors, sized by indegree](interactive_pictograms.png)
+
+The picture shows the page after choosing *man* and *woman* in the two drop-downs.
+
+- **What there is.** People (person, woman, man, child, senior, couple, family, group), places and
+  organisations (house, building, factory, school, hospital, bank, church, shop), work and communication
+  (briefcase, laptop, phone, envelope, document, book, chat), transport and symbols (car, airplane, flag,
+  star, heart, shield, lightbulb) and nature (tree, paw, fish). Nothing is assigned automatically: you
+  decide which pictogram stands for which group.
+- **Colors.** A pictogram takes the color of its group. When `color()` and `symbol()` group the nodes
+  differently (say color by office and pictogram by gender), colors and pictograms have rows of their own.
+  With `symbol()` alone, every pictogram row has its own color picker.
+- **Sizes.** `size()` and the node size slider work as usual. Pictograms are drawn somewhat larger than
+  the ordinary shapes. Small nodes are hard to tell apart, so use pictograms for networks in which the nodes
+  have room.
+- **Stata graphs.** Pictograms exist only in the browser view and in the PNG that its export button writes.
+  Stata has no such marker symbols: *Save do-file* and `importcoords()` draw the ordinary shapes. To keep
+  different colors in the Stata graph, set them by `color()` (as in the call above) and not only with the
+  color pickers of the pictogram rows.
+
 ### The workflow: explore in the browser, finish in Stata
 
 The browser is for looking at the network from several sides; the figure you publish is better made

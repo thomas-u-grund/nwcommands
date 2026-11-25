@@ -33,7 +33,7 @@ end
 
 capture program drop nwcorrelate_nodes
 program nwcorrelate_nodes
-	syntax [anything(name=netname)] [, name(string) context(string) UNDirected DIRected]
+	syntax [anything(name=netname)] [, name(string) context(string) UNDirected DIRected replace nwreplace]
 	// _nwsyntax exports a local named directed: keep the options under other names
 	local _ud_opts `undirected' `directed'
 	_nwsyntax `netname'
@@ -49,9 +49,12 @@ program nwcorrelate_nodes
 	}
 	_opts_oneof "outgoing incoming both" "context" "`context'" 6556
 	
+	// the default result _corr is overwritten; a name given in name() only with replace
+	local __given = ("`name'" != "")
 	if "`name'" == "" {
 		local name = "_corr"
 	}
+	_nwtargetcheck `name', source(`netname') given(`__given') `replace' `nwreplace'
 	
 	capture nwdrop `name'
 
@@ -187,9 +190,9 @@ unw_defs
 	// (not even a "." missing token), so `if `corr' > 0' expands to an
 	// operand-less comparison. Caught here with a clear message instead.
 	if "`corr'" == "" | "`corr'" == "." {
-		di "{err}{p 0 0 2}Correlation is undefined (one of the two networks has zero variance); cannot run a QAP permutation test.{p_end}"
+		di "{err}{p 0 0 2}Correlation is undefined (one of the two networks has zero variance).{p_end}"
 		if "`attribute'" != "" & "`keepexpand'" == "" capture nwdrop `netname2'
-		error 198
+		exit 198
 	}
 	
 	// Calculate correlations of network2 with permutations of network1

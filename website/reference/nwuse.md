@@ -19,7 +19,8 @@ filename
 [,
 nwclear
 nwappend
-force]
+force
+clear]
 nwwebuse
 netexample
 [,
@@ -30,6 +31,7 @@ nwclear]
 |---|---|
 | `nwclear` | clear memory before loading dataset |
 | `nwappend` | append to existing data |
+| `clear` | load even though the data in memory have changed and were not saved; without `clear`, `nwclear` or `nwappend` the command stops |
 | `force` | when combined with `nwappend`, if the incoming data contains a network with the same name as one already in memory, auto-renumber the incoming network to a fresh name instead of erroring - unlike `replace` elsewhere in this group (e.g. [nwset](nwset)), which overwrites the existing network in place under the same name, `force` leaves the existing network untouched |
 
 ## Description
@@ -40,7 +42,7 @@ Every network comes back as it was saved: a network saved as directed stays dire
 
 ## Network types
 
-The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)); files of two-mode networks that list every pair of nodes also load. A temporal network (event, snapshot or interval network, see [nwset](nwset)) comes back with its times, and with its type and the names of its time variables, exactly as [nwsave](nwsave) wrote them; a file written without times (by an earlier version, or of a network that is not temporal) loads as a network that is not temporal.
+The command works the same for every network type (see [nwnetworktypes](nwnetworktypes)); files of two-mode networks that list every pair of nodes also load. A temporal network (event, snapshot or interval network, see [nwset](nwset)) comes back with its times, and with its type and the names of its time variables, exactly as [nwsave](nwsave) wrote them; a file that holds no times loads as a network that is not temporal.
 
 ## Limits
 
@@ -59,7 +61,7 @@ This example creates 5 new random networks and [saves](nwsave) them as *mynets*.
 One can bring the data back with:
 
 ```stata
-. nwuse mynets
+. nwuse mynets, nwclear
 ```
 This load the Florentine dataset from the internet and appends it to the existing data.
 
@@ -73,4 +75,4 @@ This load the Florentine dataset from the internet and appends it to the existin
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

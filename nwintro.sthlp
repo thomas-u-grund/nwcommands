@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.36.1  23nov2026}{...}
+{* *! version 3.37.0  25nov2026}{...}
 
 {phang}
 {help nwcommands:NW-1 intro} {hline 2} Introduction and concepts
@@ -120,7 +120,7 @@ Many commands work like the Stata commands they are named after. The full list o
 {center:{c |} {help tabulate}     {c |} {help nwtabulate}     {c |} Tabulate networks             {c |}}
 {center:{c |} {help correlate}    {c |} {help nwcorrelate}    {c |} Correlate networks            {c |}}
 {center:{c |} {help expand}       {c |} {help nwexpand}       {c |} Expand variable to network    {c |}}
-{center:{c |} {help syntax}       {c |} {help _nwsyntax}      {c |} Parse network syntax          {c |}}
+{center:{c |} {help syntax}       {c |} {help nwprogramming##syntax:_nwsyntax}      {c |} Parse network syntax          {c |}}
 {center:{c BLC}{hline 14}{c BT}{hline 16}{c BT}{hline 31}{c BRC}}
 
 
@@ -343,4 +343,4 @@ own help file is the authority on anything specific to it. When in doubt for a g
 structural commands first (they are the ones proven at real scale), and treat the figures for the dense-matrix commands as realistic planning numbers rather than hard guarantees.
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -63,8 +63,7 @@ not applicable. See {help nwnetworktypes}.{p_end}
 {title:Limits}
 
 {pstd}
-{cmd:type(global)} of an undirected network writes the bridges as ties (one depth-first search, no matrix): 20,000 nodes 0.4 seconds
-and 0.3 GB in Stata/BE. {cmd:type(local)} and {cmd:type(distance)} work on the matrix.
+{cmd:type(global)} of an undirected network writes the bridges as ties (one depth-first search, no matrix). {cmd:type(local)} and {cmd:type(distance)} work on the matrix.
 
 
 {title:Examples}
@@ -96,4 +95,4 @@ University Press.
 	{help nwburt}, {help nwpath}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

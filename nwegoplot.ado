@@ -245,8 +245,9 @@ void nw_egoplot_xy(real matrix A0, real scalar ego, real scalar hop, real colvec
 			in[two] = J(r, 1, 1)
 		}
 	}
-	st_store(., xv, x)
-	st_store(., yv, y)
-	st_store(., inv, in)
+	// the data set may have more observations than the network has nodes
+	st_store((1::rows(x)), xv, x)
+	st_store((1::rows(y)), yv, y)
+	st_store((1::rows(in)), inv, in)
 }
 end

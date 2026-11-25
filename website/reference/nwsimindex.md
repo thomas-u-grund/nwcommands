@@ -58,9 +58,9 @@ The similarity of a node with itself is not defined and is set to missing, as ar
 
 ## Limits
 
-The result is a dense *n*-by-*n* valued network. Measured in Stata/BE, random undirected network with 10 ties per node: 5,000 nodes 0.8 seconds and 1.3 GB.
+The result is a dense *n*-by-*n* valued network. At 5,000 nodes it needs about 1.3 GB.
 
-The result is a dense *n*-by-*n* valued network. About 5 matrices of that size are held at once (10,000 nodes: 2.8 seconds and 4 GB). Above about 17,300 nodes the command stops at once with r(484) and a message with the memory needed (16 GB at 20,000 nodes); option `force` runs it anyway.
+The result is a dense *n*-by-*n* valued network. About 5 matrices of that size are held at once (10,000 nodes: 4 GB). Above about 17,300 nodes the command stops at once with r(484) and a message with the memory needed (16 GB at 20,000 nodes); option `force` runs it anyway.
 
 ## Examples
 
@@ -91,4 +91,4 @@ Adamic, L.A., Adar, E. (2003). Friends and neighbors on the Web. *Social Network
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

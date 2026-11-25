@@ -66,7 +66,7 @@ For a network with more than one connected component, the Fiedler value is 0 and
 
 ## Limits
 
-The complete eigendecomposition of the dense Laplacian is needed for the Fiedler vector and for the eigenvalues that are returned, so the work grows with the cube of the number of nodes and the memory with its square. Measured in Stata/BE, random undirected network with 10 ties per node: 1,000 nodes 1.5 seconds, 2,000 nodes 14 seconds, 3,000 nodes 50 seconds, 5,000 nodes more than 180 seconds, 10,000 nodes more than 300 seconds (and about 3 GB). Above 2,000 nodes the command prints a note; above 6,000 nodes it stops with r(484) unless `force` is given. There is no exact shortcut for the returned spectrum: only the Fiedler vector could be had from a sparse iteration, which this command does not offer.
+The complete eigendecomposition of the dense Laplacian is needed for the Fiedler vector and for the eigenvalues that are returned, so the work grows with the cube of the number of nodes and the memory with its square. At 10,000 nodes it needs about 3 GB. Above 2,000 nodes the command prints a note; above 6,000 nodes it stops with r(484) unless `force` is given. There is no exact shortcut for the returned spectrum: only the Fiedler vector could be had from a sparse iteration, which this command does not offer.
 
 Only a single network is accepted: the Fiedler vector of each network is a full per-node eigenvector.
 
@@ -82,7 +82,7 @@ Only a single network is accepted: the Fiedler vector of each network is a full 
 
 `plot` draws the Laplacian eigenvalues in ascending order, the values of **r(eigenvalues)**; the second one, the algebraic connectivity, is marked. A gap after the first eigenvalues points to few well separated groups, and the number of eigenvalues at 0 is the number of components. `embedding` adds a second panel with the second and third eigenvectors, one marker per node. `name()` names the graph in memory, `saving()` writes a `.gph` file and `export()` writes it with `graph export`. Other options go to `twoway` (`graph combine` with `embedding`) and come last; without `plot` they give an error. `plot` stops with error 198 for a two-mode network; a directed network follows the rule for `sym` above.
 
-- `. nwspectral flomarriage, generate(_fiedler) plot embedding export(spectrum.png, width(1100))`
+- `. nwspectral flomarriage, generate(_fiedler) replace plot embedding export(spectrum.png, width(1100))`
 
 ## Stored results
 
@@ -105,4 +105,4 @@ von Luxburg, U. (2007). A tutorial on spectral clustering. *Statistics and Compu
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

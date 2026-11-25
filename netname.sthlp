@@ -63,10 +63,10 @@ to change the current network use {it: {help nwcurrent}}.
 {marker examples}{...}
 {title:Examples}
 
-{phang}{cmd:. nwuse florentine}{p_end}
+{phang}{cmd:. nwwebuse florentine, nwclear}{p_end}
 {phang}{cmd:. nwset}{p_end}
-{phang}{cmd:. nwdegree flobusiness}{p_end}
-{phang}{cmd:. nwcomponents *marriage}{p_end}
+{phang}{cmd:. nwdegree flobusiness, generate(deg)}{p_end}
+{phang}{cmd:. nwcomponents *marriage, generate(comp)}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

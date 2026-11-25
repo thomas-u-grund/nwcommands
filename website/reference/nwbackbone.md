@@ -84,7 +84,7 @@ Two kinds of input are handled.
 
 **Checked against R.** For one-mode networks and for `sdsm`, `fixedrow`, `fixedcol` and `fixedfill` the p-values equal those of the R package *backbone* 3.0.4 (to better than 1e-8 absolute, 1e-6 relative) and the kept ties are identical, with and without the corrections and with `signed`, on the networks of the test suite. A p-value that is exactly equal to `alpha()` in exact arithmetic can fall on either side of it through rounding, in R as well as here. `fdsm` cannot reproduce R's random numbers; its p-values agree with a 40,000-draw reference within the Monte Carlo error. Not implemented: the SDSM variant with edge constraints, the extraction from unweighted networks (sparsification: `backbone_from_unweighted` in R), and bipartite networks with tie values.
 
-**Limits.** The p-values are computed for all pairs of nodes at once and held in memory as *n* x *n* matrices. The one-mode methods take under a second for 2,000 nodes. The two-mode methods with 3,000 persons and 600 events take 6 to 10 seconds (Stata 17 on a recent Mac; `sdsm` is the slowest). Beyond a few thousand nodes of the projected mode memory runs out first. `fdsm` needs one projection per random network and becomes slow beyond a few hundred nodes at the default number of networks.
+**Limits.** The p-values are computed for all pairs of nodes at once and held in memory as *n* x *n* matrices. Beyond a few thousand nodes of the projected mode memory runs out first. `fdsm` needs one projection per random network and becomes slow beyond a few hundred nodes at the default number of networks.
 
 **Direction.** A directed network is filtered as directed; an undirected network as undirected (a pair is tested once). The disparity filter of a directed network uses the out-strength of the sender and the in-strength of the receiver and keeps the smaller p-value, as in R.
 
@@ -99,11 +99,14 @@ Two kinds of input are handled.
 - Keep the ties of a valued network with a value above 3, with their values
 - `. nwbackbone w, method(global) threshold(3) keepvalues generate(wg)`
 
+- Load a two-mode network (women by social events)
+- `. nwwebuse davis, nwclear`
+
 - Backbone of the projection of a two-mode network (persons by events) onto the persons
-- `. nwbackbone affiliations, method(sdsm) alpha(0.05) mtc(BH) project(1) generate(persons)`
+- `. nwbackbone davis, method(sdsm) alpha(0.05) mtc(BH) project(1) generate(persons)`
 
 - Fixed degree sequence model with 2,000 random networks
-- `. nwbackbone affiliations, method(fdsm) trials(2000) seed(1) generate(persons_fdsm)`
+- `. nwbackbone davis, method(fdsm) trials(2000) seed(1) generate(persons_fdsm)`
 
 ## Stored results
 
@@ -146,4 +149,4 @@ Zweig, K. A. and M. Kaufmann. 2011. A systematic approach to the one-mode projec
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

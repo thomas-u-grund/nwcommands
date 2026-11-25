@@ -20,7 +20,7 @@ BEGIN
   GROUPBOX gb_opt 10 44 520 104, label("Options")
   TEXT tx_ed_nodes 20 54 260 ., label("Numlist of nodeid's to be kept")
   EDIT ed_nodes 290 54 190 ., nomem option(nodes)
-  TEXT tx_cb_generate 20 82 260 ., label("Generates a new network and does not overwrite the original network")
+  TEXT tx_cb_generate 20 82 260 ., label("Create a new network; keep the original")
   COMBOBOX cb_generate 290 82 190 ., dropdown contents(netlist) nomem option(generate)
   TEXT tx_vl_attributes 20 110 260 ., label("Attribute variables that are included in the drop")
   VARLIST vl_attributes 290 110 190 ., nomem option(attributes)

@@ -28,7 +28,7 @@ BEGIN
   VARLIST vl_attributes 290 138 190 ., nomem option(attributes)
   TEXT tx_cx_netonly 20 166 260 ., label("Only drops the network, but keeps all Stata variables")
   CHECKBOX cx_netonly 290 166 190 ., label("netonly") option(netonly)
-  TEXT tx_cb_generate 20 194 260 ., label("Generates a new network and does not overwrite the original network")
+  TEXT tx_cb_generate 20 194 260 ., label("Create a new network; keep the original")
   COMBOBOX cb_generate 290 194 190 ., dropdown contents(netlist) nomem option(generate)
 END
 

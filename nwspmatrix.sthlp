@@ -62,7 +62,7 @@ Values must not be negative. Self-loops are removed.
 
 {phang}
 {opt direction()} applies to directed networks only (an undirected network is symmetric already).
-{cmd:out} (default): {it:W}{sub:ij} refers to the tie from {it:i} to {it:j}, so node {it:i} is influenced by the
+{cmd:out} (default): {it:W_ij} refers to the tie from {it:i} to {it:j}, so node {it:i} is influenced by the
 nodes it names. {cmd:in}: the transpose, so node {it:i} is influenced by the nodes that name it.
 {cmd:symmetric}: a tie in either direction counts (the larger of the two values with valued weights).
 {cmd:mutual}: only reciprocated ties count (the smaller of the two values).
@@ -162,4 +162,4 @@ Leenders, R. T. A. J. 2002. Modeling social influence through network autocorrel
 {p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -88,7 +88,7 @@ The following network formats are supported:
 {pmore}{help nwimport##matrix:- Raw adjacency matrix}{p_end}
 {pmore}{help nwimport##edgelist:- Raw edgelist}{p_end}
 {pmore}{help nwimport##compressed:- Compressed edgelist}{p_end}
-{pmore}{help nwimport##gml:- GML}{p_end}
+{pmore}{help nwimport##import_type:- GML}{p_end}
 
 {pstd}
 {it:{help filename}} can also be a URL, so networks can be imported directly from the internet
@@ -300,4 +300,4 @@ two-mode networks with level labels (not UCINET); a tie inside a mode is refused
 (see {help nwimport##edgelist_time:edge lists with times}). See {help nwnetworktypes}.{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

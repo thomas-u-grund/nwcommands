@@ -24,7 +24,9 @@
 {opt name}({it:{help newnetname}})
 {opt labs}({it:lab1, lab2, ...})
 {opt xvars}
-{opth ntimes(int)}]
+{opth ntimes(int)}
+{opt vars(string)}
+{opt stub(string)}]
 
 
 {synoptset 21 tabbed}{...}
@@ -41,6 +43,8 @@
 {synopt:{opt xvars}}generate Stata variables for the network{p_end}
 {synopt:{opth ntimes(int)}}number of preferential-attachment networks to be generated (named {it:name}_1, {it:name}_2, ...); default = 1{p_end}
 {synopt:{opt noreplace}}reserved; currently a no-op - the create/replace collision guard on {opt name()} already applies regardless{p_end}
+{synopt:{opt vars(string)}}accepted; has no effect{p_end}
+{synopt:{opt stub(string)}}accepted; has no effect{p_end}
 
 
 {title:Description}
@@ -84,7 +88,7 @@ checked. See {help nwnetworktypes}.{p_end}
 Above 2,000 nodes the ties are written as a list, with the same draws as the matrix version up to 10,000 nodes (the same seed gives
 the same network); above 10,000 nodes the picks, proportional to the degrees, are uniformly chosen end points of the ties made so
 far (a different stream; {cmd:rdiscrete()} takes at most 10,000 probabilities).
-20,000 nodes: 0.2 seconds. {opt weights()} uses the matrix.
+{opt weights()} uses the matrix.
 
 
 {title:Examples}
@@ -118,4 +122,4 @@ Barabasi, A-L., Albert, R. (1999). Emergence of scaling in random networks. {it:
 	{help nwsmall}, {help nwrandom}, {help nwlattice}, {help nwring}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -55,7 +55,7 @@ required and says to which mode each new node belongs. {bf:Signed:} yes, as valu
 {title:Limits}
 
 {pstd}
-The added nodes have no ties, so a network held as stored ties only gets longer row pointers: 20,000 nodes 0.1 seconds.
+The added nodes have no ties, so a network held as stored ties only gets longer row pointers.
 
 
 {title:Examples}
@@ -71,8 +71,14 @@ This example adds three new nodes (isolates) to a random network with 5 nodes.
 This example adds two isolate nodes to a two-mode network - one to each mode (a mode-1 "person"
 with no memberships, and a mode-2 "institution" with no members):
 
+	{cmd:. nwclear}
+	{cmd:. input str8 person str8 institution}
+	{cmd:.   Anna Church}
+	{cmd:.   Ben Church}
+	{cmd:.   Ben Club}
+	{cmd:. end}
 	{cmd:. nw2fromedge person institution, name(mynet)}
 	{cmd:. nwaddnodes mynet, nodenames(NewPerson, NewInstitution) mode(1 2)}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

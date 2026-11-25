@@ -93,7 +93,7 @@ counted; both networks should have the same modes. {bf:Signed:} negative values 
 
 {pstd}
 The ties kept, formed and dissolved are counted from the lists of ties of the two networks (sorted keys) when both are held as
-stored ties. Measured in Stata/BE, random directed network with 10 ties per node: 20,000 nodes 0.2 seconds.
+stored ties.
 
 
 {title:Examples}
@@ -136,4 +136,4 @@ change, used as a standard diagnostic for whether panel-wave data is suitable fo
 	{help nwcorrelate}, {help nwcomponents}, {help nwqap}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

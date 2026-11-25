@@ -18,7 +18,7 @@ BEGIN
   TEXT tx_net 20 20 260 ., label("File name:")
   EDIT cb_net 290 20 190 ., nomem
   GROUPBOX gb_opt 10 44 520 76, label("Options")
-  TEXT tx_cx_old 20 54 260 ., label("Save in a Stata-version-backward-compatible format (uses saveold internally instead of save)")
+  TEXT tx_cx_old 20 54 260 ., label("Save in an older Stata format (saveold)")
   CHECKBOX cx_old 290 54 190 ., label("old") option(old)
   TEXT tx_cx_replace 20 82 260 ., label("overwrite existing dataset")
   CHECKBOX cx_replace 290 82 190 ., label("replace") option(replace)

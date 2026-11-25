@@ -18,7 +18,13 @@
 {cmd:nwgen} {it:{help newnetname}} {cmd:=} {it:netfcn}({it:arguments}) [{cmd:,} {it:options}]
 
 {p 8 17 2}
-{cmd:nwgen} {it:{help newnetname}} {cmd:=} {it:{help netexp}} [{help if}] [{cmd:,} {it:options}]
+{cmd:nwgen} {it:{help newnetname}} {cmd:=} {it:{help netexp}} [{help if}] [{cmd:,} {opt xvars} {opth vars(varlist)} {opt replace} {it:options}]
+
+{synoptset 20 tabbed}{...}
+{synopt:{opt replace}}overwrite an existing network (or, for a function that makes a variable, an existing variable) of the name {it:newnetname}{p_end}
+{synopt:{opth vars(varlist)}}network expression only: names for the Stata variables of the new network, one for each node (used by {opt xvars} and {help nwload}); the functions do not take it{p_end}
+{synopt:{opt xvars}}generate Stata variables for the network{p_end}
+{p2colreset}{...}
 
 
 {title:Description}
@@ -168,4 +174,4 @@ Generate a per-node variable, one value per node, from an existing network:
 	{cmd:. list mydeg in 1/5}
 
 {hline}
-{pstd}{it:nwcommands version 3.36.1, 23 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.0, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

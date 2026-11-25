@@ -51,7 +51,7 @@ The functions listed here are the programming interface of nwcommands for Mata. 
 
 Nothing else in the Mata library of nwcommands is part of this interface: the classes that hold the networks and all other functions can change in any release without notice. Do not use them in code that has to keep working.
 
-`nwapi_version()` returns the generation of the interface as a whole number (`1` for nwcommands 3.x); test it in a program that needs the functions: `assert(nwapi_version() >= 1)`. The functions of this help file exist from nwcommands 3.24 on; an older installation does not know them (Mata stops with r(3499), "function not found"). [nwversion](nwversion) shows the version of the package.
+`nwapi_version()` returns the generation of the interface as a whole number (`1` for nwcommands 3.x); test it in a program that needs the functions: `assert(nwapi_version() >= 1)`. [nwversion](nwversion) shows the version of the package.
 
 ## Conventions
 
@@ -160,4 +160,4 @@ Use `capture` to catch them: `capture mata: nwapi_nodes("friends")` followed by 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

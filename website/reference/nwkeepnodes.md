@@ -93,7 +93,7 @@ Note the opposite default polarity between the two interfaces: [nwkeep](nwkeep) 
 
 ## Limits
 
-`nwkeepnodes` works through [nwdropnodes](nwdropnodes): a network held as stored ties stays so (20,000 nodes keeping 5: 2.3 seconds in Stata/BE).
+`nwkeepnodes` works through [nwdropnodes](nwdropnodes): a network held as stored ties stays so.
 
 ## See also
 
@@ -101,4 +101,4 @@ Note the opposite default polarity between the two interfaces: [nwkeep](nwkeep) 
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))

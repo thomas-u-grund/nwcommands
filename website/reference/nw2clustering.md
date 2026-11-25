@@ -16,10 +16,10 @@ Clustering coefficient (transitivity) of a two-mode network
 ```stata
 nw2clustering
 [netname]
-[,
-measure(string)
+,
+generate(newvarname) | ra
+[measure(string)
 level(int)
-generate(newvarname)
 replace
 ra]
 ```
@@ -48,11 +48,21 @@ Only nodes of the requested `level()` receive a value; nodes of the other mode a
 
 ## Limits
 
-The 4-paths around each node are enumerated in compiled code and the closing 6-cycle is tested with a marker array instead of a copy of the neighbour list per path. The work grows with, for each node, the square of its number of alters times the squares of their numbers of other egos. Measured in Stata/BE on a random two-mode network with N mode-1 nodes, N/2 mode-2 nodes and 10 ties drawn per mode-1 node: N = 300 / 1,000 / 5,000 take 0.09 / 0.25 / 1.4 seconds. Memory is proportional to the number of ties.
+The 4-paths around each node are enumerated in compiled code and the closing 6-cycle is tested with a marker array instead of a copy of the neighbour list per path. The work grows with, for each node, the square of its number of alters times the squares of their numbers of other egos. Memory is proportional to the number of ties.
 
 ## Examples
 
 ```stata
+. nwclear
+. input str4 ego str4 alter
+.   a x
+.   b x
+.   b y
+.   c y
+.   c z
+.   a z
+.   d z
+. end
 . nwset ego alter, twomode name(bip)
 . nw2clustering bip, generate(_clustering2_lev1)
 . sum _clustering2_lev1
@@ -82,4 +92,4 @@ Robins, G., Alexander, M. (2004). Small worlds among interlocking directors: Net
 
 ---
 
-*nwcommands version 3.35.1, 22 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.0, 25 November 2026* ([check your installed version](nwversion))
