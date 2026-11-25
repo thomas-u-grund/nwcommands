@@ -61,7 +61,7 @@ When the source network is **valued**, option **stat()** controls how the tie va
 - neighbor, then take the maximum of those minima across all shared neighbors -
 - substantively, the strongest shared bond
 
-The remaining five options score the **shared-neighbor structure itself** rather than combining tie values - they are defined the same way regardless of whether the source network is valued, and are available for a valued source network too (unlike the five above, which require one):
+The remaining five options score the **shared-neighbor structure itself** rather than combining tie values. They are available for valued and unvalued source networks alike (unlike the five above, which require a valued one). `count`, `binary`, `jaccard` and `cosine` ignore tie values; `newman` uses them:
 
 - **stat(count)**
 - the number of shared neighbors - identical to the default on an
@@ -78,7 +78,8 @@ The remaining five options score the **shared-neighbor structure itself** rather
 - divided by the geometric mean of their two degrees
 - **stat(newman)**
 - the collaboration weight of Newman (2001): the sum over the shared neighbors of
-- 1/(k - 1), with k the number of ties of the shared neighbor
+- 1/(k - 1), with k the number of ties of the shared neighbor. On a valued network each term is
+- multiplied by the mean of the two tie values to the shared neighbor
 
 For example, suppose Peter and Thomas are both affiliated with Oxford (Peter: 7 years, Thomas: 5 years) and LiU (Peter: 1 year, Thomas: 1 year). Then:
 
@@ -97,7 +98,7 @@ The projected network's provenance (which network and mode it was projected from
 
 ## Network types
 
-**Directed:** the projection is undirected. **Valued:** on a valued network `stat()` combines the tie values (default `minmax`); on an unvalued network the weight is the number of shared nodes; `count`, `binary`, `jaccard`, `cosine` and `newman` ignore the values. **Two-mode:** yes - the projection onto one mode. **Signed:** not treated specially. See [nwnetworktypes](nwnetworktypes).
+**Directed:** the projection is undirected. **Valued:** on a valued network `stat()` combines the tie values (default `minmax`); on an unvalued network the weight is the number of shared nodes; `count`, `binary`, `jaccard` and `cosine` ignore the values, `newman` uses them. **Two-mode:** yes - the projection onto one mode. **Signed:** not treated specially. See [nwnetworktypes](nwnetworktypes).
 
 ## Stored results
 
@@ -111,4 +112,4 @@ The projected network's provenance (which network and mode it was projected from
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

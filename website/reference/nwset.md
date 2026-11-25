@@ -290,4 +290,4 @@ Options `time()` and `interval()` keep the times as a list with one entry per ro
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

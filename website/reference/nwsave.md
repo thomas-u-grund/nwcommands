@@ -30,6 +30,10 @@ old]
 
 **nwsave** saves all networks (and Stata variables) currently in memory on disk. The command saves data in its own file format **.nwdta**. Network data saved in this way can be loaded with [nwuse](nwuse). Notice that the command `save` does not save network data.
 
+Saving changes nothing in memory: the data, their sort order, the name of the data file (which `save, replace` writes to), the mark of unsaved changes and the current network stay as they are, also when the command fails.
+
+Every observation is saved, also those that belong to no node, and so is every variable, also one that has the name of a network or a name that starts with *_nw_*. The variables that [nwload](nwload) created to show a network are not saved (the network itself is). Names of nodes are kept in the variable *_nwnode*: observations with a node name belong to that node. When the data have no *_nwnode* yet and their number of observations differs from the number of nodes, they are not assigned to nodes; the file then holds one observation per node in addition to them.
+
 ## Network types
 
 **Directed:**, **Valued:**, **Signed:** stored as they are. **Two-mode:** yes - the file holds the ties between the modes only, the mode of every node and the node attributes (5,000 + 500 nodes take about a megabyte). See [nwnetworktypes](nwnetworktypes).
@@ -65,4 +69,4 @@ After this, one can easily load these 5 networks in a new Stata session just as 
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

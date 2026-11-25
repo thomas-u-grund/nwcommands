@@ -24,6 +24,7 @@ f nw2project.ado
 f nw2set.ado
 f nw2toedge.ado
 f _nwdatasync.ado
+f _nwdetemporal.ado
 f _nwdenseguard.ado
 f _nwtimeguard.ado
 f _nwstrcat.ado

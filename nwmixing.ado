@@ -254,6 +254,8 @@ real matrix rep_EIvar_net(real scalar reps, pointer(class nw_def scalar) scalar 
 	n = p->get_nodes()
 	el = p->edgelist()
 	el = select(el, el[., 1] :!= el[., 2])
+	// missing ties are no ties
+	el = select(el, el[., 3] :< . :& el[., 3] :!= 0)
 	total = rows(el)
 	intern = J(reps, 1, 0)
 	inv = J(n, 1, .)
@@ -277,7 +279,8 @@ real matrix rep_EIvar(real scalar reps, real matrix net0, real matrix attr){
 	same = (attrMat:== attrMatTr)
 	// BUGFIX: this assigned to its argument, which Mata passes by reference: the network's own matrix was
 	// overwritten with its 0/1 pattern after every nwmixing call with permutations (values of a valued network lost)
-	net1 = (net0:!=0)
+	// missing ties are no ties
+	net1 = (editmissing(net0, 0):!=0)
 	// BUGFIX: the network's own diagonal is missing (no self-ties), not
 	// 0, and Mata's `:!=0' treats missing as not-equal-to-zero - so
 	// before this fix, every one of the `nsize' diagonal cells silently

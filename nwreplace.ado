@@ -178,6 +178,7 @@ program nwreplace, rclass
 		_nwname `netname', newvalued(true)
 	}
 	nwsync `netname'
+	_nwdetemporal `netname'
 	return scalar symmetric = `__symmetric'
 	return scalar valued = `__valued'
 

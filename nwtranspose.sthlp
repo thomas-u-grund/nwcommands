@@ -80,4 +80,4 @@ A network held as stored ties is transposed tie by tie.
           {c BLC}{hline 21}{c BRC}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -114,7 +114,11 @@ program nwdropnodes
 	mata: st_local("__dndir", strofreal(`netobj'->is_directed_boolean()))
 	// a temporal network keeps its events, times and intervals among the nodes that remain (the node numbers change)
 	local __dntemporal = ("`istemporal'" == "true")
-	if `__dntemporal' _nwtemporal stash `netname'
+	if `__dntemporal' {
+		_nwtemporal stash `netname'
+		// the time data are put back below: nwreplacemat is not to report them as lost
+		mata: `netobj'->set_temporal(0)
+	}
 
 	tempname newnames
 	mata: `newnames' = select(`netobj'->get_nodenames(), `keepmat'')
@@ -148,12 +152,19 @@ program nwdropnodes
 	// (pre-drop, pre-reorder) row order - before nwreplacemat ever
 	// runs - so they are read at the same point in time `keepvector'
 	// itself was built against.
+	// attributes(): the observations of the dropped nodes are set to missing in these variables (checked here, before
+	// anything is changed; observations that belong to no node are never touched)
 	tempname attrstash
+	local __dnold = `nodes'
 	if "`attributes'" != "" {
+		unab attributes : `attributes'
 		local attri = 0
-		foreach attr of varlist `attributes' {
+		foreach attr of local attributes {
 			local attri = `attri' + 1
-			mata: `attrstash'`attri' = st_data((1,`nodes'), st_varindex("`attr'"))
+			capture confirm string variable `attr', exact
+			local __dnstr`attri' = (_rc == 0)
+			if `__dnstr`attri'' mata: `attrstash'`attri' = st_sdata((1,`nodes'), "`attr'")
+			else mata: `attrstash'`attri' = st_data((1,`nodes'), "`attr'")
 		}
 	}
 
@@ -195,16 +206,22 @@ program nwdropnodes
 
 	// deal with attributes that should be synced with the smaller network
 	if "`attributes'" != "" {
+		mata: st_local("__dnnew", strofreal(sum(`keepvector')))
 		local attri = 0
-		foreach attr of varlist `attributes' {
+		foreach attr of local attributes {
 			local attri = `attri' + 1
-			mata: __nwdropnodes_subattr = select(`attrstash'`attri', `keepvector'')
-			mata: st_view(__nwdropnodes_attrview=.,(1,sum(`keepvector')), "`attr'")
-			replace `attr' = .
-			mata: __nwdropnodes_attrview[.,.] = __nwdropnodes_subattr
+			// with netonly the observations are not reordered: the values of the remaining nodes are moved up here
+			// (otherwise they have moved with their observations)
+			if "`netonly'" != "" & `__dnnew' > 0 {
+				if `__dnstr`attri'' mata: st_sstore((1::`__dnnew'), "`attr'", select(`attrstash'`attri', `keepvector''))
+				else mata: st_store((1::`__dnnew'), "`attr'", select(`attrstash'`attri', `keepvector''))
+			}
+			if `__dnnew' < `__dnold' {
+				if `__dnstr`attri'' qui replace `attr' = "" in `=`__dnnew' + 1'/`__dnold'
+				else qui replace `attr' = . in `=`__dnnew' + 1'/`__dnold'
+			}
 			mata: mata drop `attrstash'`attri'
 		}
-		mata: mata drop __nwdropnodes_subattr
 	}
 	mata: mata drop `keepnet' `keepvector'
 	if `__dntemporal' {

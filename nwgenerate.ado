@@ -119,7 +119,7 @@ program nwgenerate
 		}
 		if `__ng_exists' nwdrop `newnetname'
 		mata: `nws'.rename("`__ngnew'", "`newnetname'")
-		if `__ng_xvars' qui nwload `newnetname'
+		if `__ng_xvars' qui nwload `newnetname', keepuser
 	}
 	
 	// generate network based on function

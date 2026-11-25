@@ -74,4 +74,4 @@ Newman, M.E.J. (2006). Modularity and community structure in networks. *PNAS* 10
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

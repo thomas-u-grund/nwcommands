@@ -90,4 +90,4 @@ A network of 100,000 nodes with 10 ties per node needs about 0.6 GB. When the es
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

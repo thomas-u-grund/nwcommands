@@ -62,8 +62,12 @@ matrix, edge list with the modes of both nodes, GML attribute {cmd:nwmode}; leve
 {bf:Signed:} not checked. {bf:Temporal:} see below. See {help nwnetworktypes}.{p_end}
 
 {pstd}
-{bf:What a format cannot hold.} {cmd:type(edgelist)} lists ties only, so isolated nodes are not in the file. A Pajek file read back with
-{help nwimport} has no tie where the network had a missing tie value. {help nwsave} keeps both.{p_end}
+{bf:What a format cannot hold.} {cmd:type(edgelist)} lists ties only, so isolated nodes are not in the file. In {cmd:pajek}, {cmd:ucinet},
+{cmd:gml} and {cmd:edgelist} files a tie with a missing value is not written, so a file read back with {help nwimport} has no tie there (the matrix
+of a two-mode network in UCINET DL holds 0). A UCINET DL file and an edge list do not say whether a network is directed: when importing them, specify
+{opt forceundirected} for an undirected edge list, and {opt forcedirected} for a directed network in which every tie is reciprocated.
+Double quotes in node names are written as apostrophes. Node names read back by {help nwimport} cannot hold commas (they become blanks).
+{help nwsave} keeps the network as it is.{p_end}
 
 {marker temporal}{...}
 {title:Temporal networks}
@@ -108,4 +112,4 @@ This example loads the {help netexample:Florentine marriage data} and exports to
 	{cmd:. nwexport flobusiness, type(pajek)}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

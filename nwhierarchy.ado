@@ -1,6 +1,25 @@
 
 capture program drop nwhierarchy
 program nwhierarchy, rclass
+	// when the command stops with an error, the data set is left as it was (preserve restores it)
+	// after an error the current network is the one it was before
+	unw_defs
+	local __nwc_cur ""
+	capture mata: st_local("__nwc_cur", `nws'.get_current_name())
+	preserve
+	capture noisily _nwhierarchy_main `0'
+	local __nwc_rc = _rc
+	return add
+	if `__nwc_rc' {
+		if "`__nwc_cur'" != "" capture mata: `nws'.make_current_from_name("`__nwc_cur'")
+		exit `__nwc_rc'
+	}
+	restore, not
+	capture confirm number 0
+end
+
+capture program drop _nwhierarchy_main
+program _nwhierarchy_main, rclass
 	// was the deprecated _nwsyntax wrapper, which only re-exports 4
 	// locals (netobj/id/netname/networks) - the same bug class fixed
 	// repeatedly elsewhere this session. Nothing below actually
@@ -45,7 +64,9 @@ program nwhierarchy, rclass
 	}
 
 	if "`dismat'" == "" {
-		local dismat "mymat"
+		// a matrix of the command's own: a Stata matrix of the user is never overwritten
+		tempname __nwhmat
+		local dismat "`__nwhmat'"
 		if "`disnet'" != "" {
 			nwtomatafast `disnet'
 			mata: st_matrix("`dismat'", `r(mata)')
@@ -56,10 +77,11 @@ program nwhierarchy, rclass
 				di "{txt}{p 0 0 2}(note: clustering `nodes' nodes with Stata's clustermat takes minutes){p_end}"
 			}
 			if "`type'" == "manhatten" local type "manhattan"
-			nwdissimilar `netname', type(`type') context(`context') name(_temp_dissimilar)
-			nwtomatafast _temp_dissimilar
+			tempname __nwhdis
+			nwdissimilar `netname', type(`type') context(`context') name(`__nwhdis')
+			nwtomatafast `__nwhdis'
 			mata: st_matrix("`dismat'", `r(mata)')
-			nwdrop _temp_dissimilar
+			nwdrop `__nwhdis'
 		}
 	}
 

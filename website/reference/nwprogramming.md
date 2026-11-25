@@ -150,4 +150,4 @@ The classes and methods described in this help file are internal: they can chang
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

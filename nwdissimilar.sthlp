@@ -156,4 +156,4 @@ nodes); option {opt force} runs it anyway. The node labels of the new network ar
 	{help nwsimilar}, {help nwcorrelate}, {help nwhierarchy}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

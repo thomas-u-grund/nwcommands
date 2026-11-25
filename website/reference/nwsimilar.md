@@ -93,4 +93,4 @@ The result is a dense *n*-by-*n* valued network. 5,000 nodes need about 1.9 GB, 
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

@@ -12,7 +12,7 @@ The current version of each package and every release, newest first. Each entry 
 
 | Package | Current version | Released | Release notes | Package page |
 |---|---|---|---|---|
-| **nwcommands** | 3.37.1 | 25 November 2026 | [all releases of nwcommands](https://github.com/thomas-u-grund/nwcommands/releases) | [nwcommands](../nwcommands/) |
+| **nwcommands** | 3.37.2 | 26 November 2026 | [all releases of nwcommands](https://github.com/thomas-u-grund/nwcommands/releases) | [nwcommands](../nwcommands/) |
 | **nwsaom** | 1.9.2 | 22 November 2026 | [all releases of nwsaom](https://github.com/thomas-u-grund/nwsaom/releases) | [nwsaom](../nwsaom/) |
 | **nwergm** | 1.16.1 | 24 November 2026 | [all releases of nwergm](https://github.com/thomas-u-grund/nwergm/releases) | [nwergm](../nwergm/) |
 | **nwdynam** | 1.11.1 | 22 November 2026 | [all releases of nwdynam](https://github.com/thomas-u-grund/nwdynam/releases) | [nwdynam](../nwdynam/) |
@@ -22,6 +22,16 @@ The current version of each package and every release, newest first. Each entry 
 | **nwsbm** | 1.1.0 | 23 November 2026 | [all releases of nwsbm](https://github.com/thomas-u-grund/nwsbm/releases) | [nwsbm](../nwsbm/) |
 
 ## All releases
+
+<a id="nwcommands-3-37-2"></a>
+
+### 26 November 2026: nwcommands 3.37.2
+
+**nwcommands 3.37.2** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.37.2)). Please update. This release fixes commands that deleted or overwrote data and networks, and file imports that returned a different network without an error. **Check networks imported from Pajek files with blank lines, and two-mode networks with blanks in node names imported from UCINET files.** Missing values in `nwdyadprob` probabilities and in `nwmixing, permutations()` were treated as ties; recompute such results. `nwsave` now works with long network names.
+
+Behaviour that changes: `nwload`, `nwsync`, `nwimport` and `nwuse` leave your variables and unsaved data as they are, several commands refuse input that would destroy data, and a temporal network whose ties are changed in place is no longer temporal. The full list is in the release notes.
+
+The core Mata library and the plugins are unchanged; the model packages need no update.
 
 <a id="nwcommands-3-37-1"></a>
 

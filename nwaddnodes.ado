@@ -95,6 +95,6 @@ program nwaddnodes
 
 
 	if "`xvars'" != "" {
-		nwload `netname'
+		nwload `netname', keepuser
 	}
 end

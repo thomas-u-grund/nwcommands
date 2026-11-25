@@ -326,7 +326,7 @@ mata: st_matrix("Wm", J(4, 4, 1) - I(4))
 nwset, mat(Wm) name(W) selfloop
 nwutility Q, benefit(.5) cost(.2)
 mata: ub = st_data(1::4, "_benefit"); uc = st_data(1::4, "_cost"); uu = st_data(1::4, "_util")
-nwutility Q, benefit(.5) cost(.2) intrvalue(W)
+nwutility Q, benefit(.5) cost(.2) intrvalue(W) replace
 mata: st_local("d1", strofreal(max(abs(st_data(1::4, "_benefit") :- ub))))
 mata: st_local("d2", strofreal(max(abs(st_data(1::4, "_cost") :- uc))))
 mata: st_local("d3", strofreal(max(abs(st_data(1::4, "_util") :- uu))))
@@ -340,7 +340,7 @@ assert `d5' < 1e-6
 mata: C = A :* (1, 2, 3, 4)'
 mata: st_matrix("Cm", C)
 nwset, mat(Cm) name(C)
-nwutility Q, benefit(.5) intrcost(C)
+nwutility Q, benefit(.5) intrcost(C) replace
 mata: st_local("d6", strofreal(max(abs(st_data(1::4, "_cost") :- rowsum(C)))))
 assert `d6' < 1e-6
 mata: st_local("d7", strofreal(max(abs(st_data(1::4, "_benefit") :- ub))))
@@ -349,7 +349,7 @@ assert `d7' < 1e-6
 mata: Wv = (J(4, 4, 2) :- 2 * I(4)); Wv = Wv + I(4) * 3
 mata: st_matrix("Wvm", Wv)
 nwset, mat(Wvm) name(WV) selfloop
-nwutility Q, benefit(.5) cost(.2) intrvalue(WV)
+nwutility Q, benefit(.5) cost(.2) intrvalue(WV) replace
 mata: Bw = (.5 :^ D) :* Wv; _diag(Bw, 0); Bw = rowsum(Bw) :+ diagonal(Wv)
 mata: st_local("d8", strofreal(max(abs(st_data(1::4, "_benefit") :- Bw))))
 assert `d8' < 1e-6

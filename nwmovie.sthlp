@@ -39,12 +39,12 @@ temporal network - there is no separate option to choose between them.
 {marker options}{...}
 {p2col:{it:options}}Description{p_end}
 {p2line}
-{synopt:{opth fname(string)}}base filename for the output; writes {it:fname}{bf:.html} in the current directory; default {bf:movie} (with {opt export()} and no {opt fname()} the page is a temporary file and no {bf:movie.html} is written){p_end}
+{synopt:{opth fname(string)}}base name of the page {it:fname}{bf:.html}; default {bf:movie}; see {help nwmovie##files:Output files}{p_end}
 {synopt:{opt noo:pen}}build the .html file but do not open it in a viewer{p_end}
 {synopt:{opt exp:ort}({it:filename})}write the movie as a video or GIF
 file without opening the interactive view; the format follows the extension: {bf:.mp4} (H.264 video), {bf:.webm} or {bf:.gif}; see
 {help nwmovie##export:Remarks}{p_end}
-{synopt:{opt replace}}with {opt export()}: overwrite an existing file{p_end}
+{synopt:{opt replace}}overwrite an existing {opt export()} file; also write over an {opt fname()} page that {cmd:nwmovie} did not write{p_end}
 {synopt:{opth time:out(int)}}with {opt export()}: seconds to wait for the file; default 600{p_end}
 {synopt:{opt layout}({it:{help nwplot##layout_options:layout}})}{bf:panel mode}: layout algorithm - see {help nwplot}'s own {opt layout()}; any value other than the {bf:kk} default disables the per-wave
 transitioning below and falls back to {opt fixedlayout}'s one-shared-layout behavior, since only {bf:kk} has a "warm start" to relax from{p_end}
@@ -76,7 +76,7 @@ readout box - see Description below); default is each wave's own {help nwname:{o
 {synopt:{opt symbolpalette}({it:string})}see {help nwplot}{p_end}
 {synopt:{opt scheme}({it:string})}see {help nwplot}{p_end}
 {synopt:{opth duration(int)}}{bf:panel mode}: milliseconds per wave-to-wave transition; default 800{p_end}
-{synopt:{opt easing}({it:string})}{bf:panel mode}: a Cytoscape.js easing name (e.g. {bf:ease-in-out-cubic}, {bf:linear}, {bf:ease-in-out-bounce}); default {bf:ease-in-out-cubic}{p_end}
+{synopt:{opt easing}({it:string})}{bf:panel mode}: how a transition speeds up and slows down; default {bf:ease-in-out-cubic}; see {help nwmovie##files:below}{p_end}
 {synopt:{opth window(real)}}{bf:event mode}: a tie fades out {it:window} time units (same units as {opt eventtime()}'s own variable) after its most recent event, and is removed once fully faded;
 omitted means ties accumulate permanently (a "growth" movie) rather than decaying{p_end}
 {synopt:{opth speed(real)}}{bf:event mode}: simulated event-time units per real second during playback; default 1{p_end}
@@ -149,6 +149,18 @@ it being baked into any file exported after that); there is no way to bring it b
 ever changes from manually resizing its box - it never changes on its own between waves, regardless of how long each wave's own title
 text happens to be.
 
+
+{marker files}{...}
+{pstd}
+{bf:Output files.} {opt fname()} writes {it:fname}{bf:.html} in the current directory; a name that already ends in
+{bf:.html} is used as it is. With {opt export()} and no {opt fname()}, the page is a temporary file and no
+{bf:movie.html} is written. An earlier movie page of the same name is written over; any other file only with
+{opt replace}.
+
+{pstd}
+{bf:easing()} takes {bf:linear}, {bf:ease}, {bf:ease-in}, {bf:ease-out} or {bf:ease-in-out}; the last three may be
+followed by {bf:-sine}, {bf:-quad}, {bf:-cubic}, {bf:-quart}, {bf:-quint}, {bf:-expo} or {bf:-circ}. Also
+{bf:spring()} and {bf:cubic-bezier()}. {opt duration()}, {opt speed()} and {opt window()} must be positive.
 
 {marker export}{...}
 {title:Remarks}
@@ -267,4 +279,4 @@ The same movie written to a video file and to an animated GIF, two seconds per t
 	{help nwset}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

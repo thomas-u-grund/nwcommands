@@ -65,10 +65,7 @@ possible but conceptually meaningless.
 
 {pstd}
 For an {bf:undirected} pair of networks, {bf:r(stable)}, {bf:r(formed)}, and {bf:r(dissolved)}
-each count both {it:(i,j)} and {it:(j,i)} for the same tie, so all three are exactly double the
-number of actual undirected ties involved (the same convention {help nwmixing} uses for its own
-mixing table). {bf:r(jaccard)} and {bf:r(persistence)} are unaffected, since the doubling cancels
-in both ratios.
+count every undirected tie once.
 
 {pstd}
 {opt formation} asks which of the ties formed between the two waves continue a pattern of {it:net1}.
@@ -136,4 +133,4 @@ change, used as a standard diagnostic for whether panel-wave data is suitable fo
 	{help nwcorrelate}, {help nwcomponents}, {help nwqap}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

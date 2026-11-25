@@ -40,7 +40,7 @@ formation]
 
 *net1* and *net2* must have the same number of nodes and the same directedness (both directed or both undirected) - comparing a directed network to an undirected one, or two networks of different size, is rejected explicitly rather than silently doing something arithmetically possible but conceptually meaningless.
 
-For an **undirected** pair of networks, **r(stable)**, **r(formed)**, and **r(dissolved)** each count both *(i,j)* and *(j,i)* for the same tie, so all three are exactly double the number of actual undirected ties involved (the same convention [nwmixing](nwmixing) uses for its own mixing table). **r(jaccard)** and **r(persistence)** are unaffected, since the doubling cancels in both ratios.
+For an **undirected** pair of networks, **r(stable)**, **r(formed)**, and **r(dissolved)** count every undirected tie once.
 
 `formation` asks which of the ties formed between the two waves continue a pattern of *net1*. A formed tie from *i* to *j* **returns a tie** if *j* named *i* in *net1*, and it **closes a two-path** if *i* named some *k* who named *j* in *net1*. The command shows both shares among the formed ties and among all pairs without a tie in *net1* (the pairs from which every formed tie comes; the diagonal is not a pair, and a missing value counts as no tie). These are the descriptive precursors of the reciprocity and transitivity effects of an actor-oriented model. For an undirected pair of networks only the two-path share is shown, and the pairs are counted once. Two-mode networks are not allowed with `formation`. The option builds the adjacency matrices of both networks, so its memory use grows with the square of the number of nodes.
 
@@ -88,4 +88,4 @@ Snijders, T.A.B., van de Bunt, G.G., Steglich, C.E.G. (2010). Introduction to st
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

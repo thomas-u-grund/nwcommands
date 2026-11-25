@@ -83,6 +83,12 @@ program nwrecode
 				_nwsyntax `onenet'
 				mata: st_numscalar("__nwrec_sym", `netobj'->recode_weights(st_data(., "__nwrec_old"), st_data(., "`onenet'")))
 				nwname `onenet', newdirected(`onedirected')
+				if `__nchg' > 0 _nwdetemporal `onenet'
+			}
+			if `__nchg' > 0 {
+				foreach tg in `targets' {
+					_nwdetemporal `tg'
+				}
 			}
 			capture scalar drop __nwrec_sym
 		}

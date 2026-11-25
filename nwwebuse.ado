@@ -71,8 +71,8 @@ program nwwebuse
 		exit
 	}
 
-	`nwclear'
-	capture drop _running
+	// nwclear is carried out by nwuse, which does so only when the file could be loaded
+	local __nwwu_clear "`nwclear'"
 
 	// Default source (since 3.18.1): the copy of data/ that the website deploy serves at nwcommands.org/examples
 	// (short addresses in output such as "Contains data from ..."); GitHub main is the fallback.
@@ -103,6 +103,7 @@ program nwwebuse
 		exit
 	}
 
+	if "`__nwwu_clear'" != "" local options `options' nwclear
 	local path = "\$nwwebpath"
 	local thispath = "`path'"
 	local webname = subinstr("`anything'", ".dta","",99)

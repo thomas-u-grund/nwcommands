@@ -39,7 +39,7 @@ program nwreach
 	mata: `netobj'->set_valued(0)
 	
 	if "`xvars'" != "" {
-		nwload `name'
+		nwload `name', keepuser
 	}
 	mata: st_rclear()
 end

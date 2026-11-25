@@ -78,9 +78,9 @@ substantively, the strongest shared bond{p_end}
 
 {pstd}
 The remaining five options score the {bf:shared-neighbor structure itself} rather than
-combining tie values - they are defined the same way regardless of whether the source
-network is valued, and are available for a valued source network too (unlike the five
-above, which require one):
+combining tie values. They are available for valued and unvalued source networks alike
+(unlike the five above, which require a valued one). {opt count}, {opt binary}, {opt jaccard}
+and {opt cosine} ignore tie values; {opt newman} uses them:
 
 {p 8 12 2}{bf:stat(count)}{p_end}
 {p 12 12 2}the number of shared neighbors - identical to the default on an
@@ -97,7 +97,8 @@ divided by the size of the union of their neighbor sets{p_end}
 divided by the geometric mean of their two degrees{p_end}
 {p 8 12 2}{bf:stat(newman)}{p_end}
 {p 12 12 2}the collaboration weight of Newman (2001): the sum over the shared neighbors of
-1/(k - 1), with k the number of ties of the shared neighbor{p_end}
+1/(k - 1), with k the number of ties of the shared neighbor. On a valued network each term is
+multiplied by the mean of the two tie values to the shared neighbor{p_end}
 
 {pstd}
 For example, suppose Peter and Thomas are both affiliated with Oxford (Peter: 7 years, Thomas: 5
@@ -124,7 +125,7 @@ which {opt stat()}) is recorded on the new network itself, not just printed - se
 {pstd}
 {bf:Directed:} the projection is undirected. {bf:Valued:} on a valued network {opt stat()} combines the tie values
 (default {opt minmax}); on an unvalued network the weight is the number of shared nodes; {opt count}, {opt binary},
-{opt jaccard}, {opt cosine} and {opt newman} ignore the values. {bf:Two-mode:} yes - the projection onto one mode.
+{opt jaccard} and {opt cosine} ignore the values, {opt newman} uses them. {bf:Two-mode:} yes - the projection onto one mode.
 {bf:Signed:} not treated specially. See {help nwnetworktypes}.{p_end}
 
 
@@ -141,4 +142,4 @@ which {opt stat()}) is recorded on the new network itself, not just printed - se
 {p 4 4 2}{help nwproject} (an exact alias for this command), {help nw2set}, {help nw2fromedge}, {help nw2toedge}, {help nw2clustering}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -1,6 +1,31 @@
 
 capture program drop nwcollapse
 program nwcollapse
+	// when the command stops, the data, the networks and the current network are as before
+	unw_defs
+	local __nwc_before ""
+	local __nwc_cur ""
+	capture mata: st_local("__nwc_before", invtokens(`nws'.get_names()))
+	capture mata: st_local("__nwc_cur", `nws'.get_current_name())
+	preserve
+	capture noisily _nwcollapse_main `0'
+	local __nwc_rc = _rc
+	if `__nwc_rc' {
+		local __nwc_after ""
+		capture mata: st_local("__nwc_after", invtokens(`nws'.get_names()))
+		local __nwc_new : list __nwc_after - __nwc_before
+		foreach __nwc_n of local __nwc_new {
+			capture nwdrop `__nwc_n'
+		}
+		if "`__nwc_cur'" != "" capture mata: `nws'.make_current_from_name("`__nwc_cur'")
+		exit `__nwc_rc'
+	}
+	restore, not
+	capture confirm number 0
+end
+
+capture program drop _nwcollapse_main
+program _nwcollapse_main
 	syntax [anything] [, generate(string) by(varname) *]
 	
 	preserve
@@ -77,7 +102,12 @@ program nwcollapse
 	tempvar _newfrom _newto
 
 	keep _fromid _toid `__nwcolcopy' `by'_fromid `by'_toid
-	collapse (`stat') `__nwcolcopy' (firstnm) _fromid _toid , by(`by'_fromid `by'_toid) `options'
+	capture noisily collapse (`stat') `__nwcolcopy' (firstnm) _fromid _toid , by(`by'_fromid `by'_toid) `options'
+	if _rc {
+		local __nwcrc = _rc
+		qui nwdrop `__nwcolcopy'
+		exit `__nwcrc'
+	}
 	
 	if "`generate'" != "" {
 		qui nwfromedge _fromid _toid `__nwcolcopy', name(`generate') `__dirflag'

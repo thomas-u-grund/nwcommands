@@ -1,6 +1,14 @@
 
 capture program drop nwfromedge
 program nwfromedge
+	// when the command stops with an error, the data set is left as it was (preserve restores it)
+	preserve
+	_nwfromedge_main `0'
+	restore, not
+end
+
+capture program drop _nwfromedge_main
+program _nwfromedge_main
 	syntax varlist(min=2 max=3) [if] [, overwrite REPLACE labprefix(string) noclear xvars name(string) labs(string asis) directed undirected forcedirected forceundirected twomode valued unvalued keeporiginal selfloop]
 
 	// HARMONISATION: `twomode' makes the existing, separate `nw2fromedge'

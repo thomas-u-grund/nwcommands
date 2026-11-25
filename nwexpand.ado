@@ -113,7 +113,7 @@ program nwexpand
 		nwload, xvars
 	}
 	else {
-		nwload
+		nwload, keepuser
 	}
 	
 	capture mata: mata drop __nwexpand_expnet 

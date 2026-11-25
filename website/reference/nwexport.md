@@ -37,7 +37,7 @@ Exports a network to 1) Pajek .NET, 2) Ucinet .DL, 3) GML or 4) plain-text edge 
 
 **Directed:** yes. **Valued:** the tie values of a valued network are written; a binary (unvalued) network is written without tie values (ego and alter only, in GML without `value`), so that [nwimport](nwimport) reads it back as binary (a two-mode network keeps its form). In UCINET DL a label that contains a blank or a comma is written in double quotes. **Two-mode:** yes - Pajek bipartite form, UCINET rectangular matrix, edge list with the modes of both nodes, GML attribute `nwmode`; level labels are kept except in UCINET DL. **Signed:** not checked. **Temporal:** see below. See [nwnetworktypes](nwnetworktypes).
 
-**What a format cannot hold.** `type(edgelist)` lists ties only, so isolated nodes are not in the file. A Pajek file read back with [nwimport](nwimport) has no tie where the network had a missing tie value. [nwsave](nwsave) keeps both.
+**What a format cannot hold.** `type(edgelist)` lists ties only, so isolated nodes are not in the file. In `pajek`, `ucinet`, `gml` and `edgelist` files a tie with a missing value is not written, so a file read back with [nwimport](nwimport) has no tie there (the matrix of a two-mode network in UCINET DL holds 0). A UCINET DL file and an edge list do not say whether a network is directed: when importing them, specify `forceundirected` for an undirected edge list, and `forcedirected` for a directed network in which every tie is reciprocated. Double quotes in node names are written as apostrophes. Node names read back by [nwimport](nwimport) cannot hold commas (they become blanks). [nwsave](nwsave) keeps the network as it is.
 
 ## Temporal networks
 
@@ -69,4 +69,4 @@ This example loads the [Florentine marriage data](netexample) and exports to bot
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

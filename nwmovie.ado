@@ -125,8 +125,8 @@ program _nwmovie_run
 			exit 498
 		}
 	}
-	else if "`replace'" != "" {
-		di as error "replace is only allowed with export()"
+	else if "`replace'" != "" & `"`fname'"' == "" {
+		di as error "replace is only allowed with export() or fname()"
 		exit 198
 	}
 
@@ -166,6 +166,54 @@ program _nwmovie_run
 
 	// export() without fname(): the page is only a means, so it goes to a file of its own in the temp folder (unique
 	// per Stata process, erased at the end); two exports in one folder no longer share (and unlink) movie.html.
+	// values the player cannot work with are refused before anything is computed
+	if `duration' <= 0 {
+		di as error "duration() must be a positive number of milliseconds."
+		exit 198
+	}
+	if !(`speed' > 0 & `speed' < .) {
+		di as error "speed() must be a positive number."
+		exit 198
+	}
+	if `"`window'"' != "" {
+		capture confirm number `window'
+		if _rc {
+			di as error "window() must be a number, in the same units as {help nwset}'s {bf:eventtime()} variable."
+			exit 198
+		}
+		if !(`window' > 0) {
+			di as error "window() must be a positive number."
+			exit 198
+		}
+	}
+	if `"`easing'"' != "" {
+		local _nwmv_eok = inlist(`"`easing'"', "linear", "ease", "ease-in", "ease-out", "ease-in-out")
+		foreach _nwmv_e in sine quad cubic quart quint expo circ {
+			if inlist(`"`easing'"', "ease-in-`_nwmv_e'", "ease-out-`_nwmv_e'", "ease-in-out-`_nwmv_e'") local _nwmv_eok 1
+		}
+		if regexm(`"`easing'"', "^(spring|cubic-bezier)\([0-9., -]+\)$") local _nwmv_eok 1
+		if !`_nwmv_eok' {
+			di as error `"{p 0 0 2}easing() {bf:`easing'} is not known. Use linear, ease, ease-in, ease-out, ease-in-out, one of the last three followed by -sine, -quad, -cubic, -quart, -quint, -expo or -circ, spring( ) or cubic-bezier( ).{p_end}"'
+			exit 198
+		}
+	}
+	// fname() with the extension: not x.html.html
+	if lower(substr(`"`fname'"', -5, .)) == ".html" {
+		local fname = substr(`"`fname'"', 1, length(`"`fname'"') - 5)
+	}
+	// a movie page is written over; any other file of that name only with replace
+	if "`replace'" == "" & (`"`fname'"' != "" | `"`export'"' == "") {
+		local _nwmv_out_f = cond(`"`fname'"' == "", "movie", `"`fname'"') + ".html"
+		capture confirm file `"`_nwmv_out_f'"'
+		if _rc == 0 {
+			local _nwmv_ours = (strpos(fileread(`"`_nwmv_out_f'"'), "MOVIE_DATA") > 0)
+			if !`_nwmv_ours' {
+				di as error `"{p 0 0 2}file {bf:`_nwmv_out_f'} exists and is not a page written by nwmovie; give another fname() or specify {bf:replace}{p_end}"'
+				exit 602
+			}
+		}
+	}
+
 	local _nwmv_tmphtml 0
 	if "`fname'" == "" {
 		local fname "movie"
@@ -497,7 +545,8 @@ program _nwmovie_run
 		// directly - the surrounding assumption elsewhere in this
 		// package is not always consistent about this), so no
 		// transpose here.
-		mata: st_local("_nwmv_labs", invtokens(`netobj'->get_nodenames()))
+		// labs() takes a comma-separated list (a comma inside a label would split it: it becomes a blank)
+		mata: st_local("_nwmv_labs", invtokens(subinstr(`netobj'->get_nodenames(), ",", " "), ","))
 
 		// NOT nwclear before this nwset - nwclear destroys every named
 		// network in memory (unw_defs's own `nw' Mata object, package-

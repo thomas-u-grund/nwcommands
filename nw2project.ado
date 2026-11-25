@@ -124,7 +124,7 @@ program nw2project, rclass
 	di "{txt}  Ties: {res}`=ties'"
 
 	if "`xvars'" != "" {
-		nwload `name'
+		nwload `name', keepuser
 	}
 end
 

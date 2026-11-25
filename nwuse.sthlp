@@ -47,6 +47,21 @@ is specified without an extension, {bf:.nwdta} is assumed. If your {it:filename}
 it in double quotes.
 
 {pstd}
+The data in memory are replaced by those of the file (with {opt nwappend}, added to them). They then belong to no data
+file: {cmd:c(filename)} is empty, so that {cmd:save, replace} cannot write over the network file; use {help nwsave} to
+save networks, or {help save} with a file name. When the command fails, for example because the file does not exist or
+is not a complete network file, the data, the networks and the current network stay as they were, also with {opt nwclear}.
+
+{pstd}
+With {opt nwappend} no observation and no variable is lost. Observations are matched by the node name in
+{it:_nwnode}; observations in memory without a match (also all of them, when the data have no {it:_nwnode}) and
+observations of the file without a match are kept as separate observations. Where a node has a value of the same
+variable both in memory and in the file, the value in memory stays and a note names the variable; missing values are
+filled from the file. When a variable is a string variable in one and numeric in the other, the one from the file is
+added under a new name, for example {it:age_2}. A variable that {help nwload} created to show a network gives way to a
+variable of the same name in the file. A plain Stata dataset (without networks) cannot be appended.
+
+{pstd}
 Every network comes back as it was saved: a network saved as directed stays directed even when its ties
 happen to be symmetric, and a two-mode network keeps the node order it was saved in.
 
@@ -92,4 +107,4 @@ This load the Florentine dataset from the internet and appends it to the existin
         {help nwwebuse}, {help nwsave}, {help use}, {help nwappend}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

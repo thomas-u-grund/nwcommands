@@ -34,7 +34,8 @@
 Networks ultimately exist as Mata objects. However, one can also load them
 as Stata variables that represent the adjacency matrix of a network 
 (see {help nwload}). Normally, when a network is changed through another {help nwcommands:nwcommand} the 
-Stata variables (if they exist) are automatically synced. But one can also invoke such 
+copies that {help nwload} made (if they exist) are automatically synced. Other variables that have the names of the
+nodes, such as those a network was declared from with {help nwset}, are left as they are. But one can also invoke such 
 a sync explicitly. Furthermore, {help nwsync} can be used to sync the other way around, i.e.
 one can change the values of the Stata variables that represent the network and sync the 
 network (that lives in Mata).   
@@ -86,4 +87,4 @@ The command works the same for every network type (see {help nwnetworktypes}). {
 	{help nwload}, {help nwreplace}, {help nwname}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

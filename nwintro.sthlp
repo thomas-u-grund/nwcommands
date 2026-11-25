@@ -1,5 +1,5 @@
 {smcl}
-{* *! version 3.37.1  25nov2026}{...}
+{* *! version 3.37.2  26nov2026}{...}
 
 {phang}
 {help nwcommands:NW-1 intro} {hline 2} Introduction and concepts
@@ -256,4 +256,4 @@ network's data into ordinary Stata commands.
 These limits do not cover every shape of network; the help file of a command is the authority on it.
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

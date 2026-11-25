@@ -38,6 +38,10 @@ nwclear]
 
 **nwuse** loads a Stata network dataset previously saved with [nwsave](nwsave). This includes all networks and Stata variables. If *`filename`* is specified without an extension, **.nwdta** is assumed. If your *filename* contains embedded spaces, remember to enclose it in double quotes.
 
+The data in memory are replaced by those of the file (with `nwappend`, added to them). They then belong to no data file: `c(filename)` is empty, so that `save, replace` cannot write over the network file; use [nwsave](nwsave) to save networks, or `save` with a file name. When the command fails, for example because the file does not exist or is not a complete network file, the data, the networks and the current network stay as they were, also with `nwclear`.
+
+With `nwappend` no observation and no variable is lost. Observations are matched by the node name in *_nwnode*; observations in memory without a match (also all of them, when the data have no *_nwnode*) and observations of the file without a match are kept as separate observations. Where a node has a value of the same variable both in memory and in the file, the value in memory stays and a note names the variable; missing values are filled from the file. When a variable is a string variable in one and numeric in the other, the one from the file is added under a new name, for example *age_2*. A variable that [nwload](nwload) created to show a network gives way to a variable of the same name in the file. A plain Stata dataset (without networks) cannot be appended.
+
 Every network comes back as it was saved: a network saved as directed stays directed even when its ties happen to be symmetric, and a two-mode network keeps the node order it was saved in.
 
 ## Network types
@@ -75,4 +79,4 @@ This load the Florentine dataset from the internet and appends it to the existin
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

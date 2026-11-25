@@ -21,6 +21,7 @@ b:enefit(#)
 c:ost(#)
 intrv:alue(netname)
 intrc:ost(netname)
+replace
 force
 geodesic_options]
 ```
@@ -31,6 +32,7 @@ geodesic_options]
 | `c:ost(#)` | cost of connection; default = 1 |
 | `intrv:alue(netname)` | intrinsic value w_ij a node i gives to a connection with node j; default = 1 for every tied pair |
 | `intrc:ost(netname)` | per-dyad cost y_ij, replacing the constant *cost* for direct connections; default = *cost* for every tied pair |
+| `replace` | overwrite the variables *_benefit*, *_cost* and *_util* if they exist (without it the command stops with r(110)) |
 | `force` | Run the command although its matrices would not fit in memory (it stops with r(484) above about 19,300 nodes otherwise) |
 
 ## Description
@@ -76,4 +78,4 @@ Jackson, M. and Wolinsky, A. (1996) A Strategic Model of Social and Economic Net
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

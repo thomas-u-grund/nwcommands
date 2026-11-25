@@ -71,7 +71,7 @@ program nwsimilar
 		capture mata mata drop __nwsim
 		capture mata mata drop `__nwsim_names'
 		if "`xvars'" != "" {
-			nwload `name'
+			nwload `name', keepuser
 		}
 		exit
 	}
@@ -126,7 +126,7 @@ program nwsimilar
 	}
 	capture mata mata drop `__nwsim_names'
 	if "`xvars'" != "" {
-		nwload `name'
+		nwload `name', keepuser
 	}
 end
 

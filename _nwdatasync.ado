@@ -82,6 +82,9 @@ program _nwdatasync_work
 		// immediately before returning, purely to leave `_rc' clean.
 		capture mata: mata drop `nodename'
 		capture mata: mata drop `nodeindex'
+		if "`generate'" == "" local generate "`nw_included'"
+		capture drop `generate'
+		qui gen `generate' = 1 if _n <= `__nwds_nodes'
 		// see the `datasync == 0' branch above for why `nwname' is
 		// wrapped in `_return hold'/`_return restore' here, not called
 		// bare.

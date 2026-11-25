@@ -282,4 +282,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page [Ho
 
 ---
 
-*nwcommands version 3.37.1, 25 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))

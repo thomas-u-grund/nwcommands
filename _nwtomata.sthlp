@@ -110,4 +110,4 @@ when doing so because you might corrupt your network data. This displays the act
 	{help nwprogramming:Programming own network commands}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

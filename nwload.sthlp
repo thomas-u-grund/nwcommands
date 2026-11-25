@@ -36,7 +36,7 @@ generators) offer{p_end}
 {synopt:{opth generate(varname)}}Generate flag for nodes of the loaded network; default = {it:_nwinclude}{p_end}
 {synopt:{opt viewoff}}Unconnect view from network to dataset; default{p_end}
 {synopt:{opt viewon}}Establish view of network to dataset{p_end}
-{synopt:{opt overwrite}}overwrite existing variables that have the names of the node variables (otherwise error 110); also forwarded to {help _nwdatasync}{p_end}
+{synopt:{opt overwrite}}replace existing variables that have the names of the node variables (otherwise error 110); also forwarded to {help _nwdatasync}{p_end}
 {synopt:{opt force}}By default, matrix is not loaded for networks with more than 1000 nodes unless {bf:force} is specified{p_end}
 		
 {title:Description}
@@ -81,8 +81,12 @@ For example, if one were to import/use a network with 16 nodes and drop all Stat
 {pstd}
 All Stata variables can be deleted without deleting the underlying networks (except when a network is established as a view on the dataset with option {bf:viewon}; see above). With {bf:nwload} a
 network can always be brought back 
-as Stata variables. Only one network is loaded at a time: loading another network drops the variables of the network loaded before, and a note says so. A variable of your own that has the name of one
-of the node variables is not overwritten; {bf:nwload} stops with error 110 unless option {opt overwrite} is given (or declare the network with other variable names, {cmd:nwset ..., vars()}). If one
+as Stata variables. Only one network is loaded at a time: loading another network, also with {opt labelonly}, drops the variables that {bf:nwload} created for the network loaded before, and a note
+says so. {bf:nwload} drops no other variables. A variable of your own that has the name of one
+of the node variables is not overwritten; a command that loads a network for you (its option {opt xvars}) prints a note and keeps your variables; {bf:nwload} itself stops with error 110 and changes
+nothing unless option {opt overwrite} is given (or declare the network with other variable names,
+{cmd:nwset ..., vars()}). A variable that already holds exactly the network's values, such as the variables a network was declared from with {help nwset}, is left as it is and stays yours
+(on the diagonal of a network without self-loops, 0 and missing count as equal). If one
 wants to permanently drop a network one needs to
 use {help nwdrop} or {help nwclear} (very similar to how one would drop or clear normal variables). 
 
@@ -145,4 +149,4 @@ hold its ties aggregated over all times, and the command says so in a note; the 
    {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}, {help nwintro##limits:feasible network sizes}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.1, 25 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
