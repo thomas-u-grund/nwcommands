@@ -129,16 +129,13 @@ The matrix is not built above 20,000 nodes; in practice these commands are comfo
 
 Further limits:
 
-- o [nwspectral](nwspectral), [nwconcor](nwconcor), [nwhierarchy](nwhierarchy) and [nwdendrogram](nwdendrogram): running time grows steeply
-- with the number of nodes; refused above 6,000 nodes unless `force` is given.
-- o [nwcorrelate](nwcorrelate) of the nodes of one network: refused above 7,000 nodes.
-- o [nwhomophily](nwhomophily), [nwcollapse](nwcollapse), and [nwtoedge](nwtoedge) and [nw2toedge](nw2toedge) without `compress` (one
-- row per dyad): refused above 50,000,000 dyads (7,071 nodes for a directed network).
-- o [nwplotmatrix](nwplotmatrix): refused above 2,500 nodes.
-- o [nwbetween](nwbetween), [nwcloseness](nwcloseness), [nwkatz](nwkatz), [nwkcomponents](nwkcomponents) and [nwcohesion](nwcohesion) stop with
-- r(484) on very large networks when the run would be long; their help files give the rules.
-- o Commands that would need more than 12 GB for a dense result stop with r(484).
-- o Two-mode networks are one matrix over both modes and are refused above 20,000 nodes in total.
+- [nwspectral](nwspectral), [nwconcor](nwconcor), [nwhierarchy](nwhierarchy) and [nwdendrogram](nwdendrogram): running time grows steeply with the number of nodes; refused above 6,000 nodes unless `force` is given.
+- [nwcorrelate](nwcorrelate) of the nodes of one network: refused above 7,000 nodes.
+- [nwhomophily](nwhomophily), [nwcollapse](nwcollapse), and [nwtoedge](nwtoedge) and [nw2toedge](nw2toedge) without `compress` (one row per dyad): refused above 50,000,000 dyads (7,071 nodes for a directed network).
+- [nwplotmatrix](nwplotmatrix): refused above 2,500 nodes.
+- [nwbetween](nwbetween), [nwcloseness](nwcloseness), [nwkatz](nwkatz), [nwkcomponents](nwkcomponents) and [nwcohesion](nwcohesion) stop with r(484) on very large networks when the run would be long; their help files give the rules.
+- Commands that would need more than 12 GB for a dense result stop with r(484).
+- Two-mode networks are one matrix over both modes and are refused above 20,000 nodes in total.
 
 Where a command offers the option `force`, it runs in spite of such a guard. [nwtostata](nwtostata) needs one Stata variable per node and is limited by the number of variables of your Stata flavor.
 
