@@ -23,8 +23,8 @@ net install nwcommands, from(https://nwcommands.org/net/)
 nwinstall, everything
 ```
 
-The do-files were checked against the versions the book was printed with: nwcommands 3.35.0, nwergm 1.13.0,
-nwlsm 1.0.6, nwsbm 1.0.2, nwalaam 1.4.0, nwsaom 1.9.1, nwrem 1.7.0 and nwdynam 1.11.0. Results of the model chapters (21 to 28) depend on the
+The do-files were checked against the versions the book was printed with: nwcommands 3.37.1, nwergm 1.16.1,
+nwlsm 1.0.6, nwsbm 1.1.0, nwalaam 1.4.0, nwsaom 1.9.2, nwrem 1.7.2 and nwdynam 1.11.1. Results of the model chapters (21 to 28) depend on the
 random-number seed and can differ slightly from the printed output with other versions.
 
 **All files at once:** [nwbook_dofiles.zip](nwbook_dofiles.zip)
