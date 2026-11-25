@@ -12,14 +12,14 @@ Pick by your data and your question.
 
 | Your data | Your question | Package |
 |---|---|---|
-| Any network, descriptive questions | Centrality, components, cohesion, plots, import and export | [nwcommands](../nwcommands/) (core) |
-| One network, observed once | Which ties are likely, given degree, reciprocity, triangles and node attributes? | [nwergm](../nwergm/) (ERGM) |
-| The same actors observed at two or more waves (a panel) | How and why did the network change? Selection or influence? | [nwsaom](../nwsaom/) (SAOM) |
-| Timestamped events (e-mails, calls), ordered by time | Who acts next, and whom do they choose, given the history? | [nwdynam](../nwdynam/) (DyNAM) |
-| Timestamped events (e-mails, calls), ordered by time | Why this sender and this receiver at each event? | [nwrem](../nwrem/) (REM) |
-| One network, observed once, with a yes/no outcome on the actors (smoking, adoption, a side taken) | Why do these actors have the outcome, given the network around them? | [nwalaam](../nwalaam/) (ALAAM) |
-| One network, observed once | Where do the actors lie, if the network is a map in which close actors are tied? | [nwlsm](../nwlsm/) (latent space model) |
-| One network, observed once | Which actors play the same role, and how do the roles connect? | [nwsbm](../nwsbm/) (stochastic block model) |
+| Any network, descriptive questions | Centrality, components, cohesion, plots, import and export | [<img src="{{ '/assets/images/packages/nwcommands.png' | relative_url }}" alt="nwcommands" width="173" height="38">](../nwcommands/){: .pkg-inline }<br>(core) |
+| One network, observed once | Which ties are likely, given degree, reciprocity, triangles and node attributes? | [<img src="{{ '/assets/images/packages/nwergm.png' | relative_url }}" alt="nwergm" width="106" height="38">](../nwergm/){: .pkg-inline }<br>(ERGM) |
+| The same actors observed at two or more waves (a panel) | How and why did the network change? Selection or influence? | [<img src="{{ '/assets/images/packages/nwsaom.png' | relative_url }}" alt="nwsaom" width="127" height="38">](../nwsaom/){: .pkg-inline }<br>(SAOM) |
+| Timestamped events (e-mails, calls), ordered by time | Who acts next, and whom do they choose, given the history? | [<img src="{{ '/assets/images/packages/nwdynam.png' | relative_url }}" alt="nwdynam" width="154" height="38">](../nwdynam/){: .pkg-inline }<br>(DyNAM) |
+| Timestamped events (e-mails, calls), ordered by time | Why this sender and this receiver at each event? | [<img src="{{ '/assets/images/packages/nwrem.png' | relative_url }}" alt="nwrem" width="98" height="38">](../nwrem/){: .pkg-inline }<br>(REM) |
+| One network, observed once, with a yes/no outcome on the actors (smoking, adoption, a side taken) | Why do these actors have the outcome, given the network around them? | [<img src="{{ '/assets/images/packages/nwalaam.png' | relative_url }}" alt="nwalaam" width="128" height="38">](../nwalaam/){: .pkg-inline }<br>(ALAAM) |
+| One network, observed once | Where do the actors lie, if the network is a map in which close actors are tied? | [<img src="{{ '/assets/images/packages/nwlsm.png' | relative_url }}" alt="nwlsm" width="97" height="38">](../nwlsm/){: .pkg-inline }<br>(latent space model) |
+| One network, observed once | Which actors play the same role, and how do the roles connect? | [<img src="{{ '/assets/images/packages/nwsbm.png' | relative_url }}" alt="nwsbm" width="107" height="38">](../nwsbm/){: .pkg-inline }<br>(stochastic block model) |
 
 All seven model packages need the core. The core is where you import, prepare and describe the data,
 so most projects start there. If your network is large, see [how large a network can be](../nwcommands/size-limits/).
