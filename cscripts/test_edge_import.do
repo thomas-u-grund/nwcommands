@@ -500,6 +500,9 @@ qui findfile nwimport.ado
 local ado "`r(fn)'"
 qui run "`ado'"
 qui run "`ado'"
+* an empty or quoted file name is left to insheet (no message from Mata)
+mata: assert(nwimp_utf8copy("", "x") == 0)
+mata: assert(nwimp_utf8copy(char(34) + "x" + char(34), "x") == 0)
 di "PASS 7 commas"
 
 * ---- Pajek *Matrix
