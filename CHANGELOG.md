@@ -4,11 +4,6 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
-## [Unreleased]
-
-### Fixed
-- Reading back the modes of a large two-mode network took time that grew with the square of the number of nodes.
-
 ## [3.39.0] - 2026-11-26
 
 **Summary.** Fixes for wrong results with `replace` targets and imported files, a safeguard against losing data in `nwset`, and pictograms in `nwplot` from the command line. **A do-file may now stop:** `nwset` from an edge list stops when unsaved variables outside the edge list would be dropped; add `dropvars` to drop them as before. Please update.
@@ -25,6 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
   message. New option `dropvars` allows it.
 
 ### Fixed
+- Reading back the node names and modes of a large two-mode network is faster: the time of this step grew with the square of
+  the number of nodes.
 - Pajek and UCINET DL files with a byte-order mark, and DL files with blank lines, are imported.
 - `nwimport, type(edgelist)`: files with a byte-order mark, in UTF-16 or in Windows-1252 gave a wrong network or
   changed node names without any message (the header read as a tie, a single nonsense node, accented letters lost).
