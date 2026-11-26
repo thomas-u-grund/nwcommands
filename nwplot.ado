@@ -717,6 +717,10 @@ program nwplot, rclass
 		mata: __nwplot_nsize = J(`nodes',1,80)
 		local sizekeys ""
 	}
+	if "`size'" != "" {
+		qui count if `size' < 0 in 1/`nodes'
+		if r(N) > 0 di "{txt}{p 0 0 2}(note: size() has negative values; marker sizes cannot show them){p_end}"
+	}
 	
 	local sizeorder = ""
 	local sizelabels = ""	

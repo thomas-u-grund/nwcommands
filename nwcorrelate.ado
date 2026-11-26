@@ -118,6 +118,10 @@ capture program drop nwcorrelate_nets
 program nwcorrelate_nets
 syntax [anything(name=netnames)] [, ifcond(string) keepexpand context(string) mode(string) ATTRibute(string) PERMutations(integer 1) SAVe(string asis) force NOPlot NAME(string) SAVing(string asis) EXPort(string asis) *]
 unw_defs
+	if `permutations' < 0 {
+		di "{err}Option {bf:permutations()} must not be negative."
+		exit 198
+	}
 	// plot-convention options: the density plot is drawn as before whenever permutations() > 1; noplot switches it off;
 	// name(), saving() and export() need the plot. (Options that went to kdensity before still do; they are not checked.)
 	local __uname `"`name'"'

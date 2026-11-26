@@ -22,7 +22,7 @@ BEGIN
   VARNAME vr_attribute 290 54 190 ., nomem option(attribute)
   TEXT tx_plot 20 82 260 ., label("draw the table as bars")
   CHECKBOX cx_plot 290 82 190 ., label("plot") option(plot)
-  TEXT tx_eiplot 20 110 260 ., label("draw the QAP null distribution of the E-I index")
+  TEXT tx_eiplot 20 110 260 ., label("plot E-I null distribution (needs attribute)")
   CHECKBOX cx_eiplot 290 110 190 ., label("eiplot") option(eiplot)
   TEXT tx_name 20 138 260 ., label("name of the graphs (name_plot, name_eiplot)")
   EDIT ed_name 290 138 190 ., nomem option(name)

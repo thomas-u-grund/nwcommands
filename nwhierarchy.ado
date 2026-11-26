@@ -47,6 +47,10 @@ program _nwhierarchy_main, rclass
 	}
 	_nwsyntax `netname'
 	_nw2guard `netname', cmd(nwhierarchy)
+	if `nodes' < 2 {
+		di "{err}{p 0 0 2}Network {bf:`netname'} has fewer than 2 nodes; there is nothing to cluster.{p_end}"
+		exit 2001
+	}
 
 	if "`clear'" == "" & "`add'" == "" {
 		local add = "add"
@@ -82,6 +86,11 @@ program _nwhierarchy_main, rclass
 			nwtomatafast `__nwhdis'
 			mata: st_matrix("`dismat'", `r(mata)')
 			nwdrop `__nwhdis'
+			mata: st_local("__nwh_miss", strofreal(hasmissing(st_matrix("`dismat'"))))
+			if `__nwh_miss' {
+				di "{err}{p 0 0 2}Some dissimilarities are missing, which clustering cannot use; the usual reason is missing ties in {bf:`netname'}. Give them a value first (for example {bf:nwrecode `netname' (.=0)}).{p_end}"
+				exit 504
+			}
 		}
 	}
 

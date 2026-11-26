@@ -94,7 +94,13 @@ program nwgenerate
 		// caller's own `xvars' through when given, no separate token is
 		// needed - matching how `undirected'/`replace' etc. already
 		// flow through the same way.
-		nwset, mat(`netexp') name(`__ngnew') `undirected' `options' nodenames(`last_netobj'->get_nodenames())
+		capture noisily nwset, mat(`netexp') name(`__ngnew') `undirected' `options' nodenames(`last_netobj'->get_nodenames())
+		if _rc {
+			local __ngrc = _rc
+			if `__ngrc' == 3499 di "{err}{p 0 0 2}A name in the expression is neither a network nor something Mata knows (see the message above). {help nwds} lists the networks.{p_end}"
+			capture nwdrop `__ngnew'
+			exit `__ngrc'
+		}
 		qui nwsym `__ngnew', check
 
 		// nwsym's own help documents r(is_symmetric) as the string
@@ -114,6 +120,7 @@ program nwgenerate
 			if _rc {
 				local __ngrc = _rc
 				capture nwdrop `__ngnew'
+				if `__ngrc' == 2000 di "{err}The condition selects no node."
 				exit `__ngrc'
 			}
 		}

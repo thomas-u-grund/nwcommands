@@ -77,6 +77,9 @@ program nwspectral, rclass
 	// identical degenerate input cleanly (via clustermat's own "1x1
 	// matrix not allowed" error); nwspectral had no equivalent guard at
 	// all.
+	mata: st_local("__neg", strofreal(sum(`netobj'->edgelist()[., 3] :< 0) > 0))
+	if `__neg' & `val' di "{txt}{p 0 0 2}(warning: the network has negative tie values, for which this decomposition is not meaningful){p_end}"
+
 	if `nodes' < 2 {
 		di "{err}{p 0 0 2}Network {bf:`netname'} has fewer than 2 nodes; spectral decomposition needs at least 2 nodes.{p_end}"
 		exit 198

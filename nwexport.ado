@@ -24,6 +24,13 @@ program nwexport, rclass
 	if `"`fname'"' == "" {
 		local fname = "`netname'"
 	}
+	// fname() may be given in quotes, and with the ending of the format (which is added in any case)
+	if substr(`"`fname'"', 1, 2) == char(96) + char(34) local fname = substr(`"`fname'"', 3, length(`"`fname'"') - 4)
+	else if substr(`"`fname'"', 1, 1) == char(34) local fname = substr(`"`fname'"', 2, length(`"`fname'"') - 2)
+	local __nwx_end = cond("`type'" == "pajek", ".net", cond("`type'" == "ucinet", ".dl", cond("`type'" == "gml", ".gml", cond("`type'" == "edgelist", ".txt", ""))))
+	if "`__nwx_end'" != "" & lower(substr(`"`fname'"', -length("`__nwx_end'"), .)) == "`__nwx_end'" {
+		local fname = substr(`"`fname'"', 1, length(`"`fname'"') - length("`__nwx_end'"))
+	}
 
 	di `"{txt}Exporting network: {it:`netname'}"'
 	// the data synchronisation of the writers may move a variable: keep the order
