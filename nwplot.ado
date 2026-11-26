@@ -175,7 +175,16 @@ program nwplot, rclass
 		local ifmaster "if `if'"
 		capture nwdrop `__nwptmp'_if
 		nwduplicate `netname', name(`__nwptmp'_if)
-		nwdrop `__nwptmp'_if if (!(`if'))
+		capture nwdrop `__nwptmp'_if if (!(`if'))
+		if _rc {
+			qui count if `if'
+			if r(N) == 0 {
+				capture nwdrop `__nwptmp'*
+				di "{err}{p 0 0 2}No node of network {bf:`netname'} meets the condition; there is nothing to plot.{p_end}"
+				exit 198
+			}
+			nwdrop `__nwptmp'_if if (!(`if'))
+		}
 		if "`edgecolor'" != "" {
 			capture nwdrop `__nwptmp'_edgecolor_if
 			nwduplicate `edgecolor', name(`__nwptmp'_edgecolor_if)

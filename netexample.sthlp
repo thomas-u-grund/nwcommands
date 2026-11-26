@@ -704,7 +704,7 @@ code.
 email, 50,233 rows sorted by time. Declare the event network with {help nwset##temporal:{cmd:nwset}}:{p_end}
 
 {phang2}{cmd:. nwwebuse manufacturing, nwclear}{p_end}
-{phang2}{cmd:. nwset sender receiver, eventtime(t) name(mail)}{p_end}
+{phang2}{cmd:. nwset sender receiver, eventtime(t) directed name(mail)}{p_end}
 
 {pstd}
 {bf:Vertex attributes:} a companion dataset, {cmd:manufacturing_nodes.dta} ({cmd:nwwebuse}
