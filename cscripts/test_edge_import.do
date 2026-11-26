@@ -456,6 +456,45 @@ foreach kind in ascii latin1 {
 	nwimport "`file'", type(matrix) nwclear
 	ei_net c5_`kind' 2 false "(0,1 \ 1,0)" "`want'"
 }
+* edge lists in other encodings: a byte-order mark, UTF-16 and an 8-bit encoding (written as bytes)
+capture mata: mata drop ei_enc()
+mata:
+void ei_enc(string scalar fn, string scalar kind, real scalar header)
+{
+	real scalar fh, i
+	string scalar t, out, nl
+	real rowvector b
+
+	nl = char((13, 10))
+	t = (header ? "ego,alter" + nl : "") + "Zo" + uchar(235) + "," + uchar(220) + "nal" + nl + uchar(220) + "nal," + uchar(197) + "sa" + nl
+	if (kind == "bom") out = char((239, 187, 191)) + t
+	if (kind == "cp1252") out = ustrto(t, "windows-1252", 1)
+	if (kind == "u16le") out = char((255, 254)) + ustrto(t, "UTF-16LE", 1)
+	if (kind == "u16be") out = char((254, 255)) + ustrto(t, "UTF-16BE", 1)
+	if (fileexists(fn)) unlink(fn)
+	fh = fopen(fn, "w")
+	fwrite(fh, out)
+	fclose(fh)
+}
+end
+foreach kind in bom cp1252 u16le u16be {
+	foreach header in 1 0 {
+		foreach opt in "" "delimiter(,)" {
+			mata: ei_enc(st_local("dir") + "/en_`kind'.csv", "`kind'", `header')
+			nwimport "`dir'/en_`kind'.csv", type(edgelist) nwclear `opt'
+			qui nwname
+			local labs `"`r(labs)'"'
+			assert r(nodes) == 3
+			foreach w in `=uchar(197) + "sa"' `=uchar(220) + "nal"' `=char(90) + char(111) + uchar(235)' {
+				assert strpos(`"`labs'"', "`w'") > 0
+			}
+			assert ustrlen(`"`labs'"') == 12
+			qui nwsummarize
+			assert cond(missing(r(arcs)), 0, r(arcs)) + cond(missing(r(edges)), 0, r(edges)) == 2
+		}
+	}
+}
+
 * nwimport.ado can be run again while its Mata functions are in memory
 qui findfile nwimport.ado
 local ado "`r(fn)'"
