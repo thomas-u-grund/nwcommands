@@ -80,8 +80,9 @@ existed in wave 2:
 {title:Network types}
 
 {pstd}
-{bf:Directed:} kept from the source network. {bf:Valued:} the tie values of the source network are kept (the slice
-selects ties, it does not change their values). {bf:Two-mode:} a temporal two-mode network ({help nwset} with
+{bf:Directed:} kept from the source network. {bf:Valued:} in a snapshot or interval network the ties of the slice have
+the values declared for that time or period (1 without a value variable; a tie whose value there is 0 or missing is not
+in the slice). In an event network every event pair at {it:t} has the value 1. {bf:Two-mode:} a temporal two-mode network ({help nwset} with
 {opt twomode} and {opt time()}, {opt interval()} or {opt eventtime()}) gives a two-mode slice with the same modes and
 level labels. {bf:Signed:} negative values are not treated
 specially. See {help nwnetworktypes}.{p_end}
@@ -111,4 +112,4 @@ nodes).
 	{help nwset}, {help nwsummarize}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

@@ -218,11 +218,13 @@ Time belongs to edges/ties, not to a separate network copy per timepoint. An edg
 - was recorded (e.g. a wave number). Ties from different waves live in the same network object, each
 - carrying its own recorded time. A pair listed in several rows with different times is a tie observed at
 - each of those times, so ties can come and go: a tie of waves 1 and 3 is present at wave 1, absent at
-- wave 2 and present again at wave 3 (see [nwattime](nwattime))
+- wave 2 and present again at wave 3 (see [nwattime](nwattime)). A third variable gives the value of the tie at that time;
+- of several rows of a pair at the same time the last one counts
 - **interval(*startvar endvar*)**
 - **interval** semantics: each row is active for *startvar* <= *t* < *endvar* - a
 - missing *endvar* means the tie is still ongoing (open-ended). A pair may have several rows, one for
-- each period in which the tie exists
+- each period in which the tie exists. A third variable gives the value of the tie in that period; where periods of a
+- pair overlap, the one that starts last counts (of several with the same start, the one that ends last)
 - **eventtime(*eventtimevar*)**
 - **event** semantics: each row is a timestamped relational *event*, not a persistent
 - tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
@@ -290,4 +292,4 @@ Options `time()` and `interval()` keep the times as a list with one entry per ro
 
 ---
 
-*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))

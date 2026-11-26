@@ -123,7 +123,7 @@ For two-mode networks see {help nw2set:introduction to two-mode networks}) and {
 does not have: that list holds each tie once, aggregated over all times (for an event network every pair with at least one event), and the command says so
 in a note. {opt aggregate} states the aggregation and leaves the note out. With {opt time} the data in memory are replaced by one row for every event of an event network (in
 the order given), every observation of a tie of a snapshot network, or every interval of an interval network, for a single one-mode network: the variables {it:_ego}
-and {it:_alter} (or the names in {opt ego()} and {opt alter()}), {it:_time} (event and snapshot networks) or {it:_start} and {it:_end} (interval networks), and {it:_value} for a valued event network. An undirected snapshot or
+and {it:_alter} (or the names in {opt ego()} and {opt alter()}), {it:_time} (event and snapshot networks) or {it:_start} and {it:_end} (interval networks), and {it:_value} for a valued temporal network. An undirected snapshot or
 interval network lists each tie once. {help nwset} with {cmd:eventtime()}, {cmd:time()} or {cmd:interval()} turns the rows into the network again. {opt time}
 cannot be combined with {opt aggregate} or with the options of the list of ties above (except {opt ego()} and {opt alter()}); error 198.{p_end}
 
@@ -214,4 +214,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 	{help nwfromedge}, {help nw2toedge}, {help nwsave}, {help nwexpand}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

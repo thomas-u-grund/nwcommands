@@ -46,14 +46,14 @@ program _nwtemporal_stash
 		mata: __nwt_E = *`netobj'->get_edge_time()
 		mata: __nwt_t1 = __nwt_E[., 3]
 		mata: __nwt_t2 = J(rows(__nwt_E), 1, .)
-		mata: __nwt_v = J(rows(__nwt_E), 1, .)
+		mata: __nwt_v = cols(__nwt_E) > 3 ? __nwt_E[., 4] : J(rows(__nwt_E), 1, .)
 	}
 	else if "`temporaltype'" == "interval" {
 		mata: __nwt_E = *`netobj'->get_edge_start()
 		mata: __nwt_S = *`netobj'->get_edge_end()
 		mata: __nwt_t1 = __nwt_E[., 3]
 		mata: __nwt_t2 = __nwt_S[., 3]
-		mata: __nwt_v = J(rows(__nwt_E), 1, .)
+		mata: __nwt_v = cols(__nwt_E) > 3 ? __nwt_E[., 4] : J(rows(__nwt_E), 1, .)
 	}
 	else {
 		di "{err}network {bf:`netname'} is not temporal"
@@ -96,10 +96,10 @@ program _nwtemporal_put
 		mata: `netobj'->set_eventlist(build_eventlist((`netobj'->get_nodenames()), __nwt_l1, __nwt_l2, __nwt_t1, __nwt_v))
 	}
 	else if "`__nwt_ty'" == "snapshot" {
-		mata: nw_set_temporal_values(`netobj', __nwt_l1, __nwt_l2, __nwt_t1, J(0, 1, .), 0, 0)
+		mata: nw_set_temporal_values(`netobj', __nwt_l1, __nwt_l2, __nwt_t1, J(0, 1, .), 0, 0, any(__nwt_v :< .) ? __nwt_v : J(0, 1, .))
 	}
 	else if "`__nwt_ty'" == "interval" {
-		mata: nw_set_temporal_values(`netobj', __nwt_l1, __nwt_l2, __nwt_t1, __nwt_t2, 0, 1)
+		mata: nw_set_temporal_values(`netobj', __nwt_l1, __nwt_l2, __nwt_t1, __nwt_t2, 0, 1, any(__nwt_v :< .) ? __nwt_v : J(0, 1, .))
 	}
 	else {
 		di "{err}unknown temporal type {bf:`__nwt_ty'}"

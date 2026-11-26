@@ -54,4 +54,4 @@ The two-step paths i -> k -> j are listed from the stored ties (the sum over k o
 
 ---
 
-*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))

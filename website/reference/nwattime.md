@@ -67,7 +67,7 @@ For example, a network declared with `nwset ego alter, time(wave)` can be sliced
 
 ## Network types
 
-**Directed:** kept from the source network. **Valued:** the tie values of the source network are kept (the slice selects ties, it does not change their values). **Two-mode:** a temporal two-mode network ([nwset](nwset) with `twomode` and `time()`, `interval()` or `eventtime()`) gives a two-mode slice with the same modes and level labels. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
+**Directed:** kept from the source network. **Valued:** in a snapshot or interval network the ties of the slice have the values declared for that time or period (1 without a value variable; a tie whose value there is 0 or missing is not in the slice). In an event network every event pair at *t* has the value 1. **Two-mode:** a temporal two-mode network ([nwset](nwset) with `twomode` and `time()`, `interval()` or `eventtime()`) gives a two-mode slice with the same modes and level labels. **Signed:** negative values are not treated specially. See [nwnetworktypes](nwnetworktypes).
 
 ## Limits
 
@@ -87,4 +87,4 @@ For a temporal network of more than 2,000 nodes the times (or the starts and end
 
 ---
 
-*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))

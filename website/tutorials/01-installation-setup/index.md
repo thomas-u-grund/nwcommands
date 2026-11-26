@@ -59,7 +59,7 @@ core and lists the model packages, so you can see what is installed:
 ```stata
 . nwversion
 
-nwcommands 3.37.2 (26nov2026), core package; Stata 17, MacOSX
+nwcommands 3.38.0 (26nov2026), core package; Stata 17, MacOSX
 Model packages (separate, GPL-3; install with nwinstall, models):
   nwsaom  1.9.2  (22nov2026)
   nwergm  1.16.1  (24nov2026)
@@ -70,7 +70,7 @@ Model packages (separate, GPL-3; install with nwinstall, models):
   nwlsm   1.0.6  (22nov2026)
 ```
 
-This is what it showed with core 3.37.2. Your version numbers, Stata release and operating system may differ.
+This is what it showed with core 3.38.0. Your version numbers, Stata release and operating system may differ.
 
 ## The Network Analysis menu
 

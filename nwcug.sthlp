@@ -204,4 +204,4 @@ indices. {it:Social Networks} 21(3), 239-267.
 	{help nwrandom}, {help nwdyads}, {help nwpermute}, {help nwqap}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

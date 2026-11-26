@@ -13,7 +13,7 @@ The current version of each package and every release, newest first. Each entry 
 
 | Package | Current version | Released | Release notes | Package page |
 |---|---|---|---|---|
-| **nwcommands** | 3.37.2 | 26 November 2026 | [all releases of nwcommands](https://github.com/thomas-u-grund/nwcommands/releases) | [nwcommands](../nwcommands/) |
+| **nwcommands** | 3.38.0 | 26 November 2026 | [all releases of nwcommands](https://github.com/thomas-u-grund/nwcommands/releases) | [nwcommands](../nwcommands/) |
 | **nwsaom** | 1.9.2 | 22 November 2026 | [all releases of nwsaom](https://github.com/thomas-u-grund/nwsaom/releases) | [nwsaom](../nwsaom/) |
 | **nwergm** | 1.16.1 | 24 November 2026 | [all releases of nwergm](https://github.com/thomas-u-grund/nwergm/releases) | [nwergm](../nwergm/) |
 | **nwdynam** | 1.11.1 | 22 November 2026 | [all releases of nwdynam](https://github.com/thomas-u-grund/nwdynam/releases) | [nwdynam](../nwdynam/) |
@@ -23,6 +23,16 @@ The current version of each package and every release, newest first. Each entry 
 | **nwsbm** | 1.1.0 | 23 November 2026 | [all releases of nwsbm](https://github.com/thomas-u-grund/nwsbm/releases) | [nwsbm](../nwsbm/) |
 
 ## All releases
+
+<a id="nwcommands-3-38-0"></a>
+
+### 26 November 2026: nwcommands 3.38.0
+
+**nwcommands 3.38.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.38.0)). Please update. Results that change: time slices of snapshot and interval networks with tie values now give the value of the time asked for (before: the last value of each pair), so recompute them; networks saved with an earlier version hold no values per time and have to be declared again from the data. After `nwdrop`, `nwkeep` or `nwsubset` with a condition, a temporal network could show ties between the wrong nodes: check such results. `nwturnover` and `nwkcomponents` no longer count missing tie values as ties.
+
+Also fixed: in `nwmovie` pages the controls stay in place when you click Play or Pause; node names with commas in two-mode networks keep their modes through saving and loading, and reserved words are refused as network names.
+
+The core Mata library is rebuilt. The model packages need no update.
 
 <a id="nwcommands-3-37-2"></a>
 

@@ -160,4 +160,4 @@ This example shows that two individuals are more likely to be friends at time2 (
 
 ---
 
-*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
