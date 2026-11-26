@@ -40,8 +40,8 @@ foreach order in middle last {
 	set seed 11
 	_mk `order'
 	gen grp = mod(_n, 2) in 1/6
-	nwneighbor src, ego(1) subnet(ctl)
-	nwneighbor src, ego(1) subnet(tgt) subreplace
+	nwneighbor src, ego(n1) subnet(ctl)
+	nwneighbor src, ego(n1) subnet(tgt) subreplace
 	_same tgt ctl
 
 	* keepexpand replaces the network same_grp
@@ -73,13 +73,10 @@ foreach order in middle last {
 	nwrandom 4, prob(.5) name(tgt) undirected
 	if "`order'" == "last" nwrandom 9, prob(.3) name(oth) undirected
 	clear
-	input str1 a str1 b t
-	a b 1
-	b c 1
-	c d 2
-	d e 2
-	a e 2
-	end
+	set obs 5
+	gen str1 a = word("a b c d a", _n)
+	gen str1 b = word("b c d e e", _n)
+	gen t = 1 + (_n > 2)
 	nwset a b, time(t) name(src) directed
 	if "`order'" == "middle" nwrandom 9, prob(.3) name(oth) undirected
 	nwattime src, at(2) name(ctl)
@@ -90,7 +87,7 @@ foreach order in middle last {
 * a target that is the source is refused and the source stays
 set seed 11
 _mk middle
-foreach cmd in "nwlambda src, name(src) replace" "nwsimindex src, name(src) replace" "nwneighbor src, ego(1) subnet(src) subreplace" {
+foreach cmd in "nwlambda src, name(src) replace" "nwsimindex src, name(src) replace" "nwneighbor src, ego(n1) subnet(src) subreplace" {
 	capture noisily `cmd'
 	assert _rc == 483
 	nwsummarize src

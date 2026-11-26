@@ -1932,6 +1932,7 @@ capture mata: mata drop nwimp_dlline()
 capture mata: mata drop nwimp_dlrect()
 capture mata: mata drop nwimp_pajeklines()
 capture mata: mata drop nwimp_nobom()
+capture mata: mata drop nwimp_lines()
 capture mata: mata drop nwimp_pajekline()
 capture mata: mata drop nwimp_notabs()
 capture mata: mata drop nwimp_squareblankdiag()
@@ -1959,6 +1960,16 @@ real scalar nwimp_maskapos(string scalar fn, string scalar out)
 	for (i = 1; i <= n; i++) fput(fh, subinstr(L[i], char(34) + char(39), char(34) + "__nwapos__"))
 	fclose(fh)
 	return(1)
+}
+
+// the lines of a text that ends with a line break; empty lines are left out
+string rowvector nwimp_lines(string scalar text)
+{
+	transmorphic t
+
+	t = tokeninit(char(10), "", "")
+	tokenset(t, text)
+	return(tokengetall(t))
 }
 
 // a line without a UTF-8 byte-order mark
@@ -2138,9 +2149,10 @@ string rowvector nwimp_dlrect(string scalar fn, real scalar nr, real scalar nc)
 // a copy of a UCINET DL file for the readers: tabs replaced by blanks, no byte-order mark, no blank lines
 void nwimp_notabs(string scalar from, string scalar to)
 {
-	real scalar fi, fo, i, last
+	real scalar fi, fo, i, k, last
 	string scalar buf, c
 	string matrix piece
+	string rowvector L
 
 	fi = fopen(from, "r")
 	fo = fopen(to, "rw")
@@ -2151,10 +2163,14 @@ void nwimp_notabs(string scalar from, string scalar to)
 		last = (piece == J(0, 0, ""))
 		if (!last) buf = buf + subinstr(piece, char(13), char(10))
 		else buf = buf + char(10)
-		while ((i = strpos(buf, char(10))) > 0) {
-			c = nwimp_nobom(subinstr(substr(buf, 1, i - 1), char(9), " "))
+		// the complete lines are split in one step (cutting them off one by one copies the rest of the chunk each time)
+		k = strrpos(buf, char(10))
+		if (k == 0) continue
+		L = nwimp_lines(substr(buf, 1, k))
+		buf = substr(buf, k + 1, .)
+		for (i = 1; i <= cols(L); i++) {
+			c = nwimp_nobom(subinstr(L[i], char(9), " "))
 			if (strtrim(c) != "") fput(fo, c)
-			buf = substr(buf, i + 1, .)
 		}
 	}
 	fclose(fi)
@@ -2183,9 +2199,10 @@ void nwimp_pajekline(real scalar fo, string scalar c)
 // network, written by nwexport, is kept. Lines of any length.
 void nwimp_pajeklines(string scalar from, string scalar to)
 {
-	real scalar fi, fo, i, last
+	real scalar fi, fo, i, k, last
 	string scalar buf
 	string matrix piece
+	string rowvector L
 
 	fi = fopen(from, "r")
 	fo = fopen(to, "rw")
@@ -2196,9 +2213,13 @@ void nwimp_pajeklines(string scalar from, string scalar to)
 		last = (piece == J(0, 0, ""))
 		if (!last) buf = buf + subinstr(piece, char(13), char(10))
 		else buf = buf + char(10)
-		while ((i = strpos(buf, char(10))) > 0) {
-			nwimp_pajekline(fo, substr(buf, 1, i - 1))
-			buf = substr(buf, i + 1, .)
+		// the complete lines are split in one step (cutting them off one by one copies the rest of the chunk each time)
+		k = strrpos(buf, char(10))
+		if (k == 0) continue
+		L = nwimp_lines(substr(buf, 1, k))
+		buf = substr(buf, k + 1, .)
+		for (i = 1; i <= cols(L); i++) {
+			nwimp_pajekline(fo, L[i])
 		}
 	}
 	fclose(fi)

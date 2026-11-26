@@ -5,6 +5,11 @@ program nwdichotomize
 
 	// the names the results will get are fixed first: a name in use is replaced by a free one (with a warning), and
 	// only the networks that receive a result are made binary afterwards
+	local __nwd_dups : list dups generate
+	if "`__nwd_dups'" != "" {
+		di "{err}{p 0 0 2}{bf:generate()} names a network twice ({bf:`: word 1 of `__nwd_dups''}); every result needs its own name.{p_end}"
+		exit 198
+	}
 	_nwsyntax `netname', max(9999) other(src)
 	local __nwd_targets ""
 	local __nwd_gen ""

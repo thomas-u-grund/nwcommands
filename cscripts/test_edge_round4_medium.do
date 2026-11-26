@@ -27,6 +27,8 @@ foreach cmd in "nwrecode a (1=5), generate(z)" "nwdichotomize a, threshold(1) ge
 	nwsummarize z_1
 }
 assert "`r(valued)'" == "false"
+capture noisily nwdichotomize a z, threshold(1) generate(w w)
+assert _rc == 198
 nwsimilar a, name(z)
 nwdissimilar a, name(z)
 

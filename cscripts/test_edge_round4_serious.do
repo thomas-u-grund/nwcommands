@@ -20,6 +20,33 @@ void __w(string scalar fn, string scalar text, string scalar bom)
 	fclose(fh)
 }
 end
+mata:
+string scalar __slurp(string scalar fn)
+{
+	real scalar fh
+	string scalar s
+	fh = fopen(fn, "r")
+	s = fread(fh, 1000000)
+	fclose(fh)
+	return(s)
+}
+end
+mata:
+// the file with carriage returns as line ends; without final: no line end after the last line
+void __cr(string scalar fn, real scalar final)
+{
+	real scalar fh
+	string scalar t
+
+	t = subinstr(__slurp(fn), char(10), char(13))
+	while (substr(t, strlen(t), 1) == char(13)) t = substr(t, 1, strlen(t) - 1)
+	if (final) t = t + char(13)
+	(void) _unlink(fn)
+	fh = fopen(fn, "w")
+	fwrite(fh, t)
+	fclose(fh)
+}
+end
 capture program drop _check
 program _check
 	args net nodes total
@@ -52,6 +79,41 @@ foreach v in plain bom blank blankbom {
 	_check d_`v' 4 12
 }
 
+* line ends: carriage returns only, no final line break, and files longer than one 64 KB chunk
+mata:
+void __long(string scalar fn, string scalar head, real scalar n, string scalar eol, real scalar final)
+{
+	real scalar fh, i
+	string scalar s, row
+	(void) _unlink(fn)
+	fh = fopen(fn, "w")
+	fwrite(fh, subinstr(head, "|", eol))
+	for (i = 1; i < n; i++) {
+		row = strofreal(i) + char(9) + strofreal(i + 1) + char(9) + "1"
+		fwrite(fh, row + eol)
+		if (!mod(i, 97)) fwrite(fh, eol)
+	}
+	fwrite(fh, "1" + char(9) + strofreal(n) + char(9) + "1" + (final ? eol : ""))
+	fclose(fh)
+}
+end
+foreach v in lf cr crlf {
+	foreach final in 0 1 {
+		local eol = cond("`v'" == "lf", "char(10)", cond("`v'" == "cr", "char(13)", "char((13,10))"))
+		mata: __long(st_local("base") + "_long.net", "*Vertices 9000|*Edges|", 9000, `eol', `final')
+		mata: assert(strlen(invtokens(cat(st_local("base") + "_long.net")')) > 70000)
+		nwimport "`base'_long.net", type(pajek) name(L) nwclear
+		nwsummarize L
+		assert r(nodes) == 9000 & r(edges) == 9000
+	}
+}
+foreach final in 0 1 {
+	_write "`base'_cr.dl" "`dlblank'" ""
+	mata: __cr(st_local("base") + "_cr.dl", `final')
+	nwimport "`base'_cr.dl", type(ucinet) name(C) nwclear
+	_check C 4 12
+}
+
 * nwspectral: a missing tie counts as 0
 nwclear
 mata: M = (0,1,1,0 \ 1,0,1,0 \ 1,1,0,1 \ 0,0,1,0)
@@ -68,6 +130,16 @@ foreach meas in binary valued {
 	assert !missing(b) in 1/4
 }
 
+mata:
+// lines of a log that hold want (a log without output is an empty file)
+real scalar __found(string scalar fn, string scalar want)
+{
+	string colvector L
+	L = cat(fn)
+	if (length(L) == 0) return(0)
+	return(sum(strpos(L, want) :> 0))
+}
+end
 * nwfromedge: identifiers that differ only in blanks are merged, with a note
 capture program drop _log
 program _log, rclass
@@ -76,7 +148,7 @@ program _log, rclass
 	quietly log using "`lf'", text replace name(r4)
 	`cmd'
 	quietly log close r4
-	mata: st_local("found", strofreal(sum(strpos(cat(st_local("lf")), st_local("want")) :> 0)))
+	mata: st_local("found", strofreal(__found(st_local("lf"), st_local("want"))))
 	return scalar found = `found'
 end
 nwclear
@@ -111,10 +183,12 @@ assert r(found) == 0
 foreach form in "edgelist" "time(t)" "interval(t u)" "eventtime(t)" "twomode" {
 	nwclear
 	clear
-	input str3 a str3 b t u extra
-	"x" "p" 1 2 7
-	"y" "q" 1 3 8
-	end
+	set obs 2
+	gen str3 a = word("x y", _n)
+	gen str3 b = word("p q", _n)
+	gen t = 1
+	gen u = 1 + _n
+	gen extra = 6 + _n
 	if "`form'" == "edgelist" | "`form'" == "twomode" drop t u
 	capture noisily nwset a b, `form' name(n)
 	assert _rc == 4
