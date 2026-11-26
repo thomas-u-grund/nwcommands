@@ -209,12 +209,25 @@ mata:
 n = 40000
 lab = "x, " :+ strofreal(1..n)
 s = invtokens(lab :+ "=" :+ strofreal(1 :+ (mod(1..n, 2) :== 0)), ",")
-t = tokeninit("", ",", "", 0, 0)
-tokenset(t, s)
 timer_clear(1)
 timer_on(1)
-res = nw_join_modepairs(tokengetall(t))
+res = nw_join_modepairs(nw_splitchunks(s, "", ","))
 timer_off(1)
+// the splitter returns what tokengetall() returns, also across the borders of its chunks
+for (i = 1; i <= 8; i++) {
+	x = ("", ",", ",,", "a", "a,", ",a", "ä, b=1,c=2", 5000 * "a," + 9000 * "b" + ",," + 300 * "ü,")[i]
+	t = tokeninit("", ",", "", 0, 0)
+	tokenset(t, x)
+	y = tokengetall(t)
+	assert(cols(nw_splitchunks(x, "", ",")) == cols(y))
+	if (cols(y)) assert(nw_splitchunks(x, "", ",") == y)
+	x = subinstr(x, ",", char(1))
+	t = tokeninit(char(1), "", "", 0, 0)
+	tokenset(t, x)
+	y = tokengetall(t)
+	assert(cols(nw_splitchunks(x, char(1), "")) == cols(y))
+	if (cols(y)) assert(nw_splitchunks(x, char(1), "") == y)
+}
 assert(cols(res) == n)
 assert(res == lab :+ "=" :+ strofreal(1 :+ (mod(1..n, 2) :== 0)))
 assert(timer_value(1)[1] < 5)
