@@ -4,9 +4,11 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
-## [Unreleased]
+## [3.39.0] - 2026-11-26
 
-### Results that change
+**Summary.** Fixes for wrong results with `replace` targets and imported files, a safeguard against losing data in `nwset`, and pictograms in `nwplot` from the command line. **A do-file may now stop:** `nwset` from an edge list stops when unsaved variables outside the edge list would be dropped; add `dropvars` to drop them as before. Please update.
+
+### Results that change (read before you re-run old analyses)
 - `nwattime`, `nwlambda`, `nwsimindex`, `nw2project` and `nwneighbor ..., subnet() subreplace` with a target network that
   exists could compute the result from another network, without a message, or stop and lose the old target (when the
   target was created before the source). `nwcorrelate, keepexpand` could stop with an error for the same reason.

@@ -69,4 +69,4 @@ Drop only certain nodes from a network, using {help if}:
 	{cmd:. nwsummarize net3}
 
 {hline}
-{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.39.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

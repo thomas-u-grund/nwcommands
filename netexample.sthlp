@@ -909,4 +909,4 @@ Schoch, D. (2022), {it:networkdata: Repository of Network Datasets}, doi:10.5281
 {cmd:nwnetworkdata describe} {it:name} and the page {browse "https://nwcommands.org/datasets/schoch/":nwcommands.org/datasets/schoch} give it. See {help nwnetworkdata}.
 
 {hline}
-{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.39.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
