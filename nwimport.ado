@@ -1952,6 +1952,7 @@ capture mata: mata drop nwimp_nobom()
 capture mata: mata drop nwimp_lines()
 capture mata: mata drop nwimp_pajekline()
 capture mata: mata drop nwimp_notabs()
+capture mata: mata drop nwimp_textenc()
 capture mata: mata drop nwimp_squareblankdiag()
 capture mata: mata drop nwimp_dlrename()
 capture mata: mata drop nwimp_dljoin()
@@ -2163,7 +2164,6 @@ string rowvector nwimp_dlrect(string scalar fn, real scalar nr, real scalar nc)
 	return(names)
 }
 
-// a copy of a UCINET DL file for the readers: tabs replaced by blanks, no byte-order mark, no blank lines
 // the encoding of a text file without zero bytes: "utf-8" if all of it is valid UTF-8, else "windows-1252"; empty if
 // the file holds zero bytes (as UTF-16 text does) or cannot be read here
 string scalar nwimp_textenc(string scalar fname)
@@ -2197,6 +2197,7 @@ string scalar nwimp_textenc(string scalar fname)
 	return(utf8 ? "utf-8" : "windows-1252")
 }
 
+// a copy of a UCINET DL file for the readers: tabs replaced by blanks, no byte-order mark, no blank lines
 void nwimp_notabs(string scalar from, string scalar to)
 {
 	real scalar fi, fo, k, last, first
