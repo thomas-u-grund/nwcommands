@@ -94,6 +94,7 @@ are nodes{p_end}
 {synopt:{opt nooutput}}Suppress the summary display normally printed after declaring a network{p_end}
 {synopt:{opt clear}}Clear all networks (but keep Stata variables){p_end}
 {synopt:{opt nwclear}}Clear all networks and the Stata dataset (as {help nwclear}){p_end}
+{synopt:{opt dropvars}}Edge list declarations: allow unsaved variables that are not part of the edge list to be discarded (see {help nwset##edgedata:below}){p_end}
 {synopt:{opth time(varname)}}Declare a snapshot temporal network - each row's own time value (see {help nwset##temporal:Declare a temporal network} below){p_end}
 {synopt:{opt interval(startvar endvar)}}Declare an interval temporal network - each row active for start<=t<end (see {help nwset##temporal:Declare a temporal network} below){p_end}
 {synopt:{opth eventtime(varname)}}Declare an event temporal network - each row a timestamped event, not a persistent tie (see {help nwset##temporal:Declare a temporal network} below){p_end}
@@ -324,6 +325,15 @@ whether it has a native bipartite definition, works on the raw bipartite structu
 an explicit projection (see {help nw2project} - {bf:nwset} and the rest of the package never project
 automatically), or does not support two-mode data at all.
 
+
+{marker edgedata}{...}
+{pstd}
+{bf:The data in memory.} A declaration from an edge list ({opt edgelist}, {opt twomode}, {opt time()}, {opt interval()} or
+{opt eventtime()}) replaces the edge list in memory with the data of the nodes. When the data have unsaved changes and hold
+variables other than those of the edge list (the two node variables, the tie value and the times), {cmd:nwset} stops with
+error 4 and changes nothing. Save the data first, or give {opt dropvars} to discard those variables. Data that are saved
+on disk, or that hold only the variables of the edge list, are replaced without a message. {help nwfromedge} with option
+{opt noclear} keeps the data and adds the rows of the nodes.
 
 {marker temporal}{...}
 {bf:{ul:5. Declare a temporal network}}

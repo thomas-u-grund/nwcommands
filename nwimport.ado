@@ -1325,7 +1325,7 @@ program _nwimport_edgelist
 		if "`eventtime'" != "" local __nwi_opt "eventtime(`__nwi_t1')"
 		if "`time'" != "" local __nwi_opt "time(`__nwi_t1')"
 		if "`interval'" != "" local __nwi_opt "interval(`__nwi_t1' `__nwi_t2')"
-		nwset `ego' `alter' `value', `__nwi_opt' name(`name') `directed' `undirected' `xvars'
+		nwset `ego' `alter' `value', `__nwi_opt' name(`name') `directed' `undirected' `xvars' dropvars
 		exit
 	}
 	if `c(k)' == 5 {
@@ -1931,6 +1931,7 @@ capture mata: mata drop nwimp_cleanvars()
 capture mata: mata drop nwimp_dlline()
 capture mata: mata drop nwimp_dlrect()
 capture mata: mata drop nwimp_pajeklines()
+capture mata: mata drop nwimp_nobom()
 capture mata: mata drop nwimp_pajekline()
 capture mata: mata drop nwimp_notabs()
 capture mata: mata drop nwimp_squareblankdiag()
@@ -1958,6 +1959,13 @@ real scalar nwimp_maskapos(string scalar fn, string scalar out)
 	for (i = 1; i <= n; i++) fput(fh, subinstr(L[i], char(34) + char(39), char(34) + "__nwapos__"))
 	fclose(fh)
 	return(1)
+}
+
+// a line without a UTF-8 byte-order mark
+string scalar nwimp_nobom(string scalar c)
+{
+	if (substr(c, 1, 3) == char((239, 187, 191))) return(substr(c, 4, .))
+	return(c)
 }
 
 // node names that the library can hold: no comma (the lists of names are comma separated), no double quote and no
@@ -2127,15 +2135,28 @@ string rowvector nwimp_dlrect(string scalar fn, real scalar nr, real scalar nc)
 	return(names)
 }
 
-// a copy of a file with every tab replaced by a blank
+// a copy of a UCINET DL file for the readers: tabs replaced by blanks, no byte-order mark, no blank lines
 void nwimp_notabs(string scalar from, string scalar to)
 {
-	real scalar fi, fo
+	real scalar fi, fo, i, last
+	string scalar buf, c
 	string matrix piece
 
 	fi = fopen(from, "r")
 	fo = fopen(to, "rw")
-	while ((piece = fread(fi, 65536)) != J(0, 0, "")) fwrite(fo, subinstr(piece, char(9), " "))
+	buf = ""
+	last = 0
+	while (!last) {
+		piece = fread(fi, 65536)
+		last = (piece == J(0, 0, ""))
+		if (!last) buf = buf + subinstr(piece, char(13), char(10))
+		else buf = buf + char(10)
+		while ((i = strpos(buf, char(10))) > 0) {
+			c = nwimp_nobom(subinstr(substr(buf, 1, i - 1), char(9), " "))
+			if (strtrim(c) != "") fput(fo, c)
+			buf = substr(buf, i + 1, .)
+		}
+	}
 	fclose(fi)
 	fclose(fo)
 }
@@ -2145,7 +2166,10 @@ void nwimp_pajekline(real scalar fo, string scalar c)
 	string scalar t
 	string rowvector l
 
-	t = strtrim(subinstr(c, char(9), " "))
+	// the reader splits lines at blanks: tabs become blanks (a tie list with tabs would otherwise be read as no ties); a
+	// byte-order mark in front of the first line is removed
+	c = nwimp_nobom(subinstr(c, char(9), " "))
+	t = strtrim(c)
 	if (t == "") return
 	if (substr(t, 1, 1) == "%") {
 		l = tokens(t)

@@ -37,14 +37,13 @@ program nw2project, rclass
 	// docs/CERTIFICATION.md entry.
 	// the input cannot receive the result: it would be dropped before or while the result is formed
 	_nwtargetcheck `name', source(`netname') given(0)
+	local __replacing 0
 	nwvalidate `name'
 	if "`r(exists)'" == "true" {
+		local __replacing = ("`replace'" != "")
 		if "`replace'" == "" {
 			di "{txt}{p 0 0 2}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use.{p_end}"
 			local name = r(validname)
-		}
-		else {
-			capture nwdrop `name'
 		}
 	}
 
@@ -76,6 +75,9 @@ program nw2project, rclass
 	}
 	local provnote "`provnote', stat=`stat'"
 
+	// The old network under replace is dropped only here, after everything has been read from the source: a drop moves
+	// the stored networks, so that netobj would point to another network (and a failed computation keeps the old one).
+	if `__replacing' capture nwdrop `name'
 	mata: __nw.nws.add("`name'")
 	_nwsyntax `name'
 	mata: `netobj'->create_by_name_sparse(`__nw_names')

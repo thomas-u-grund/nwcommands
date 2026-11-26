@@ -145,6 +145,13 @@ unw_defs
 	local netname1 : word 1 of `netname'
 	local netname2 : word 2 of `netname'
 	
+	// under keepexpand the network mode_varname is replaced; it is dropped before netobj is looked up, because a drop
+	// moves the stored networks
+	if "`attribute'" != "" & "`keepexpand'" != "" {
+		_nwtargetcheck `mode'_`attribute', source(`netname1') given(0)
+		capture nwdrop `mode'_`attribute'
+	}
+
 	_nwdatasync `netname1'
 	
 	_nwsyntax `netname1'
@@ -158,7 +165,6 @@ unw_defs
 		// (which then replaces a network of that name)
 		if "`keepexpand'" != "" {
 			local __expnet "`mode'_`attribute'"
-			capture nwdrop `__expnet'
 		}
 		else {
 			tempname __expnet
