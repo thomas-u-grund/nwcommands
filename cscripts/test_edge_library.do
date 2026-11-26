@@ -78,7 +78,8 @@ _cell i5 1 2 2
 * without a value variable every tie is 1, and the list of times has no value column
 nwclear
 _mkt
-nwset a b, time(wave) name(s) directed
+* the values are not used: they are discarded
+nwset a b, time(wave) name(s) directed dropvars
 nwattime s, at(2) name(w2)
 _cell w2 1 2 1
 nwtoedge s, time
@@ -149,9 +150,9 @@ foreach cmd in drop keep {
 		gen double v = real(word("5 3 4 2", _n))
 		gen t = cond(_n == 1, 1, 2)
 		gen t1 = t + 1
-		if "`kind'" == "snapshot" nwset e a v, time(t) name(N) directed
-		if "`kind'" == "interval" nwset e a v, interval(t t1) name(N) directed
-		if "`kind'" == "event" nwset e a, eventtime(t) name(N) directed
+		if "`kind'" == "snapshot" nwset e a v, time(t) name(N) directed dropvars
+		if "`kind'" == "interval" nwset e a v, interval(t t1) name(N) directed dropvars
+		if "`kind'" == "event" nwset e a, eventtime(t) name(N) directed dropvars
 		clear
 		if "`cmd'" == "drop" nwdrop N if _n == 1
 		else nwkeep N if _n != 1

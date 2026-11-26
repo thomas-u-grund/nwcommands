@@ -13,6 +13,11 @@ void nw_trimmerge(string scalar from, string scalar to, string scalar use)
 		st_local("__nwfe_nm", "0")
 		return
 	}
+	// nothing to compare (and nothing to sort) when no identifier has blanks at its ends
+	if (all(raw :== strtrim(raw))) {
+		st_local("__nwfe_nm", "0")
+		return
+	}
 	raw = uniqrows(raw)
 	cut = strtrim(raw)
 	raw = select(raw, cut :!= "")
@@ -163,7 +168,10 @@ program _nwfromedge_main
 		tempvar __nwfe_use
 		qui gen byte `__nwfe_use' = 0
 		qui replace `__nwfe_use' = 1 `if'
+		// the check must not change what later commands do: sorting moves the state that breaks ties in later sorts
+		local __nwfe_srt = c(sortrngstate)
 		mata: nw_trimmerge("`fromvar'", "`tovar'", "`__nwfe_use'")
+		set sortrngstate `__nwfe_srt'
 		drop `__nwfe_use'
 		if `__nwfe_nm' > 0 {
 			noi di `"{txt}{p 0 0 2}Warning: blanks at the start or end of node identifiers are removed, and `__nwfe_nm' `=cond(`__nwfe_nm' == 1, "identifier that differs", "identifiers that differ")' only in such blanks became the same node as another, for example {bf:`__nwfe_ex'}. If these are different nodes, give them different names first.{p_end}"'

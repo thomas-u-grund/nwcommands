@@ -132,7 +132,7 @@ foreach dims in "5 3 .5" "40 12 .2" "60 60 .05" "30 80 .9" {
 	gen str8 pa = "p" + string(a)
 	gen str8 ob = "o" + string(b)
 	local nt = _N
-	nwset pa ob, twomode name(rnd)
+	nwset pa ob, twomode name(rnd) dropvars
 	_snap rnd R1
 	nwsave `f3', replace
 	use `f3'.nwdta, clear
@@ -174,7 +174,7 @@ duplicates drop a b, force
 gen str8 pa = "p" + string(a)
 gen str8 ob = "o" + string(b)
 local nt = _N
-nwset pa ob, twomode name(big)
+nwset pa ob, twomode name(big) dropvars
 nwsave `f3', replace
 use `f3'.nwdta, clear
 assert _N <= max(1150, `nt')
