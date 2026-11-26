@@ -1,0 +1,31 @@
+# Colours of the model package sections; nwcommands has no entry, its pages keep the site style. logo = main colour of
+# the logo; accent = the same hue, dark enough for text
+# (contrast at least 4.8 on the tinted menu); tint = menu background
+nwergm:
+  logo: "#1e00e8"
+  accent: "#1e00e8"
+  tint: "#efedfd"
+nwsaom:
+  logo: "#009392"
+  accent: "#007878"
+  tint: "#edf7f7"
+nwdynam:
+  logo: "#be00b3"
+  accent: "#be00b3"
+  tint: "#faedfa"
+nwrem:
+  logo: "#ca0127"
+  accent: "#ca0127"
+  tint: "#fbedf0"
+nwalaam:
+  logo: "#029831"
+  accent: "#027e29"
+  tint: "#edf8f1"
+nwlsm:
+  logo: "#00ccdb"
+  accent: "#007a83"
+  tint: "#edfbfc"
+nwsbm:
+  logo: "#e29204"
+  accent: "#986203"
+  tint: "#fdf7ed"

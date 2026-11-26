@@ -1,0 +1,30 @@
+{%- comment -%}
+  A page in a model package section takes that package's logo and colour: pages under /<package>/ and the package's
+  tutorial group page /tutorials/<package>/. All other pages, including all nwcommands pages, keep the site style.
+  Every page has the top line and the marker beside the current menu entry: in the package colour, else in the purple
+  of the nwcommands logo.
+{%- endcomment -%}
+{%- assign parts = page.url | split: "/" -%}
+{%- assign pkg = parts[1] -%}
+{%- if pkg == "tutorials" and parts[2] -%}
+  {%- assign pkg = parts[2] -%}
+{%- endif -%}
+{%- assign style = site.data.package_styles[pkg] -%}
+{%- assign mark = style.logo | default: "#7f15f3" %}
+<style id="menu-marks">
+  body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: 4px; background: {{ mark }}; z-index: 1000; }
+  .site-nav .nav-list-link.active { box-shadow: inset 3px 0 0 {{ mark }}; }
+</style>
+{%- if style %}
+<style id="package-style">
+  .side-bar { background-color: {{ style.tint }}; }
+  .site-logo { background-image: url("{{ '/assets/images/packages/' | append: pkg | append: '.png' | relative_url }}"); }
+  a { color: {{ style.accent }}; }
+  a:not([class]) { text-decoration-color: {{ style.accent }}73; }
+  .site-button, .site-nav .nav-list-expander, .main-content ol > li::before, .search-result-title { color: {{ style.accent }}; }
+  .site-nav .nav-list-link.active { color: {{ style.accent }}; }
+  .btn, .btn:hover, .btn-outline { color: {{ style.accent }}; }
+  .btn-primary, .btn-primary:hover { color: #fff; background-color: {{ style.accent }}; background-image: none; }
+  .pkg-card:hover { border-color: {{ style.accent }}; }
+</style>
+{%- endif %}
