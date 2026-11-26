@@ -35,6 +35,11 @@ reciprocity of receipt, recency, and covariates of actors and of pairs. The esti
 models of the nwcommands family, see [Intro to Longitudinal Network Models](../tutorials/19-intro-longitudinal-models/);
 the sister package that splits each event into the choice of the actor and the choice of the partner is [nwdynam](../nwdynam/).
 
+**Speed is a good reason to use it.** In our benchmark on simulated logs of 200 to 20,000 events, `nwrem` was faster
+than relevent in every case that both programs finished: at least 16 times as fast, and often hundreds of times,
+also when relevent was allowed to skip the standard errors (`nwrem` 1.4.0, relevent 1.2-1, one Linux server). The
+[speed page](speed/) has all times, the method and the cases that relevent did not finish.
+
 ## Key facts
 
 | | |

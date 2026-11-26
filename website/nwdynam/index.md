@@ -39,6 +39,11 @@ the author's. For how a DyNAM differs from the other longitudinal models of the 
 [Intro to Longitudinal Network Models](../tutorials/19-intro-longitudinal-models/); the sister package for
 the simpler relational event model is [nwrem](../nwrem/).
 
+**Speed is a good reason to use it.** `nwdynam` was faster than goldfish in all 16 cases of our benchmark of choice
+and rate models (simulated logs of 200 to 20,000 events): 7 to 119 times as fast as goldfish's faster engine, with
+estimates that agree (`nwdynam` 1.8.0, goldfish 1.6.12, one Linux server). Coordination models were not compared.
+The [speed page](speed/) has the times and the method.
+
 ## Key facts
 
 | | |
