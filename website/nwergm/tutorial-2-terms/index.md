@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 2: Terms and model specification"
-parent: "nwergm (ERGM)"
-nav_order: 3
+parent: "nwergm: ERGM"
+nav_order: 2
 description: "How to choose and read the terms of an ERGM with nwergm: structural, degree, triad and covariate terms, nodematch and nodemix, and the decay of gwesp."
 ---
 

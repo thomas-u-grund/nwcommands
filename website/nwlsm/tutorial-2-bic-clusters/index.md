@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 2: How many latent clusters?"
-parent: "nwlsm (latent space)"
-nav_order: 3
+parent: "nwlsm: latent space"
+nav_order: 2
 description: "Choose the number of latent clusters of a latent space model with the BIC (estat bic and nwlsmselect) on Sampson's monks, check the clusters against the observed factions, read the parts of the BIC, and check goodness of fit for binary and valued networks."
 ---
 

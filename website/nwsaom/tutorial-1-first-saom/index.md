@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 1: A first SAOM"
-parent: "nwsaom (SAOM)"
-nav_order: 2
+parent: "nwsaom: SAOM"
+nav_order: 1
 description: "Fit a first stochastic actor-oriented model to the Glasgow friendship data with nwsaom and read the coefficient table, the rates and the convergence check."
 ---
 

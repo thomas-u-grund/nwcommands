@@ -1,7 +1,7 @@
 ---
 title: "Install"
 parent: "nwsaom (SAOM)"
-nav_order: 1
+nav_order: 2
 permalink: /nwsaom/install/
 description: "Install nwsaom for Stata: the core nwcommands first, then the nwsaom package; specific releases, updating, and the native plugin."
 ---

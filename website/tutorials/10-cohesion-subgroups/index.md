@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 10: Cohesion & Subgroups"
-parent: "nwcommands (core)"
+parent: "nwcommands: describe networks"
 nav_order: 10
 description: "Components, k-cores, cliques, k-plexes, communities, fixed numbers of groups and core-periphery: what each notion of a cohesive subgroup means and which command to use when."
 ---

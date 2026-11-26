@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 5: Testing and comparing"
-parent: "nwsaom (SAOM)"
-nav_order: 6
+parent: "nwsaom: SAOM"
+nav_order: 5
 description: "Score tests for effects held fixed with fix(), tests of time heterogeneity and the relative importance of effects with nwsaom (estat score, estat timetest, estat importance)."
 ---
 

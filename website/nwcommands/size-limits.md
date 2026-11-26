@@ -1,7 +1,7 @@
 ---
 title: "How large a network?"
 parent: "nwcommands (core)"
-nav_order: 31
+nav_order: 4
 description: "Which core commands are comfortable, workable or refused at which network size, from measured run times."
 permalink: /nwcommands/size-limits/
 ---
@@ -46,7 +46,7 @@ a message (error code 484) and does nothing. Sizes are numbers of nodes.
 | Build, import, export, save and load a network (`nwfromedge`, `nwset`, `nwimport`, `nwexport`, `nwsave`, `nwuse`, `nwappend`, `nwtoedge, compress`) | 20,000 nodes: 0.6 to 2 s | 100,000 nodes: 3 to 14 s each, 0.6 to 1.4 GB | Not tried beyond 100,000 nodes | |
 | Degrees, dyads, summary, components, k-core, PageRank, random walk, assortativity, bridges, brokerage, paths and neighbors, recode, dichotomize, drop, keep, subset, maximum flow, networks at a point in time | 100,000 nodes: 0.06 to 7 s | | Not tried beyond 100,000 nodes | |
 | Clustering, community detection, ego networks, eigenvector centrality, shared neighbors, mixing, motifs, factions, `nwcug` (5 repetitions) | 20,000 nodes: up to 5 s | 100,000 nodes: 0.7 to 26 s in the audit; `nwclustering` (26.1 s then) and `nwevcent` (13.7 s then) now take 0.7 s and 0.5 s; the others were not measured again | Not tried beyond 100,000 nodes | |
-| Heavier counting: `nwtriads`, `nwburt`, `nwsimmelian`, `nwclique` (these now run in the compiled plugin) | 5,000 nodes: 0.03 to 0.1 s; 20,000 nodes: `nwclique` 1.0 s | 100,000 nodes: `nwburt` 0.2 s, `nwsimmelian` 0.8 s, `nwtriads` 1.0 s; `nwclique` search 0.6 s, but the result matrix takes longer to store (see below); with `nomatrix` 100,000 nodes take 0.26 s | Not tried beyond 100,000 nodes | Run on a sample or a component first |
+| Heavier counting: `nwtriads`, `nwburt`, `nwsimmelian`, `nwclique` (these now run in the compiled plugin; see [the later check](#a-later-check)) | 5,000 nodes: 0.03 to 0.1 s; 20,000 nodes: `nwclique` 1.0 s | 100,000 nodes: `nwburt` 0.2 s, `nwsimmelian` 0.8 s, `nwtriads` 1.0 s; `nwclique` search 0.6 s, but the result matrix takes longer to store (see below); with `nomatrix` 100,000 nodes take 0.26 s | Not tried beyond 100,000 nodes | Run on a sample or a component first |
 | `nwconstraint` | 5,000 nodes: 0.4 s | 100,000 nodes: 10.4 s in the audit; 2.2 s (undirected) and 0.70 s (directed) after the later speed round, with 5 ties drawn per node | Not tried beyond 100,000 nodes; above 2,000 nodes only `name()` and `replace` are accepted | Run on a sample or a component first |
 | `nwcloseness`, `nwkatz` | 20,000 nodes: 10 s | About 63,000 nodes inside the 2-minute limit | Above about 63,000 nodes (100,000: estimated 5 minutes; one run with `force` took 302 s) | `nwdegree`, `nwpagerank`, or run on a part of the network (`nwsubset`) |
 | `nwbetween` | 10,000 nodes: 8 s | 20,000 nodes: 29 s; about 36,000 inside the limit | Above about 36,000 nodes (100,000: estimated 15 minutes, not measured) | As above |
@@ -63,6 +63,13 @@ a message (error code 484) and does nothing. Sizes are numbers of nodes.
 | Two-mode networks (`nw2fromedge`, `nw2set`, `nw2degree`, `nw2project`, `nwproject`, `nwmatching`, `nw2clustering`) | 10,000 nodes in the first mode (15,000 in total): 1 to 9 s | About 20,000 in total: 1.6 to 12 s, 3 to 5 GB | Above 20,000 nodes in total | Project onto one mode from the edge list, or analyze a part |
 | Plots: `nwplot` | Circle layout, 10,000 nodes: 38 s (but unreadable) | Force-directed (`layout(kk)`), 5,000 nodes: 17 s | Circle layout above about 12,000 nodes; `kk` not measured above 5,000 | Plot a part (`nwsubset`, `nwego`, `nwkcore`) or export with `nwexport` |
 | `nwload, xvars`, `nwtostata`, `nwvalidvars` | | | Stata's own limits: number of variables in your Stata (`nwload` refuses above 1,000 nodes without `force`), and the length of a macro | Do not load a large network as variables; the commands work without |
+
+### A later check
+
+On 26 November 2026, version 3.37.2 of the core, Stata/BE 17 on a Mac, on a directed random network of 100,000 nodes
+and 999,944 ties, `nwtriads`, `nwburt` and `nwsimmelian` each took between 5 and 6 seconds. That is longer than the
+times in the table above, which come from an earlier speed round; the network and the load on the computer were not
+the same. On 20,000 nodes and 199,918 ties each took under half a second. The other rows were not measured again.
 
 ## Why a command is limited: three reasons
 

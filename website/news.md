@@ -1,8 +1,10 @@
 ---
 title: "News"
-nav_order: 12
+nav_order: 8
 description: "News about nwcommands and the book: workshops, talks, teaching material and other announcements."
 permalink: /news/
+has_children: true
+has_toc: false
 ---
 
 # News

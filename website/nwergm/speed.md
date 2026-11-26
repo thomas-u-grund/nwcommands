@@ -1,7 +1,7 @@
 ---
 title: "Speed"
 parent: "nwergm (ERGM)"
-nav_order: 7.5
+nav_order: 8
 description: "Run times of nwergm against R's ergm on the same data and models, where nwergm is faster, where it is not, and why."
 permalink: /nwergm/speed/
 ---

@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 12: Conditional and unconditional estimation, threads and speed"
-parent: "nwsaom (SAOM)"
-nav_order: 13
+parent: "nwsaom: SAOM"
+nav_order: 12
 description: "What conditional and unconditional estimation mean in nwsaom, how to restart an unconditional fit, how threads (cores) and the number of simulations (k0, k3) affect speed and precision."
 ---
 

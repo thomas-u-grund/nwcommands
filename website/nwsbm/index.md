@@ -1,9 +1,10 @@
 ---
 title: "nwsbm (block models)"
-nav_order: 8.7
+nav_order: 11
 has_children: true
 permalink: /nwsbm/
 description: "nwsbm: stochastic block models and latent block models for networks in Stata, following the R packages sbm, blockmodels and greed. Installation, two worked tutorials and how to cite."
+parent: "Packages and reference"
 ---
 
 <h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwsbm.png' | relative_url }}" alt="nwsbm" width="213" height="76"></h1>
@@ -13,7 +14,7 @@ Stochastic block models for networks in Stata: which actors play the same role i
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Start with the tutorial](tutorial-1-first-sbm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Tutorials](../tutorials/nwsbm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Manual](https://doi.org/10.5281/zenodo.24398296){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwsbm on GitHub](https://github.com/thomas-u-grund/nwsbm){: .btn .fs-5 .mb-4 .mb-md-0 }
 
@@ -58,10 +59,10 @@ Which model suits which question, block model, [latent space model](../nwlsm/) o
 - Where R's covariate models differ from the true likelihood (missing ties treated as zeros, an approximate Bernoulli estimator by default, a wrong value for the two-mode Bernoulli case), `nwsbm` follows the exact model and says so in its help file.
 - A version below 1.0 is a young package: use it alongside the R packages where the result matters, and report what you find.
 
-## In this section
+## Tutorials and reference
 
+- [Tutorials](../tutorials/nwsbm/): two worked tutorials. New to `nwsbm`? Start with [Tutorial 1](tutorial-1-first-sbm/).
 - [Install](install/): core first, then `nwsbm`; releases, updating, the plugin.
-- [Tutorial 1: Blocks in the karate club](tutorial-1-first-sbm/): choosing the number of blocks, and what the blocks are.
-- [Tutorial 2: Covariates, the exact ICL and two-mode blocks](tutorial-2-covariates-greedy/): covariates with standard errors, the greedy search, the degree-corrected two-mode model, block variances.
 - [How to cite](citation/)
 - [nwlsm](../nwlsm/): the companion package that places actors in a latent space, where `nwsbm` groups them.
+

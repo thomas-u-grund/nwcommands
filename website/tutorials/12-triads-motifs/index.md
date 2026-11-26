@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 12: Triads, Dyads & Motifs"
-parent: "nwcommands (core)"
+parent: "nwcommands: describe networks"
 nav_order: 12
 description: "The building blocks of network structure: the dyad census and reciprocity, the 16-type triad census, clustering and transitivity, four-node motifs and structural balance in signed networks."
 ---

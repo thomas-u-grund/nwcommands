@@ -4,6 +4,7 @@ nav_order: 7
 has_children: true
 permalink: /nwdynam/
 description: "nwdynam: dynamic network actor models (DyNAM) for Stata, after the R package goldfish. Installation, worked tutorials, a guide for goldfish users and how to cite."
+parent: "Packages and reference"
 ---
 
 <h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwdynam.png' | relative_url }}" alt="nwdynam" width="309" height="76"></h1>
@@ -14,7 +15,7 @@ timestamped events.
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Start with Tutorial 1](tutorial-1-first-dynam/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Tutorials](../tutorials/nwdynam/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwdynam on GitHub](https://github.com/thomas-u-grund/nwdynam){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Manual](https://doi.org/10.5281/zenodo.24398099){: .btn .fs-5 .mb-4 .mb-md-0 }
 
@@ -51,12 +52,10 @@ the simpler relational event model is [nwrem](../nwrem/).
 | Version | 1.11.1 (22 November 2026) |
 | License | GNU General Public License, version 3 |
 
-## In this section
+## Tutorials and reference
 
+- [Tutorials](../tutorials/nwdynam/): three worked tutorials. New to `nwdynam`? Start with [Tutorial 1](tutorial-1-first-dynam/).
 - [Install](install/): core first, then `nwdynam`; releases, updating, the plugin.
-- [Tutorial 1: A first DyNAM](tutorial-1-first-dynam/): event data, the rate and the choice sub-model, reading the table.
-- [Tutorial 2: Effects and interpretation](tutorial-2-effects/): covariates, closure, windows, comparing models.
-- [Tutorial 3: Limits and diagnostics](tutorial-3-limits/): what a small event log can and cannot tell you.
 - [nwdynam and goldfish](r-goldfish/): what is the same, what differs, a translation table.
 - [Manual](manual/): the PDF reference, with worked examples and the comparison with goldfish.
 - [How to cite](citation/)

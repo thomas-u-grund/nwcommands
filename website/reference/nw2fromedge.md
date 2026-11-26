@@ -1,7 +1,7 @@
 ---
 title: "nw2fromedge"
-parent: "Command reference"
-grand_parent: "nwcommands (core)"
+parent: "Core command reference"
+grand_parent: "Packages and reference"
 nav_exclude: true
 search_exclude: false
 description: "Import two-mode network data from an edge list"

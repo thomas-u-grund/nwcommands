@@ -1,7 +1,7 @@
 ---
 title: "Install"
 parent: "nwergm (ERGM)"
-nav_order: 1
+nav_order: 2
 permalink: /nwergm/install/
 description: "Install nwergm for Stata: the core nwcommands first, then the nwergm package; specific releases, updating, and the native plugin."
 ---

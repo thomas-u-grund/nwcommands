@@ -1,7 +1,7 @@
 ---
 title: "What it is"
 parent: "nwdynam (DyNAM)"
-nav_order: 0.5
+nav_order: 1
 permalink: /nwdynam/what-is/
 description: "nwdynam in plain words: what a dynamic network actor model is, what question it answers, what data you need and when to use it."
 ---

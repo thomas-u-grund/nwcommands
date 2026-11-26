@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 3: Comparing specifications"
-parent: "nwrem (REM)"
-nav_order: 4
+parent: "nwrem: relational events"
+nav_order: 3
 description: "Compare relational event models fitted with nwrem by log likelihood, AIC, BIC and likelihood-ratio tests, check that the estimates are stable, and see what the command refuses."
 ---
 

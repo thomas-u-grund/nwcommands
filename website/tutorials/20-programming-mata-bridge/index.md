@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 20: Programming with Mata: from Stata Networks to Mata and Back"
-parent: "nwcommands (core)"
+parent: "nwcommands: more topics"
 nav_order: 20
 description: "Bring a network into a Mata matrix, compute a measure nwcommands does not offer, return it as a node variable and as a new network, loop over the waves of a longitudinal network, and avoid the usual traps."
 ---

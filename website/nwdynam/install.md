@@ -1,7 +1,7 @@
 ---
 title: "Install"
 parent: "nwdynam (DyNAM)"
-nav_order: 1
+nav_order: 2
 permalink: /nwdynam/install/
 description: "Install nwdynam for Stata: the core nwcommands first, then the nwdynam package; specific releases, updating, and the native plugin."
 ---

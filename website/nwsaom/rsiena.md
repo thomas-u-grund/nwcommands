@@ -1,7 +1,7 @@
 ---
 title: "nwsaom and RSiena"
 parent: "nwsaom (SAOM)"
-nav_order: 16
+nav_order: 7
 permalink: /nwsaom/rsiena/
 description: "What nwsaom shares with RSiena, what it lacks, how it was compared, and a translation table from RSiena functions to nwsaom commands."
 ---

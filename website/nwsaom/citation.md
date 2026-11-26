@@ -1,7 +1,7 @@
 ---
 title: "How to cite"
 parent: "nwsaom (SAOM)"
-nav_order: 18
+nav_order: 9
 permalink: /nwsaom/citation/
 description: "How to cite nwsaom, and the original papers and software it builds on."
 ---

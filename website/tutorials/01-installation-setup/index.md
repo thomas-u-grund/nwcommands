@@ -1,13 +1,13 @@
 ---
 title: "Tutorial 1: Installation & Setup"
-parent: "nwcommands (core)"
+parent: "nwcommands: first steps"
 nav_order: 1
-description: "Installing nwcommands 3.0.0 and the model packages from scratch with nwinstall, everything, installing the model packages, choosing a release, and updating."
+description: "Installing nwcommands and the model packages from scratch with nwinstall, everything, installing the model packages, choosing a release, and updating."
 ---
 
 # Tutorial 1: Installation & Setup
 
-This page covers the core `nwcommands` (version 3.0.0) and the seven model packages (`nwsaom`,
+This page covers the core `nwcommands` and the seven model packages (`nwsaom`,
 `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwlsm`, `nwsbm`), which are installed separately.
 
 nwcommands isn't on Stata's built-in SSC-style search path, so installing the core is a two-step
@@ -28,8 +28,8 @@ the real work.
 
 ## Installing everything
 
-Requirements: Stata 17 or later. The packages are tested with Stata 17 and 18, and StataBE is enough.
-Older versions are untested; on one, `nwinstall` and `nwversion` print a note but go on.
+Requirements: Stata 17 or later. The packages are tested on macOS with Stata 17, 18 and 19 and on
+Windows with Stata 19, and StataBE is enough. Older versions are untested; on one, `nwinstall` and `nwversion` print a note but go on.
 
 ```stata
 . nwinstall, everything
@@ -59,16 +59,18 @@ core and lists the model packages, so you can see what is installed:
 ```stata
 . nwversion
 
-nwcommands 3.0.0 (24oct2026), core package; Stata 18, MacOSX
+nwcommands 3.37.2 (26nov2026), core package; Stata 17, MacOSX
 Model packages (separate, GPL-3; install with nwinstall, models):
-  nwsaom  not installed
-  nwergm  not installed
-  nwdynam not installed
-  nwrem   not installed
+  nwsaom  1.9.2  (22nov2026)
+  nwergm  1.16.1  (24nov2026)
+  nwdynam 1.11.1  (22nov2026)
+  nwrem   1.7.2  (23nov2026)
+  nwalaam 1.4.0  (22nov2026)
+  nwsbm   1.1.0  (23nov2026)
+  nwlsm   1.0.6  (22nov2026)
 ```
 
-The Stata release and the operating system in the first line are those of the computer the page was
-written on; yours will differ.
+This is what it showed with core 3.37.2. Your version numbers, Stata release and operating system may differ.
 
 ## The Network Analysis menu
 

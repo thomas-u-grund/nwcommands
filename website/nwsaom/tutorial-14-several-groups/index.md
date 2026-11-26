@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 14: Several groups at once"
-parent: "nwsaom (SAOM)"
-nav_order: 15
+parent: "nwsaom: SAOM"
+nav_order: 14
 description: "Estimate one stochastic actor-oriented model for several groups jointly with nwsaom's groups() option: the data layout, the rate of every group, a behavior in several groups, groups with different waves, tests after the fit, and when to prefer the meta-analysis."
 ---
 

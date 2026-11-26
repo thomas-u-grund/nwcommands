@@ -1,7 +1,7 @@
 ---
 title: "What it is"
 parent: "nwlsm (latent space)"
-nav_order: 0.5
+nav_order: 1
 permalink: /nwlsm/what-is/
 description: "nwlsm in plain words: what a latent space model is, what question it answers, what data you need and when to use it."
 ---

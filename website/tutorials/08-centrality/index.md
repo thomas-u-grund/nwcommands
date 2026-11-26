@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 8: Centrality"
-parent: "nwcommands (core)"
+parent: "nwcommands: describe networks"
 nav_order: 8
 description: "Degree, betweenness, closeness, eigenvector, PageRank, and Katz centrality."
 ---

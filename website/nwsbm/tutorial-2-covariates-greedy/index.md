@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 2: Covariates, the exact ICL and two-mode blocks"
-parent: "nwsbm (block models)"
-nav_order: 3
+parent: "nwsbm: block models"
+nav_order: 2
 description: "Block models with covariates and standard errors for the Lazega lawyers, the exact ICL with the greedy search, the degree-corrected two-mode model for the Southern women, and block variances for Gaussian ties."
 ---
 

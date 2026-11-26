@@ -1,7 +1,7 @@
 ---
 title: "Manual"
 parent: "nwergm (ERGM)"
-nav_order: 10
+nav_order: 6
 permalink: /nwergm/manual/
 description: "The nwergm manual (PDF), archived at Zenodo."
 ---

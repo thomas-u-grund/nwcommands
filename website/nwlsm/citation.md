@@ -1,7 +1,7 @@
 ---
 title: "How to cite"
 parent: "nwlsm (latent space)"
-nav_order: 4
+nav_order: 9
 permalink: /nwlsm/citation/
 description: "How to cite nwlsm, and the papers and software it builds on."
 ---

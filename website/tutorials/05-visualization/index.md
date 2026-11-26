@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 5: Visualization"
-parent: "nwcommands (core)"
+parent: "nwcommands: first steps"
 nav_order: 5
 description: "Plot styling and network movies."
 ---

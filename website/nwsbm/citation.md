@@ -1,7 +1,7 @@
 ---
 title: "How to cite"
 parent: "nwsbm (block models)"
-nav_order: 4
+nav_order: 9
 permalink: /nwsbm/citation/
 description: "How to cite nwsbm, and the papers and software it builds on."
 ---

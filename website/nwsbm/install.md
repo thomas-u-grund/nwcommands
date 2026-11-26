@@ -1,7 +1,7 @@
 ---
 title: "Install"
 parent: "nwsbm (block models)"
-nav_order: 1
+nav_order: 2
 permalink: /nwsbm/install/
 description: "Install nwsbm for Stata: the core nwcommands first, then the nwsbm package; specific releases, updating, and the native plugin."
 ---

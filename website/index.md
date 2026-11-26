@@ -11,11 +11,28 @@ Network analysis in Stata: import, generate, describe, analyze and plot networks
 network models, from the Stata command line or from dialog boxes.
 {: .fs-6 .fw-300 }
 
-[Install](#install-in-two-steps){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Start here](start/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Tutorials](tutorials/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Command reference](reference/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Which package do I need?](which-package/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Teaching and slides](teaching/){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Command reference](reference/){: .btn .fs-5 .mb-4 .mb-md-0 }
+
+<div class="home-figs">
+  <figure>
+    <a href="{{ '/start/' | relative_url }}"><img src="{{ '/assets/images/start/florentine.png' | relative_url }}" alt="Plot of the marriage ties among 16 Florentine families"></a>
+    <figcaption>Marriage ties among Florentine families, drawn with <code>nwplot</code></figcaption>
+  </figure>
+  <figure>
+    <a href="{{ '/tutorials/05-visualization/' | relative_url }}"><img src="{{ '/tutorials/05-visualization/interactive_pictograms.png' | relative_url }}" alt="Interactive plot of an advice network with pictograms for men and women"></a>
+    <figcaption>An interactive plot with pictograms (<code>nwplot, interactive</code>)</figcaption>
+  </figure>
+</div>
+
+## What's new
+
+- **Workshops:** two workshops are planned for Sunbelt 2027 in Montreal. To organize one elsewhere, get in touch: see [Teaching and workshops](teaching/).
+- **For instructors:** [slides, course outlines and a workshop](teaching/).
+- **For readers of the book:** [do-files and an exercise bank](book/).
+
+[All news](news/) · [Release notes](releases/)
 
 ## The packages
 {: #the-packages }
@@ -55,53 +72,12 @@ network models, from the Stata command line or from dialog boxes.
   </a>
 </div>
 
-## Install in two steps
-{: #install-in-two-steps }
+## Install
 
 ```stata
 . net install nwcommands, from(https://nwcommands.org/net/) replace
 . nwinstall, everything
 ```
 
-1. The first line installs `nwinstall` itself and the landing help topics.
-2. `nwinstall, everything` downloads everything else: the core (every command, all help files and every dialog
-   box) and the seven model packages, sets up the "Network Analysis" menu in Stata's User menu (one line in your
-   `profile.do`, never written twice), and prints the version of each package at the end. Add `nogui` to leave
-   the menu out; `nwinstall, gui` adds it later (the older option name `permanently` still works).
-
-To install the core only, type `nwinstall, all` instead of `nwinstall, everything`; the model packages can be
-added later with `nwinstall, models` (repeating `nwinstall, everything` or `nwinstall, models` also updates them). To install one model package only, for example nwsaom, type
-`net install nwsaom, from(https://raw.githubusercontent.com/thomas-u-grund/nwsaom/main/)`.
-
-Requirements: Stata 17 or later (tested on macOS with Stata 17, 18 and 19 and on Windows with Stata 19; StataBE is enough).
-
-If Stata answers `option everything not allowed`, an older `nwinstall` is being used. Type `which nwinstall`: the
-path should point into Stata's `ado/plus` folder. If it says `./nwinstall.ado`, an old copy lies in the folder
-Stata was started from (the current folder is searched first): change to another folder with `cd`. If an older
-copy is loaded in memory (for example by your `profile.do`), type `program drop nwinstall` (or restart Stata).
-Then run `nwinstall, everything` again.
-
-`nwversion` shows the installed versions. More on installation, releases and computers without
-internet access: [Installation & Setup](tutorials/01-installation-setup/).
-
-After installing, try this: it loads the Florentine marriage network, plots it, and computes each family's betweenness centrality.
-
-```stata
-. nwwebuse florentine, nwclear
-. nwplot flomarriage, label(_nwnode)
-. nwbetween flomarriage
-. sum _between
-```
-
-## Where to start
-
-- New to networks in Stata: the [tutorials](tutorials/), starting with Installation & Setup and Core Concepts.
-- You know the command you want: the [command reference](reference/).
-- Coming from R (RSiena, statnet, goldfish, relevent): [nwsaom and RSiena](nwsaom/rsiena/) and the
-  "Follows" column of [Which package do I need?](which-package/).
-- How fast the model packages are compared with R: [Speed compared with R](nwcommands/speed/) (faster in most of our
-  benchmark models, not in all).
-- Citing the software, licenses and releases: [Citing and licenses](citing/).
-- Problems: issues with the core go to the
-  [nwcommands repository](https://github.com/thomas-u-grund/nwcommands/issues); issues with a model
-  package go to that package's own repository on GitHub.
+Needs Stata 17 or later; Stata BE is enough. New here? [Start here](start/) takes you from installation to your
+first network, then to your own data.

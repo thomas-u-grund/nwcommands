@@ -1,9 +1,10 @@
 ---
 title: "nwcommands (core)"
-nav_order: 3
+nav_order: 4
 has_children: true
 description: "The nwcommands core package: network import, generation, description, analysis and visualization in Stata."
 permalink: /nwcommands/
+parent: "Packages and reference"
 ---
 
 <h1 class="pkg-logo no_toc"><img src="{{ '/assets/images/packages/nwcommands.png' | relative_url }}" alt="nwcommands" width="346" height="76"></h1>
@@ -15,7 +16,7 @@ it but are installed separately.
 {: .fs-6 .fw-300 }
 
 [Install](#install){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Start with Tutorial 1](../tutorials/01-installation-setup/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Tutorials](../tutorials/nwcommands-first-steps/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Command reference](../reference/){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ## Install
@@ -34,8 +35,8 @@ Stata BE is enough).
 
 ## Where to go
 
-- **Tutorials** ([all tutorials](../tutorials/)): installation, core concepts, importing and exporting,
-  visualization, generating and manipulating networks, centrality, paths and ego networks.
+- **Tutorials** for the core, in three groups: [first steps](../tutorials/nwcommands-first-steps/),
+  [describing networks](../tutorials/nwcommands-describing/) and [more topics](../tutorials/nwcommands-more/).
 - **Command reference** ([all commands](../reference/)): every command with its syntax and options.
 - **Size limits** ([how large a network can be](size-limits/)): which commands finish in seconds, which need
   minutes and which are refused at which number of nodes.
@@ -47,7 +48,7 @@ Stata BE is enough).
   and kept, which commands use the two modes, which accept the bipartite graph as it is and which stop.
 - **Network types** ([the table of all commands](network-types/)): for every command, what it does with binary, valued,
   two-mode and directed networks.
-- **Model packages**: the statistical models have their own sections in the menu: [nwsaom](../nwsaom/)
+- **Model packages**: the statistical models have their own pages: [nwsaom](../nwsaom/)
   (stochastic actor-oriented models), [nwergm](../nwergm/) (exponential random graph models),
   [nwdynam](../nwdynam/) (dynamic network actor models), [nwrem](../nwrem/) (relational event models),
   [nwalaam](../nwalaam/) (autologistic actor attribute models), [nwlsm](../nwlsm/) (latent space models) and

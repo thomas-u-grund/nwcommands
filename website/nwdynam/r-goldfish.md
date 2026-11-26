@@ -1,7 +1,7 @@
 ---
 title: "nwdynam and goldfish"
 parent: "nwdynam (DyNAM)"
-nav_order: 5
+nav_order: 7
 permalink: /nwdynam/r-goldfish/
 description: "What nwdynam shares with the R package goldfish, what it lacks, how it was compared, and a translation table from goldfish to nwdynam."
 ---

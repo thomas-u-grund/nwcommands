@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 11: Simulation and what-if analysis"
-parent: "nwsaom (SAOM)"
-nav_order: 12
+parent: "nwsaom: SAOM"
+nav_order: 11
 description: "Use a fitted stochastic actor-oriented model to simulate networks (estat simulate, nwsaom simulate) and to ask what a network would look like if an effect did not operate (estat mems)."
 ---
 

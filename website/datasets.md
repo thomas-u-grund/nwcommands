@@ -1,6 +1,6 @@
 ---
 title: "Data sets"
-nav_order: 11
+nav_order: 5
 has_children: true
 description: "The example networks that ship with nwcommands: what they are, where they come from, how to load them and which tutorials use them."
 permalink: /datasets/

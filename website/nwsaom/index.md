@@ -1,9 +1,10 @@
 ---
 title: "nwsaom (SAOM)"
-nav_order: 5
+nav_order: 6
 has_children: true
 permalink: /nwsaom/
 description: "nwsaom: stochastic actor-oriented models for Stata, after RSiena. Installation, worked tutorials, a guide for RSiena users, an effect overview and how to cite."
+parent: "Packages and reference"
 ---
 
 <h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwsaom.png' | relative_url }}" alt="nwsaom" width="253" height="76"></h1>
@@ -14,7 +15,7 @@ change over time.
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Start with Tutorial 1](tutorial-1-first-saom/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Tutorials](../tutorials/nwsaom/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Manual](https://doi.org/10.5281/zenodo.23623807){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwsaom on GitHub](https://github.com/thomas-u-grund/nwsaom){: .btn .fs-5 .mb-4 .mb-md-0 }
 
@@ -56,23 +57,10 @@ errors in `nwsaom` are the author's.
 | Version | 1.9.2 (22 November 2026) |
 | License | GNU General Public License, version 3 |
 
-## In this section
+## Tutorials and reference
 
+- [Tutorials](../tutorials/nwsaom/): fourteen worked tutorials. New to `nwsaom`? Start with [Tutorial 1](tutorial-1-first-saom/).
 - [Install](install/): core first, then `nwsaom`; releases, updating, the plugin.
-- [Tutorial 1: A first SAOM](tutorial-1-first-saom/): a first model for the Glasgow friendship data, and how to read the table.
-- [Tutorial 2: Convergence](tutorial-2-convergence/): what the convergence line means and what to do when a model does not converge.
-- [Tutorial 3: Goodness of fit](tutorial-3-goodness-of-fit/): `estat gof`, and improving a poor model.
-- [Tutorial 4: Selection and influence](tutorial-4-selection-influence/): friendship and drinking together.
-- [Tutorial 5: Testing and comparing](tutorial-5-testing-comparing/): `estat score`, `estat timetest`, `estat importance`, `fix()`.
-- [Tutorial 6: Beyond the basic model](tutorial-6-beyond/): maximum likelihood, Bayesian estimation, several networks.
-- [Tutorial 7: Changing actor sets and missing data](tutorial-7-composition-missing/): `present()`, `joinat()`/`leaveat()`, `missnet()`, `missbeh()`: actors who join or leave, and missing data.
-- [Tutorial 8: Time-varying and dyadic covariates](tutorial-8-covariates/): `tvcov()` and `dyadcov()`: covariates that change over time and covariates of pairs.
-- [Tutorial 9: Undirected and two-mode networks](tutorial-9-undirected-twomode/): undirected networks (`symtype()`) and two-mode networks.
-- [Tutorial 10: Endowment, creation, interactions and rate effects](tutorial-10-endowment-interaction-rate/): `endow()`/`creation()`, `interact()`, `ratecov()`, `outrate`.
-- [Tutorial 11: Simulation and what-if analysis](tutorial-11-simulation/): `estat simulate`, `nwsaom simulate`, `estat mems`.
-- [Tutorial 12: Conditional and unconditional estimation, threads and speed](tutorial-12-estimation-speed/): conditional and unconditional estimation, `cores()`, `k0()`/`k3()`.
-- [Tutorial 13: Combining several groups with a meta-analysis](tutorial-13-meta-analysis/): `nwsaom meta` for several groups (RSiena's `siena08`).
-- [Tutorial 14: Several groups at once](tutorial-14-several-groups/): one model for all groups with `groups()` and `gwaves()` (RSiena's `sienaGroupCreate`).
 - [nwsaom and RSiena](rsiena/): what is the same, what differs, a translation table.
 - [Effects](effects/): an overview of the effect families.
 - [How to cite](citation/)
