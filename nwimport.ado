@@ -2149,8 +2149,8 @@ string rowvector nwimp_dlrect(string scalar fn, real scalar nr, real scalar nc)
 // a copy of a UCINET DL file for the readers: tabs replaced by blanks, no byte-order mark, no blank lines
 void nwimp_notabs(string scalar from, string scalar to)
 {
-	real scalar fi, fo, i, k, last
-	string scalar buf, c
+	real scalar fi, fo, k, last, first
+	string scalar buf, text, eol
 	string matrix piece
 	string rowvector L
 
@@ -2158,20 +2158,31 @@ void nwimp_notabs(string scalar from, string scalar to)
 	fo = fopen(to, "rw")
 	buf = ""
 	last = 0
+	first = 1
+	eol = char(10)
 	while (!last) {
 		piece = fread(fi, 65536)
 		last = (piece == J(0, 0, ""))
-		if (!last) buf = buf + subinstr(piece, char(13), char(10))
+		if (!last) buf = buf + subinstr(subinstr(subinstr(piece, char((13, 10)), eol), char(13), eol), char(9), " ")
 		else buf = buf + char(10)
-		// the complete lines are split in one step (cutting them off one by one copies the rest of the chunk each time)
+		// the complete lines of a chunk are cleaned and written together (one write per line is much slower)
 		k = strrpos(buf, char(10))
 		if (k == 0) continue
-		L = nwimp_lines(substr(buf, 1, k))
-		buf = substr(buf, k + 1, .)
-		for (i = 1; i <= cols(L); i++) {
-			c = nwimp_nobom(subinstr(L[i], char(9), " "))
-			if (strtrim(c) != "") fput(fo, c)
+		if (first) {
+			buf = nwimp_nobom(buf)
+			k = strrpos(buf, char(10))
+			first = 0
 		}
+		text = substr(buf, 1, k)
+		buf = substr(buf, k + 1, .)
+		// without an empty line or a line that ends in a blank there is nothing to leave out
+		if (substr(text, 1, 1) != eol & !strpos(text, eol + eol) & !strpos(text, " " + eol)) {
+			fwrite(fo, text)
+			continue
+		}
+		L = nwimp_lines(text)
+		if (cols(L)) L = select(L, strtrim(L) :!= "")
+		if (cols(L)) fwrite(fo, invtokens(L, eol) + eol)
 	}
 	fclose(fi)
 	fclose(fo)
