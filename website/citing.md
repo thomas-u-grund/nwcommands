@@ -11,6 +11,8 @@ parent: "Help and about"
 
 ## How to cite
 
+The methods papers behind the packages are listed under [Literature](/literature/).
+
 Cite the packages you used and report their versions. `nwversion` prints the version of the core and
 lists the installed model packages; each model package prints its own version with `<name> version`, for
 example `nwsaom version`.

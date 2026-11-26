@@ -9,6 +9,8 @@ parent: "Help and about"
 # Literature
 {: .no_toc }
 
+How to cite each package, with the exact references, is on [Citing and licenses](/citing/).
+
 A short list, kept small on purpose. It names what to cite for the software and the methods papers each package follows. For the wider literature on each model, the Siena project keeps much longer lists: [articles](https://www.stats.ox.ac.uk/~snijders/siena/siena_articles.htm) and [applications](https://www.stats.ox.ac.uk/~snijders/siena/siena_applications.htm).
 
 ## About nwcommands and the models

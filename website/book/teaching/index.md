@@ -1,7 +1,7 @@
 ---
 title: "Teaching with the book"
 parent: "Teaching and workshops"
-nav_order: 5
+nav_order: 3
 description: "Material for instructors who teach with the book Network Analysis with Stata: course outlines, notes on every chapter and assignments with other data sets."
 permalink: /book/teaching/
 ---

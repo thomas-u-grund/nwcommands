@@ -597,3 +597,6 @@ signatures can change in any release without notice, and code that depends on th
 that has to last, use the `nwapi_` functions, the commands, `nwtomata` and `nwset`. If you need something that the
 functions do not offer, say so on the [issue tracker](https://github.com/thomas-u-grund/nwcommands/issues): the
 interface grows by additions in minor versions.
+
+See also [Programming with networks in Mata](/book/programming/) in the book companion: writing a network command, with
+a reference of the `nwapi` functions.

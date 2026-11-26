@@ -1,7 +1,7 @@
 ---
 title: "Chapter notes"
 parent: "Teaching and workshops"
-nav_order: 3
+nav_order: 4
 description: "One entry per chapter of Network Analysis with Stata: time needed, data sets, prerequisites, commands taught, where students get stuck, and the exercises by level."
 permalink: /book/teaching/chapter-notes/
 ---

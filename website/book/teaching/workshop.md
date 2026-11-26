@@ -1,7 +1,7 @@
 ---
 title: "Six-hour workshop"
 parent: "Teaching and workshops"
-nav_order: 2
+nav_order: 1
 description: "A six-hour workshop in two sessions for network researchers who are new to Stata or to nwcommands: the core workflow, then ERGMs with nwergm and SAOMs with nwsaom, with an optional third session on relational events with nwrem and nwdynam; the book's data and commands."
 permalink: /book/teaching/workshop/
 ---
