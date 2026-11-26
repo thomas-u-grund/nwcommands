@@ -2216,6 +2216,8 @@ real scalar nwimp_utf8copy(string scalar fname, string scalar to)
 	string scalar fn, head, all, enc, bom8, le, be
 	string matrix piece
 
+	// no file name holds a double quote (Windows stops at such a name): insheet then says what it says
+	if (strpos(fname, char(34))) return(0)
 	fn = fname
 	if (!fileexists(fn) & fileexists(fn + ".raw")) fn = fn + ".raw"
 	fi = _fopen(fn, "r")
