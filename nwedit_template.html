@@ -632,6 +632,11 @@ function arrowFit(w) {
 }
 
 function render(data) {
+  // nwplot, pictograms(): the node starts with the pictogram; its ordinary shape stays the one written for Stata
+  for (const n of data.nodes) {
+    if (n.plain_shape === undefined) n.plain_shape = n.shape;
+    if (n.pictogram && (n.pictogram in ICONS)) n.shape = ICON_PREFIX + n.pictogram;
+  }
   hasNodeLegend = !!data.has_node_legend;
   hasEdgeLegend = !!data.has_edge_legend;
   hasSizeLegend = !!data.has_size_legend;
@@ -648,7 +653,7 @@ function render(data) {
       data: {
         id: n.id, label: n.label, degree: n.degree, group: n.group,
         group_label: n.group_label || n.group, shape_label: n.shape_label || n.shape,
-        color: rgbStringToHex(n.color), shape: n.shape, plainShape: n.shape, size: n.size,
+        color: rgbStringToHex(n.color), shape: n.shape, plainShape: n.plain_shape, size: n.size,
         color_group: n.color_group, shape_group: n.shape_group,
         baseSize: n.size,   // undisturbed by the size-factor slider, so factor edits stay reversible
         displayLabel: n.label || ''

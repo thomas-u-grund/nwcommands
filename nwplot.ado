@@ -6,7 +6,7 @@ program nwplot, rclass
 	set more off
 	local 0_original = `"`0'"'
 	local layout = ""
-	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign BASEmap(string asis) * ]
+	syntax [anything(name=netname)][if/] [in/], [ ignorelgc lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer 1000) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive PICTOgrams(string) IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign BASEmap(string asis) * ]
 	// interactive/importcoords()/edgeimport() must ALSO be declared here
 	// (not just in the real parse at line ~449) even though this parse is
 	// otherwise a throwaway used only to extract layout() for re-parsing
@@ -19,6 +19,16 @@ program nwplot, rclass
 
 	// the nwplot call for the interactive page's Save do-file button, without the options of the page
 	// itself; split here, while the data in memory are the user's (the if condition refers to them)
+	// pictograms(): the names are checked before anything is done
+	if `"`pictograms'"' != "" {
+		if "`interactive'" == "" {
+			di "{err}{p 0 0 2}option {bf:pictograms()} needs option {bf:interactive}: pictograms exist only in the interactive view (Stata graphs have no such markers).{p_end}"
+			exit 198
+		}
+		_nwedit_pictonames `pictograms'
+		local pictograms `"`r(names)'"'
+	}
+
 	if "`interactive'" != "" {
 		_nwedit_cmdline `0_original'
 		local _nwedit_cmd_net `"`r(net)'"'
@@ -60,7 +70,7 @@ program nwplot, rclass
 	}
 	
 	local 0 = `"`0_original'"'
-	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer -1) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign BASEmap(string asis) * ]
+	syntax [anything(name=netname)][if/] [in/], [ lab  labelopt(string) _layoutfunction(string) arrows edgesize(string) EDGESIZERAW ASPECTratio(string) components(string) arcstyle(string) arcbend(string) arcsplines(integer 10) nodexy(varlist numeric min=2 max=2) edgeforeground(string) GENerate(string) colorpalette(string) edgecolorpalette(string) edgepatternpalette(string) symbolpalette(string) lineopt(string) scatteropt(string) legendopt(string) size(string) color(string) symbol(string) edgecolor(string) label(varname) nodefactor(string) sizebin(string) edgefactor(string) arrowfactor(string) arrowgap(string) arrowbarbfactor(string) layout(string) iterations(integer -1) scheme(string) EXPORT(string) replace EXPORTOPT(string) interactive PICTOgrams(string) IMPORTCOORDS(string) EDGEIMPORT(string) movieexport(string) fname(string) NOOpen force binary nosign BASEmap(string asis) * ]
 	// iterations() given to nwplot itself; layout(..., iterations()) takes precedence, the default is 1000
 	local __nwp_top_iter = `iterations'
 
@@ -1621,6 +1631,41 @@ program nwplot, rclass
 			}
 		}
 
+		// pictograms(): one name for all nodes, or one per group in the order of the legend; the groups are those of
+		// the shapes when these differ between nodes, else those of the colors
+		local _nwedit_pictoby ""
+		if `"`pictograms'"' != "" {
+			// the options were parsed again further up: bring the names into their standard form
+			_nwedit_pictonames `pictograms'
+			local pictograms `"`r(names)'"'
+			local _nwedit_pictoby = cond(`symbs' > 1, "shape", "color")
+			local _nwedit_ng = cond(`symbs' > 1, `symbs', `ncols')
+			local _nwedit_np : word count `pictograms'
+			if `_nwedit_np' != 1 & `_nwedit_np' != `_nwedit_ng' {
+				local _nwedit_glist ""
+				forvalues _nwedit_gi = 1/`_nwedit_ng' {
+					if `symbs' > 1 {
+						local _nwedit_g = __nwp_nsymbolrow[`_nwedit_gi', 1]
+						local _nwedit_gl `"`_nwedit_symbollabel_`_nwedit_g''"'
+					}
+					else {
+						local _nwedit_g = __nwp_ncolorrow[`_nwedit_gi', 1]
+						local _nwedit_gl `"`_nwedit_colorlabel_`_nwedit_g''"'
+					}
+					if `"`_nwedit_gl'"' == "" local _nwedit_gl "group `_nwedit_gi'"
+					local _nwedit_glist `"`_nwedit_glist'`=cond(`_nwedit_gi' > 1, "; ", "")'`_nwedit_gl'"'
+				}
+				di `"{err}{p 0 0 2}{bf:pictograms()} has `_nwedit_np' names, but the plot has `_nwedit_ng' `=cond(`_nwedit_ng' == 1, "group", "groups")' of nodes: `_nwedit_glist'. Give one name for all nodes, or one name for each group in this order ({bf:.} keeps the shape of a group).{p_end}"'
+				exit 198
+			}
+			forvalues _nwedit_gi = 1/`_nwedit_ng' {
+				if `symbs' > 1 local _nwedit_g = __nwp_nsymbolrow[`_nwedit_gi', 1]
+				else local _nwedit_g = __nwp_ncolorrow[`_nwedit_gi', 1]
+				local _nwedit_one : word `=cond(`_nwedit_np' == 1, 1, `_nwedit_gi')' of `pictograms'
+				local _nwedit_picto_`_nwedit_g' = cond("`_nwedit_one'" == ".", "", "`_nwedit_one'")
+			}
+		}
+
 		// Edge colors/styles -- same resolution, only if there are ties.
 		// Edge line pattern always defaults to solid on initial display
 		// (no nwcommands-shipped scheme varies it by group either,
@@ -2562,10 +2607,29 @@ end
 // edgeimport().
 capture program drop _nwedit_cmdline
 program def _nwedit_cmdline, rclass
-	syntax [anything(name=netname)] [if] [in] [, interactive NOOpen fname(string) GENerate(string) IMPORTCOORDS(string) EDGEIMPORT(string) nodexy(string) movieexport(string) EXPORT(string) EXPORTOPT(string) replace *]
+	syntax [anything(name=netname)] [if] [in] [, interactive PICTOgrams(string) NOOpen fname(string) GENerate(string) IMPORTCOORDS(string) EDGEIMPORT(string) nodexy(string) movieexport(string) EXPORT(string) EXPORTOPT(string) replace *]
 	return local net `"`netname'"'
 	return local ifin `"`if' `in'"'
 	return local opt `"`options'"'
+end
+
+// the pictograms of the interactive view (ICONS in nwedit_template.html); r(names) is the list in lower case, blanks
+// or commas between the names, "." (or none) for a group that keeps its shape
+capture program drop _nwedit_pictonames
+program def _nwedit_pictonames, rclass
+	local known "person woman man child senior couple family group house building factory school hospital bank church shop briefcase laptop phone envelope document book chat car airplane flag star heart shield lightbulb tree paw fish"
+	local list = lower(subinstr(`"`0'"', ",", " ", .))
+	local out ""
+	foreach w of local list {
+		if "`w'" == "none" local w "."
+		local ok : list posof "`w'" in known
+		if !`ok' & "`w'" != "." {
+			di `"{err}{p 0 0 2}{bf:`w'} is not a pictogram. The pictograms are: `known' (and {bf:.} to keep the shape of a group).{p_end}"'
+			exit 198
+		}
+		local out "`out' `w'"
+	}
+	return local names = trim("`out'")
 end
 
 capture program drop _nwedit_buildgroupmap
@@ -2907,6 +2971,7 @@ string scalar _nwedit_buildjson(real scalar nn, real scalar nties,
 			q+"shape_label"+q+":"+q+shapelbl+q+"," +
 			q+"color"+q+":"+q+colorstr+q+"," +
 			q+"shape"+q+":"+q+shapestr+q+"," +
+			q+"pictogram"+q+":"+q+(st_local("_nwedit_pictoby") == "" ? "" : st_local("_nwedit_picto_" + strofreal(st_local("_nwedit_pictoby") == "shape" ? sg : cg)))+q+"," +
 			q+"size"+q+":"+_nwedit_num(sizepx, 22)+"," +
 			q+"color_group"+q+":"+_nwedit_num(cg, 0)+"," +
 			q+"shape_group"+q+":"+_nwedit_num(sg, 0)+"," +

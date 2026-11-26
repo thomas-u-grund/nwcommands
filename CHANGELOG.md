@@ -6,6 +6,10 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
+### Added
+- `nwplot, interactive pictograms(names)`: the pictograms of the interactive view can be set in the command, one for all
+  nodes or one per group of `symbol()` or `color()`.
+
 ## [3.38.0] - 2026-11-26
 
 **Summary.** Fixes for temporal networks with tie values, for dropping nodes of temporal networks, and other fixes in the shared Mata library. Please update.
