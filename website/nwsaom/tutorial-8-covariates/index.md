@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 8: Time-varying and dyadic covariates"
-parent: "nwsaom (SAOM)"
-nav_order: 9
+parent: "nwsaom: SAOM"
+nav_order: 8
 description: "Covariates that change between waves (tvcov) and covariates defined for pairs of actors (dyadcov, dyadcovrecip) in nwsaom, shown on a Dutch school class observed four times."
 ---
 

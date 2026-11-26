@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 4: Selection and influence"
-parent: "nwsaom (SAOM)"
-nav_order: 5
+parent: "nwsaom: SAOM"
+nav_order: 4
 description: "Model friendship and drinking together with nwsaom: network-behavior co-evolution, selection and influence effects, on the Glasgow data."
 ---
 

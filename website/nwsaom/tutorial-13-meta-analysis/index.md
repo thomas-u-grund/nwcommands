@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 13: Combining several groups with a meta-analysis"
-parent: "nwsaom (SAOM)"
-nav_order: 14
+parent: "nwsaom: SAOM"
+nav_order: 13
 description: "Fit the same stochastic actor-oriented model to several school classes and combine the estimates with nwsaom meta, the counterpart of RSiena's siena08."
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 3: Goodness of fit"
-parent: "nwsaom (SAOM)"
-nav_order: 4
+parent: "nwsaom: SAOM"
+nav_order: 3
 description: "Check how well an nwsaom model describes the Glasgow friendship network with estat gof, read the violin plots, and improve a poorly fitting model."
 ---
 

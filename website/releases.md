@@ -1,8 +1,9 @@
 ---
 title: "Release notes"
-nav_order: 12.5
+nav_order: 1
 description: "Release notes of nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm: the current version of each package and the dated list of all releases, newest first."
 permalink: /releases/
+parent: "News"
 ---
 
 # Release notes

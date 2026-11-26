@@ -1,8 +1,9 @@
 ---
 title: "About"
-nav_order: 15
+nav_order: 4
 permalink: /about/
 description: "Who develops and maintains nwcommands and its model packages nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm."
+parent: "Help and about"
 ---
 
 # About

@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 1: A first relational event model"
-parent: "nwrem (REM)"
-nav_order: 2
+parent: "nwrem: relational events"
+nav_order: 1
 description: "Fit a first relational event model with nwrem to an e-mail log: declare the event sequence, fit degree and inertia effects, and read the coefficient table."
 ---
 

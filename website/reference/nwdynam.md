@@ -1,7 +1,7 @@
 ---
 title: "nwdynam"
-parent: "Command reference"
-grand_parent: "nwcommands (core)"
+parent: "Core command reference"
+grand_parent: "Packages and reference"
 nav_exclude: true
 search_exclude: false
 description: "nwdynam: Dynamic Network Actor Models (DyNAM), in the separate nwdynam package (GPL-3)."

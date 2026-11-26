@@ -1,7 +1,7 @@
 ---
 title: "What it is"
 parent: "nwrem (REM)"
-nav_order: 0.5
+nav_order: 1
 permalink: /nwrem/what-is/
 description: "nwrem in plain words: what a relational event model is, what question it answers, what data you need and when to use it."
 ---

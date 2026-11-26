@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 5: Constraints, two-mode networks and operators"
-parent: "nwergm (ERGM)"
-nav_order: 6
+parent: "nwergm: ERGM"
+nav_order: 5
 description: "Restrict the sample space with constraints(), model two-mode (bipartite) networks, and use operator terms such as Symmetrize and Project in nwergm."
 ---
 

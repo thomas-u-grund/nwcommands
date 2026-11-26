@@ -1,7 +1,7 @@
 ---
 title: "Speed"
 parent: "nwrem (REM)"
-nav_order: 5.5
+nav_order: 8
 description: "Run times of nwrem 1.4.0 against R's relevent on the same data and models: every cell, the closest case and the largest fits."
 permalink: /nwrem/speed/
 ---

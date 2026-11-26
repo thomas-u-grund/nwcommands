@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 2: Effects and interpretation"
-parent: "nwrem (REM)"
-nav_order: 3
+parent: "nwrem: relational events"
+nav_order: 2
 description: "Add actor covariates, a pair covariate and recency effects to a relational event model with nwrem, and read what each one says."
 ---
 

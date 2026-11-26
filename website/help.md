@@ -1,12 +1,16 @@
 ---
-title: "Get help and community"
-nav_order: 10
+title: "Help and about"
+nav_order: 9
 description: "Where to ask questions, report problems and follow announcements for nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm."
 permalink: /help/
+has_children: true
+has_toc: false
 ---
 
 # Get help and community
 {: .no_toc }
+
+Also here: [citing and licenses](/citing/), [literature](/literature/), [links](/links/) and [about](/about/).
 
 Each package has its own place for questions and problems. Everything is public, so an answer to one person helps the next.
 

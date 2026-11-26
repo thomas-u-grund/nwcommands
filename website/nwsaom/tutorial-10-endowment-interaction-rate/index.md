@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 10: Endowment, creation, interactions and rate effects"
-parent: "nwsaom (SAOM)"
-nav_order: 11
+parent: "nwsaom: SAOM"
+nav_order: 10
 description: "Separate effects for creating and for ending ties (endow, creation), interactions between effects (interact), and effects on the rate of change (ratecov, outrate) in nwsaom."
 ---
 

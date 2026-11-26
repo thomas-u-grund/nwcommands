@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 1: A latent space for the karate club"
-parent: "nwlsm (latent space)"
-nav_order: 2
+parent: "nwlsm: latent space"
+nav_order: 1
 description: "Fit a first latent space model with nwlsm to the karate club: the model in plain words, the posterior of the coefficients, MCMC diagnostics, the positions of the actors and goodness of fit."
 ---
 

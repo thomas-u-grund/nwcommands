@@ -1,7 +1,7 @@
 ---
 title: "Speed"
 parent: "nwsaom (SAOM)"
-nav_order: 16.5
+nav_order: 8
 description: "Run times of nwsaom against R's RSiena on the same data and models, where nwsaom is faster, where it is not, and why."
 permalink: /nwsaom/speed/
 ---

@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 2: Smoking in the Glasgow friendship network"
-parent: "nwalaam (ALAAM)"
-nav_order: 3
+parent: "nwalaam: actor attributes"
+nav_order: 2
 description: "Fit contagion and covariate effects for smoking in a school friendship network with nwalaam, check the fit, simulate from the model, and see what the contagion term does not say."
 ---
 

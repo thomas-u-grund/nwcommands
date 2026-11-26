@@ -1,7 +1,7 @@
 ---
 title: "How to cite"
 parent: "nwalaam (ALAAM)"
-nav_order: 4
+nav_order: 9
 permalink: /nwalaam/citation/
 description: "How to cite nwalaam, and the papers and software it builds on."
 ---

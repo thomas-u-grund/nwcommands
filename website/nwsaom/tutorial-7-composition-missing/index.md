@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 7: Changing actor sets and missing data"
-parent: "nwsaom (SAOM)"
-nav_order: 8
+parent: "nwsaom: SAOM"
+nav_order: 7
 description: "Pupils who join or leave between waves and values that were not observed: composition change with present(), joinat() and leaveat(), and missing data with missnet() and missbeh() in nwsaom."
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: "Speed"
 parent: "nwdynam (DyNAM)"
-nav_order: 5.5
+nav_order: 8
 description: "Run times of nwdynam 1.8.0 against R's goldfish on the same data and models: choice, rate with intercept, and the largest fits."
 permalink: /nwdynam/speed/
 ---

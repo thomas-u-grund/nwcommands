@@ -1,7 +1,7 @@
 ---
 title: "nwmaxflow"
-parent: "Command reference"
-grand_parent: "nwcommands (core)"
+parent: "Core command reference"
+grand_parent: "Packages and reference"
 nav_exclude: true
 search_exclude: false
 description: "Maximum flow and minimum cut between two nodes"

@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 13: Positions & Equivalence"
-parent: "nwcommands (core)"
+parent: "nwcommands: describe networks"
 nav_order: 13
 description: "Nodes that play the same role: structural equivalence, similarity and dissimilarity of tie profiles, hierarchical clustering with a dendrogram, CONCOR blocks and spectral partitions."
 ---

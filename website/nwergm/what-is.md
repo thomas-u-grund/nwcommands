@@ -1,7 +1,7 @@
 ---
 title: "What it is"
 parent: "nwergm (ERGM)"
-nav_order: 0.5
+nav_order: 1
 permalink: /nwergm/what-is/
 description: "nwergm in plain words: what a exponential random graph model is, what question it answers, what data you need and when to use it."
 ---

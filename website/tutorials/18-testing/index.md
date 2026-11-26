@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 18: Testing Hypotheses about Networks"
-parent: "nwcommands (core)"
+parent: "nwcommands: more topics"
 nav_order: 18
 description: "Why ordinary tests fail for network data, and the three tests in nwcommands: conditional uniform graph tests (nwcug), QAP correlation (nwcorrelate) and QAP regression (nwqap)."
 ---

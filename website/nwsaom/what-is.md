@@ -1,7 +1,7 @@
 ---
 title: "What it is"
 parent: "nwsaom (SAOM)"
-nav_order: 0.5
+nav_order: 1
 permalink: /nwsaom/what-is/
 description: "nwsaom in plain words: what a stochastic actor-oriented model is, what question it answers, what data you need and when to use it."
 ---

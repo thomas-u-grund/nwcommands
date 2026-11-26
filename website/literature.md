@@ -1,8 +1,9 @@
 ---
 title: "Literature"
-nav_order: 13
+nav_order: 2
 description: "Publications about nwcommands, the methods papers behind nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm, and the new commands of the core, and how to add your application."
 permalink: /literature/
+parent: "Help and about"
 ---
 
 # Literature

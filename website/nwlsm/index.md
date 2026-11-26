@@ -1,9 +1,10 @@
 ---
 title: "nwlsm (latent space)"
-nav_order: 8.6
+nav_order: 10
 has_children: true
 permalink: /nwlsm/
 description: "nwlsm: latent space models for networks (Hoff, Raftery and Handcock) for Stata, following the R package latentnet, with a latent space model for social influence. Installation, two worked tutorials and how to cite."
+parent: "Packages and reference"
 ---
 
 <h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwlsm.png' | relative_url }}" alt="nwlsm" width="193" height="76"></h1>
@@ -13,7 +14,7 @@ Latent space models for networks in Stata: every actor has a position in a hidde
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Start with the tutorial](tutorial-1-first-lsm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Tutorials](../tutorials/nwlsm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Manual](https://doi.org/10.5281/zenodo.24398243){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwlsm on GitHub](https://github.com/thomas-u-grund/nwlsm){: .btn .fs-5 .mb-4 .mb-md-0 }
 
@@ -63,10 +64,10 @@ A latent space is a summary of the network, not a measurement of anything. The p
 - Bipartite (two-mode) and dynamic networks.
 - A version below 1.0 is a young package: use it alongside `latentnet` where the result matters, and report what you find.
 
-## In this section
+## Tutorials and reference
 
+- [Tutorials](../tutorials/nwlsm/): two worked tutorials. New to `nwlsm`? Start with [Tutorial 1](tutorial-1-first-lsm/).
 - [Install](install/): core first, then `nwlsm`; releases, updating, the plugin.
-- [Tutorial 1: A latent space for the karate club](tutorial-1-first-lsm/): fit, diagnostics, positions and goodness of fit.
-- [Tutorial 2: How many latent clusters?](tutorial-2-bic-clusters/): the BIC, `nwlsmselect`, clusters against the known factions of Sampson's monks, goodness of fit for binary and valued networks.
 - [How to cite](citation/)
 - [nwsbm](../nwsbm/): the companion package that finds blocks of actors with similar tie patterns, where `nwlsm` finds positions.
+

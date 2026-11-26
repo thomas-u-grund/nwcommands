@@ -1,7 +1,7 @@
 ---
 title: "Install"
 parent: "nwalaam (ALAAM)"
-nav_order: 1
+nav_order: 2
 permalink: /nwalaam/install/
 description: "Install nwalaam for Stata: the core nwcommands first, then the nwalaam package; specific releases, updating, and the native plugin."
 ---

@@ -1,9 +1,10 @@
 ---
 title: "nwergm (ERGM)"
-nav_order: 6
+nav_order: 5
 has_children: true
 permalink: /nwergm/
 description: "nwergm: exponential random graph models (ERGM) for Stata, after R's ergm, with Bayesian estimation and ERGMs for egocentric data. Installation, tutorials, a map of the terms, a guide for ergm users and how to cite."
+parent: "Packages and reference"
 ---
 
 <h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwergm.png' | relative_url }}" alt="nwergm" width="212" height="76"></h1>
@@ -14,7 +15,7 @@ local patterns (reciprocity, clustering, homophily) build it.
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Start with the intro tutorial](/nwergm/tutorial-1-first-ergm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Tutorials](../tutorials/nwergm/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Manual](https://doi.org/10.5281/zenodo.23661331){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwergm on GitHub](https://github.com/thomas-u-grund/nwergm){: .btn .fs-5 .mb-4 .mb-md-0 }
 
@@ -57,14 +58,10 @@ to replace `ergm`. R's `ergm` is the reference implementation and the more compl
 
 The operator terms (`operators()`), the term `balance`, the curved two-mode terms and `altkstar` with an estimated decay were added in version 1.1.0; earlier releases do not have them.
 
-## In this section
+## Tutorials and reference
 
+- [Tutorials](../tutorials/nwergm/): five worked tutorials. New to `nwergm`? Start with [Tutorial 1](tutorial-1-first-ergm/).
 - [Install](install/): core first, then `nwergm`; releases, updating, the plugin.
-- [Tutorial 1: A first ERGM](/nwergm/tutorial-1-first-ergm/): a first model, information criteria, a Monte Carlo fit and goodness of fit.
-- [Tutorial 2: Terms and model specification](tutorial-2-terms/): covariate, structural and triad terms and how to read them.
-- [Tutorial 3: Diagnostics and goodness of fit](tutorial-3-diagnostics/): `estat mcmcdiag`, `estat gof` and what to do when a fit does not converge.
-- [Tutorial 4: Missing data and comparing models](tutorial-4-missing-comparing/): missing dyads, `estat ic`, `lrtest`, `predict`.
-- [Tutorial 5: Constraints, two-mode networks and operators](tutorial-5-constraints-twomode-operators/).
 - [Bayesian ERGM](bayesian/): `estimate(bayes)`, priors, posterior summaries and diagnostics.
 - [Ego-network ERGM](ego/): `nwergm ego` for samples of egos and their alters.
 - [nwergm and R's ergm](rergm/): what is the same, what differs, a translation table.

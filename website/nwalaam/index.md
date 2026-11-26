@@ -1,9 +1,10 @@
 ---
 title: "nwalaam (ALAAM)"
-nav_order: 8.5
+nav_order: 9
 has_children: true
 permalink: /nwalaam/
 description: "nwalaam: autologistic actor attribute models (ALAAM) for Stata, following ALAAMEE and MPNet. Installation, worked tutorials and how to cite."
+parent: "Packages and reference"
 ---
 
 <h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwalaam.png' | relative_url }}" alt="nwalaam" width="256" height="76"></h1>
@@ -13,7 +14,7 @@ Autologistic actor attribute models (ALAAM) for Stata: why do these actors, and 
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Start with Tutorial 1](tutorial-1-first-alaam/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Tutorials](../tutorials/nwalaam/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Manual](https://doi.org/10.5281/zenodo.24397901){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwalaam on GitHub](https://github.com/thomas-u-grund/nwalaam){: .btn .fs-5 .mb-4 .mb-md-0 }
 
@@ -64,9 +65,9 @@ close to it. [Tutorial 1](tutorial-1-first-alaam/) shows the numbers; `method(ee
 | Version | 1.4.0 (22 November 2026) |
 | License | GNU General Public License, version 3 |
 
-## In this section
+## Tutorials and reference
 
+- [Tutorials](../tutorials/nwalaam/): two worked tutorials. New to `nwalaam`? Start with [Tutorial 1](tutorial-1-first-alaam/).
 - [Install](install/): core first, then `nwalaam`; releases, updating.
-- [Tutorial 1: A first ALAAM on the karate club](tutorial-1-first-alaam/): the estimators side by side, and the exact answer.
-- [Tutorial 2: Smoking in the Glasgow friendship network](tutorial-2-glasgow/): contagion and covariates, goodness of fit, simulation, and what contagion does not say.
 - [How to cite](citation/)
+

@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 3: Limits and diagnostics"
-parent: "nwdynam (DyNAM)"
-nav_order: 4
+parent: "nwdynam: DyNAM"
+nav_order: 3
 description: "What a small event log cannot tell you: a ten-event toy log gives degenerate choice-model estimates, how the standard errors shrink with more events, and the checks nwdynam makes for you."
 ---
 

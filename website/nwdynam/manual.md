@@ -1,7 +1,7 @@
 ---
 title: "Manual"
 parent: "nwdynam (DyNAM)"
-nav_order: 10
+nav_order: 6
 permalink: /nwdynam/manual/
 description: "The nwdynam manual (PDF): the model, every effect and option, postestimation, worked examples, the comparison with goldfish and the limits."
 ---

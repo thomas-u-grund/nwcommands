@@ -4,6 +4,7 @@ nav_order: 8
 has_children: true
 permalink: /nwrem/
 description: "nwrem: relational event models (REM) for Stata, written from Butts (2008) and cross-checked with the R package relevent. Installation, worked tutorials, a guide for relevent users and how to cite."
+parent: "Packages and reference"
 ---
 
 <h1 class="pkg-logo"><img src="{{ '/assets/images/packages/nwrem.png' | relative_url }}" alt="nwrem" width="196" height="76"></h1>
@@ -13,7 +14,7 @@ Relational event models (REM) for Stata: why this sender and this receiver, in a
 
 [Install](install/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [What it is](what-is/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[Start with Tutorial 1](tutorial-1-first-rem/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
+[Tutorials](../tutorials/nwrem/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Manual](https://doi.org/10.5281/zenodo.24398012){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwrem on GitHub](https://github.com/thomas-u-grund/nwrem){: .btn .fs-5 .mb-4 .mb-md-0 }
 
@@ -49,12 +50,10 @@ the sister package that splits each event into the choice of the actor and the c
 | Version | 1.7.2 (23 November 2026) |
 | License | GNU General Public License, version 3 |
 
-## In this section
+## Tutorials and reference
 
+- [Tutorials](../tutorials/nwrem/): three worked tutorials. New to `nwrem`? Start with [Tutorial 1](tutorial-1-first-rem/).
 - [Install](install/): core first, then `nwrem`; releases, updating.
-- [Tutorial 1: A first relational event model](tutorial-1-first-rem/): the event sequence, degree and inertia effects, reading the table.
-- [Tutorial 2: Effects and interpretation](tutorial-2-effects/): actor and pair covariates, recency, side-by-side comparison.
-- [Tutorial 3: Comparing specifications](tutorial-3-comparing/): AIC, BIC and likelihood-ratio tests, stability, limits.
 - [nwrem and relevent](r-relevent/): what is the same, what differs, a translation table, and where the package comes from.
 - [Manual](manual/): the reference, as a PDF.
 - [How to cite](citation/)

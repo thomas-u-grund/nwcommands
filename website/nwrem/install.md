@@ -1,7 +1,7 @@
 ---
 title: "Install"
 parent: "nwrem (REM)"
-nav_order: 1
+nav_order: 2
 permalink: /nwrem/install/
 description: "Install nwrem for Stata: the core nwcommands first, then the nwrem package; specific releases and updating."
 ---

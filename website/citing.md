@@ -1,8 +1,9 @@
 ---
 title: "Citing and licenses"
-nav_order: 9
+nav_order: 1
 permalink: /citing/
 description: "How to cite nwcommands, nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm, the license of each package, and where the releases are."
+parent: "Help and about"
 ---
 
 # Citing and licenses

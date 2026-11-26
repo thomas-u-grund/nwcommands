@@ -1,7 +1,7 @@
 ---
 title: "Manual"
 parent: "nwrem (REM)"
-nav_order: 10
+nav_order: 6
 permalink: /nwrem/manual/
 description: "The nwrem manual (PDF): the model, every effect and option, worked examples, the comparison with relevent and the limits."
 ---

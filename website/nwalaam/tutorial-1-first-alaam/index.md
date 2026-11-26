@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 1: A first ALAAM on the karate club"
-parent: "nwalaam (ALAAM)"
-nav_order: 2
+parent: "nwalaam: actor attributes"
+nav_order: 1
 description: "Fit a first autologistic actor attribute model with nwalaam to the karate club: the outcome and the network, the estimators side by side, and the exact maximum likelihood answer."
 ---
 

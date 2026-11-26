@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 1: Blocks in the karate club"
-parent: "nwsbm (block models)"
-nav_order: 2
+parent: "nwsbm: block models"
+nav_order: 1
 description: "Fit stochastic block models with nwsbm to the karate club, choose the number of blocks by the integrated classification likelihood, and read what the blocks are and what they are not."
 ---
 

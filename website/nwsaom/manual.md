@@ -1,7 +1,7 @@
 ---
 title: "Manual"
 parent: "nwsaom (SAOM)"
-nav_order: 19
+nav_order: 6
 permalink: /nwsaom/manual/
 description: "The nwsaom manual (PDF), archived at Zenodo."
 ---

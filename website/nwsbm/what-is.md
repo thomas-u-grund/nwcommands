@@ -1,7 +1,7 @@
 ---
 title: "What it is"
 parent: "nwsbm (block models)"
-nav_order: 0.5
+nav_order: 1
 permalink: /nwsbm/what-is/
 description: "nwsbm in plain words: what a stochastic block model is, what question it answers, what data you need and when to use it."
 ---

@@ -1,8 +1,9 @@
 ---
 title: "Links"
-nav_order: 14
+nav_order: 3
 description: "Related software, communities and Stata resources for network analysis, and the project's own pages."
 permalink: /links/
+parent: "Help and about"
 ---
 
 # Links

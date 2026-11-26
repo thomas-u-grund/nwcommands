@@ -1,7 +1,7 @@
 ---
 title: "Install"
 parent: "nwlsm (latent space)"
-nav_order: 1
+nav_order: 2
 permalink: /nwlsm/install/
 description: "Install nwlsm for Stata: the core nwcommands first, then the nwlsm package; specific releases, updating, and the native plugin."
 ---

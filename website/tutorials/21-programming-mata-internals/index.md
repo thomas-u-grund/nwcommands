@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 21: Reading Networks in Mata with the nwapi Functions"
-parent: "nwcommands (core)"
+parent: "nwcommands: more topics"
 nav_order: 21
 description: "Read networks in your own Mata code through a small, stable set of functions: properties, the adjacency matrix, the edge list, degrees and neighbors, then loop over networks, compute your own measure and give the result back to Stata."
 ---

@@ -1,6 +1,6 @@
 ---
 title: "Tutorial 19: Longitudinal Models: An Overview"
-parent: "nwcommands (core)"
+parent: "nwcommands: more topics"
 nav_order: 19
 description: "Stochastic actor-oriented models (nwsaom), relational event models (nwrem) and dynamic network actor models (nwdynam): installing the packages and a first model of each."
 ---
@@ -48,7 +48,7 @@ The examples below were run with nwsaom 1.6.0, nwrem 1.1.0, nwdynam 1.3.0 and th
 
 ## Stochastic actor-oriented models (SAOM)
 
-> **Full nwsaom tutorials.** This page is an overview. `nwsaom` has its own section with thirteen worked tutorials, each with real output:
+> **Full nwsaom tutorials.** This page is an overview. `nwsaom` has its own [set of worked tutorials](../nwsaom/), each with real output, among them:
 > 1. [A first SAOM](../../nwsaom/tutorial-1-first-saom/)
 > 2. [Convergence](../../nwsaom/tutorial-2-convergence/)
 > 3. [Goodness of fit](../../nwsaom/tutorial-3-goodness-of-fit/)
@@ -177,7 +177,7 @@ likelihood instead of the method of moments (`ml`), and Bayesian estimation (`nw
 
 ## Relational event models (REM)
 
-> **Full nwrem tutorials.** This page is an overview. `nwrem` has its own section with three worked tutorials, each with real output:
+> **Full nwrem tutorials.** This page is an overview. `nwrem` has its own [set of three worked tutorials](../nwrem/), each with real output:
 > 1. [A first relational event model](../../nwrem/tutorial-1-first-rem/)
 > 2. [Effects and interpretation](../../nwrem/tutorial-2-effects/)
 > 3. [Comparing specifications](../../nwrem/tutorial-3-comparing/)
@@ -236,7 +236,7 @@ substantive result.
 
 ## Dynamic network actor models (DyNAM)
 
-> **Full nwdynam tutorials.** This page is an overview. `nwdynam` has its own section with three worked tutorials, each with real output:
+> **Full nwdynam tutorials.** This page is an overview. `nwdynam` has its own [set of three worked tutorials](../nwdynam/), each with real output:
 > 1. [A first DyNAM](../../nwdynam/tutorial-1-first-dynam/)
 > 2. [Effects and interpretation](../../nwdynam/tutorial-2-effects/)
 > 3. [Limits and diagnostics](../../nwdynam/tutorial-3-limits/)

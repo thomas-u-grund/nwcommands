@@ -622,7 +622,7 @@ def convert_file(path: Path):
     front_matter = [
         "---",
         f'title: "{cmd_name}"',
-        'parent: "Command reference"',
+        'parent: "Core command reference"',
         "nav_exclude: true",
         "search_exclude: false",
     ]
@@ -768,14 +768,15 @@ def main():
 
     index_lines = [
         "---",
-        'title: "Command reference"',
-        "nav_order: 3",
+        'title: "Core command reference"',
+        'parent: "Packages and reference"',
+        "nav_order: 2",
         "has_children: false",
         "---",
         "",
-        "# Command reference",
+        "# Core command reference",
         "",
-        "All nwcommands commands, grouped as in `help nwtopical`.",
+        "All commands of the core package nwcommands, grouped as in `help nwtopical`.",
         "",
     ]
 

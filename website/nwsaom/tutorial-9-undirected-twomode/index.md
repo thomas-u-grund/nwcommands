@@ -1,7 +1,7 @@
 ---
 title: "Tutorial 9: Undirected and two-mode networks"
-parent: "nwsaom (SAOM)"
-nav_order: 10
+parent: "nwsaom: SAOM"
+nav_order: 9
 description: "Stochastic actor-oriented models for undirected networks (symtype) and for two-mode networks in which actors choose among events, with nwsaom."
 ---
 

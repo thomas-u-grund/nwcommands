@@ -1,6 +1,6 @@
 ---
 title: "Book companion"
-nav_order: 11.5
+nav_order: 6
 has_children: true
 description: "Material that goes with the book Network Analysis with Stata (forthcoming, Stata Press): live examples to try in the browser."
 permalink: /book/

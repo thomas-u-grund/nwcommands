@@ -1,7 +1,7 @@
 ---
 title: "Ego-network ERGM"
 parent: "nwergm (ERGM)"
-nav_order: 7.3
+nav_order: 5
 permalink: /nwergm/ego/
 description: "Fit an ERGM to egocentrically sampled data with nwergm ego, after R's ergm.ego: when you have a sample of egos and their alters rather than a whole network."
 ---

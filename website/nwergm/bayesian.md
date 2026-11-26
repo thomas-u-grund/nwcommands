@@ -1,7 +1,7 @@
 ---
 title: "Bayesian ERGM"
 parent: "nwergm (ERGM)"
-nav_order: 7.2
+nav_order: 4
 permalink: /nwergm/bayesian/
 description: "Bayesian estimation of exponential random graph models with nwergm (estimate(bayes), after R's Bergm): what it does, how to read it, and what is not available."
 ---

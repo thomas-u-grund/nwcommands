@@ -1,8 +1,9 @@
 ---
 title: "Which package do I need?"
-nav_order: 2
+nav_order: 1
 permalink: /which-package/
 description: "Choose between nwcommands (core), nwsaom, nwergm, nwdynam, nwrem, nwalaam, nwlsm and nwsbm by the kind of network data you have and the question you ask."
+parent: "Start here"
 ---
 
 # Which package do I need?

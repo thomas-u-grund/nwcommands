@@ -1,16 +1,16 @@
 ---
-title: "Command reference"
-parent: "nwcommands (core)"
-nav_order: 26
+title: "Core command reference"
+parent: "Packages and reference"
+nav_order: 2
 has_children: false
 ---
 
-# Command reference
+# Core command reference
 
-All nwcommands commands, grouped as in `help nwtopical`.
+All commands of the core package nwcommands, grouped as in `help nwtopical`.
 
 `nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwlsm` and `nwsbm` are not part of the core. They are separate GPL-3
-packages with their own sections (see the menu); the entries below only point to them. The
+packages with their own pages under [Packages and reference](/packages/); the entries below only point to them. The
 complete syntax is in each package's own Stata help (`help nwsaom` etc.).
 
 ## Concepts
