@@ -17,6 +17,7 @@ from Stata Press, expected 2027). Nothing here is needed to use the software, an
   that the book builds (Florentine families, the law firm, Glasgow, Chesapeake Bay), with the commands that wrote
   them.
 - [Do-files of the book](dofiles/): one do-file per chapter with every command the book prints, in order.
+- [Exercise bank](teaching/exercises/): about 85 more exercises with hints, by chapter, that are not printed in the book.
 - [Performance and network size](performance/): run times by command and network size, and what each edition of Stata
   can handle.
 - [Programming with networks in Mata](programming/): how to read and write networks in Mata and write a command of your

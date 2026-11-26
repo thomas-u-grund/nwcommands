@@ -1,7 +1,7 @@
 ---
 title: "Exercise bank"
-parent: "Teaching and workshops"
-nav_order: 6
+parent: "Book companion"
+nav_order: 2.5
 description: "More exercises for Network Analysis with Stata, with hints: the exercises that are not printed in the book, by chapter, for instructors and for readers who want more practice."
 permalink: /book/teaching/exercises/
 ---

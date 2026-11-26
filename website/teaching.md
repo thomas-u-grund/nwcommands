@@ -9,6 +9,15 @@ description: "Teaching material for network analysis with Stata: slides for work
 # Teaching and workshops
 {: .no_toc }
 
+{: .workshops }
+> **Sunbelt 2027, Montreal, Canada** (INSNA conference, 21 to 26 June 2027, Le Centre Sheraton Montreal Hotel).
+> Two workshops are planned: one on network analysis with nwcommands in general, and one on statistical models of
+> networks in Stata. They are proposed to INSNA; dates and times will be posted once INSNA has confirmed them.
+> [More details](/news/) · [Conference website](https://www.insna.org/events/sunbelt-2027-montreal)
+>
+> **A workshop somewhere else?** If you would like to organize one at your university, institute or conference,
+> please contact me, Thomas Grund, at tgrund [at] soziologie.rwth-aachen.de. I am happy to do it.
+
 Everything you need to teach network analysis with Stata and the nwcommands packages, in one place. The slides are
 PowerPoint files with speaker notes (and PDFs); instructors are free to use, adapt and share them.
 
