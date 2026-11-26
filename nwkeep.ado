@@ -51,7 +51,13 @@ program nwkeep
 
 		mata: `keep' = (st_data((1::`nodes'),"`ifcond'"))'
 		mata: _editmissing(`keep', 0)
+		local __nwktemporal = ("`istemporal'" == "true")
+		if `__nwktemporal' _nwtemporal stash `netname'
 		mata: `netobj'->keep_nodes(`keep')
+		if `__nwktemporal' {
+			_nwtemporal put `netname', filter
+			_nwtemporal drop
+		}
 
 		_nwsyntax `netname'
 		

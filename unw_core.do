@@ -415,21 +415,36 @@ real matrix build_edge_value_triplets(string rowvector nodenames, string colvect
 	Rows with a missing time or start, rows whose nodes are not in the network, and repeated identical rows are
 	dropped; symmetric adds the row (alter, ego) of every row.
 */
-real matrix build_edge_time_list(string rowvector nodenames, string colvector lab1, string colvector lab2, real colvector v1, real colvector v2, real scalar symmetric)
+real matrix build_edge_time_list(string rowvector nodenames, string colvector lab1, string colvector lab2, real colvector v1, real colvector v2, real scalar symmetric, | real colvector val)
 {
-	real colvector i1, i2, keep
-	real matrix L
-	real scalar interval
+	real colvector i1, i2, keep, id, o, last
+	real matrix L, K
+	real scalar interval, hasval, m, nk
 
 	interval = (rows(v2) > 0)
+	hasval = (args() > 6 ? rows(val) > 0 : 0)
 	i1 = nw_label_positions(nodenames, lab1)
 	i2 = nw_label_positions(nodenames, lab2)
 	keep = nw_which((i1 :> 0) :& (i2 :> 0) :& (v1 :!= .))
-	if (rows(keep) == 0) return(J(0, 3 + interval, 0))
+	if (rows(keep) == 0) return(J(0, 3 + interval + hasval, 0))
 	L = (i1[keep], i2[keep], v1[keep])
 	if (interval) L = (L, v2[keep])
 	if (symmetric) L = L \ (L[., 2], L[., 1], L[|1, 3 \ ., cols(L)|])
-	return(uniqrows(L))
+	if (!hasval) return(uniqrows(L))
+	// with values: one row per pair and time (or interval); of repeated rows the last one of the data counts, as for
+	// the ties of the network itself
+	nk = cols(L)
+	id = keep
+	if (symmetric) id = id \ id
+	K = (L, id, (symmetric ? val[keep] \ val[keep] : val[keep]))
+	o = order(K, 1..(nk + 1))
+	K = K[o, .]
+	m = rows(K)
+	if (m > 1) {
+		last = rowsum(K[|1, 1 \ m - 1, nk|] :!= K[|2, 1 \ m, nk|]) :> 0 \ 1
+		K = select(K, last)
+	}
+	return((K[., 1..nk], K[., nk + 2]))
 }
 
 /* the value of cell (el[k,1], el[k,2]) in the list T = (ego, alter, value) sorted by ego, alter; missing when there is none */
@@ -4680,6 +4695,7 @@ real matrix nwattime_slice_snapshot(pointer(class nw_def scalar) scalar p, real 
 	if (!p->get_time_sparse()) return(nwattime_slice_dense(p, et, et, at, 0))
 	// the pairs observed at exactly this time
 	if (rows(et) == 0) return(J(0,3,0))
+	if (cols(et) > 3) return(nwattime_ties_of_rows(select(et[., (1, 2, 4)], (et[., 3] :!= .) :& (et[., 3] :== at))))
 	return(nwattime_ties_of_pairs(p, select(et[., (1, 2)], (et[., 3] :!= .) :& (et[., 3] :== at))))
 }
 
@@ -4691,7 +4707,22 @@ real matrix nwattime_slice_interval(pointer(class nw_def scalar) scalar p, real 
 	// the pairs with an interval that contains the time: start <= t < end; a missing end is open-ended (missing is
 	// larger than every number in Mata), a missing start is excluded
 	if (rows(es) == 0) return(J(0,3,0))
+	// of several such intervals of a pair the one that starts last counts (the list is sorted by ego, alter, start)
+	if (cols(es) > 3) return(nwattime_ties_of_rows(select(es[., (1, 2, 4)], (es[., 3] :!= .) :& (es[., 3] :<= at) :& (ee[., 3] :> at))))
 	return(nwattime_ties_of_pairs(p, select(es[., (1, 2)], (es[., 3] :!= .) :& (es[., 3] :<= at) :& (ee[., 3] :> at))))
+}
+
+/* the ties (i, j, value) of rows sorted by i, j: the last row of a pair, without loops and zero or missing values */
+real matrix nwattime_ties_of_rows(real matrix R)
+{
+	real matrix out
+	real scalar m
+
+	m = rows(R)
+	if (m == 0) return(J(0,3,0))
+	if (m > 1) R = select(R, (R[|1, 1 \ m - 1, 1|] :!= R[|2, 1 \ m, 1|]) :| (R[|1, 2 \ m - 1, 2|] :!= R[|2, 2 \ m, 2|]) \ 1)
+	out = select(R, (R[., 1] :!= R[., 2]) :& (R[., 3] :< .) :& (R[., 3] :!= 0))
+	return(rows(out) == 0 ? J(0,3,0) : out)
 }
 
 /* the stored ties (i, j, value) of the pairs in P (rows i, j; repeats allowed), in row-major order, without loops and zero or missing values */
@@ -4769,17 +4800,22 @@ real matrix nwattime_slice_event(pointer(class nw_def scalar) scalar p, real sca
 	row by row. Every observation of a pair is kept (build_edge_time_list()), so a tie can come and go. The lists
 	are always used (timesparse = 1); the n x n matrices of older versions held one time per pair only.
 */
-void nw_set_temporal_values(pointer(class nw_def scalar) scalar p, string colvector lab1, string colvector lab2, real colvector v1, real colvector v2, real scalar symmetric, real scalar interval)
+void nw_set_temporal_values(pointer(class nw_def scalar) scalar p, string colvector lab1, string colvector lab2, real colvector v1, real colvector v2, real scalar symmetric, real scalar interval, | real colvector val)
 {
 	real matrix L
+	real colvector v
 
+	v = J(0, 1, .)
+	if (args() > 7) v = val
 	p->set_time_sparse(1)
 	if (!interval) {
-		p->set_edge_time(build_edge_time_list(p->get_nodenames(), lab1, lab2, v1, J(0, 1, .), symmetric))
+		p->set_edge_time(build_edge_time_list(p->get_nodenames(), lab1, lab2, v1, J(0, 1, .), symmetric, v))
 	}
 	else {
-		L = build_edge_time_list(p->get_nodenames(), lab1, lab2, v1, v2, symmetric)
-		p->set_edge_interval(L[., (1, 2, 3)], L[., (1, 2, 4)])
+		L = build_edge_time_list(p->get_nodenames(), lab1, lab2, v1, v2, symmetric, v)
+		// with values both lists carry them in a fourth column
+		if (cols(L) == 5) p->set_edge_interval(L[., (1, 2, 3, 5)], L[., (1, 2, 4, 5)])
+		else p->set_edge_interval(L[., (1, 2, 3)], L[., (1, 2, 4)])
 	}
 }
 
@@ -4847,8 +4883,9 @@ real matrix nw_turnover_counts(pointer(class nw_def scalar) scalar p1, pointer(c
 	n = p1->get_nodes()
 	out = J(n, 3, 0)
 	if (!nw_ties_only(p1) | !nw_ties_only(p2)) {
-		A1 = (*p1->get_matrix_mod(0, isdirected)) :!= 0
-		A2 = (*p2->get_matrix_mod(0, isdirected)) :!= 0
+		// missing ties are no ties
+		A1 = editmissing(*p1->get_matrix_mod(0, isdirected), 0) :!= 0
+		A2 = editmissing(*p2->get_matrix_mod(0, isdirected), 0) :!= 0
 		_diag(A1, 0)
 		_diag(A2, 0)
 		out[., 1] = rowsum(A1 :& A2)
@@ -4858,8 +4895,8 @@ real matrix nw_turnover_counts(pointer(class nw_def scalar) scalar p1, pointer(c
 	}
 	el1 = p1->edgelist()
 	el2 = p2->edgelist()
-	el1 = select(el1, (el1[., 3] :> 0) :& (el1[., 1] :!= el1[., 2]))
-	el2 = select(el2, (el2[., 3] :> 0) :& (el2[., 1] :!= el2[., 2]))
+	el1 = select(el1, (el1[., 3] :> 0) :& (el1[., 3] :< .) :& (el1[., 1] :!= el1[., 2]))
+	el2 = select(el2, (el2[., 3] :> 0) :& (el2[., 3] :< .) :& (el2[., 1] :!= el2[., 2]))
 	k1 = el1[., 1] :* (n + 1) :+ el1[., 2]
 	k2 = el2[., 1] :* (n + 1) :+ el2[., 2]
 	k = k1 \ k2
@@ -7373,8 +7410,8 @@ real matrix `NWdef'::calculate_kcomponents(real scalar k){
 		ev = J(0, 1, 0)
 		if (rows(el) > 0){
 			r = el[,1]; c = el[,2]; w = el[,3]
-			if (isdirect == 0 & isvalued == 0) keep = nw_which((w :!= 0) :& (r :!= c))
-			else keep = nw_which((w :> 0) :& (r :!= c))
+			if (isdirect == 0 & isvalued == 0) keep = nw_which((w :!= 0) :& (w :< .) :& (r :!= c))
+			else keep = nw_which((w :> 0) :& (w :< .) :& (r :!= c))
 			if (rows(keep) > 0){
 				r = r[keep]; c = c[keep]
 				// each tie in both directions, once, in the order of a column
@@ -7390,7 +7427,7 @@ real matrix `NWdef'::calculate_kcomponents(real scalar k){
 		return(KComponentsEdges(n, eu, ev, rowptr, colidx, nodeset, k))
 	}
 
-	adj = (*get_matrix_mod(0,0)) :!= 0
+	adj = *nw_undirected01(get_matrix_copy(), (isdirect | isvalued))
 	_diag(adj, 0)
 	return(KComponents(adj, nodeset, k))
 }
@@ -7411,7 +7448,7 @@ real matrix `NWdef'::calculate_cohesion_hierarchy(){
 	n = get_nodes()
 	// native kernel (native/nwcomb.h), exact port of the Mata recursion below
 	if (nwg_comb_ok()) return(nwg_cohesion(n, nwg_sym01(edgelist())))
-	adj = (*get_matrix_mod(0,0)) :!= 0
+	adj = *nw_undirected01(get_matrix_copy(), (isdirect | isvalued))
 	_diag(adj, 0)
 
 	nodeset = J(1, n, 1)
@@ -10917,6 +10954,53 @@ string scalar `NWdef'::get_modes_labeled_string(){
 }
 
 /*
+	The undirected 0/1 matrix of a tie matrix, missing ties being no ties: in a directed or valued network a pair is tied
+	when a value in either direction is positive. Missing values go first, each on its own, so that a missing value in one
+	direction does not remove the tie of the other.
+*/
+pointer(real matrix) scalar nw_undirected01(real matrix M, real scalar arcs)
+{
+	real matrix A
+
+	A = editmissing(M, 0)
+	if (arcs) A = (A :> 0) :| (A' :> 0)
+	else A = (A :!= 0)
+	return(&(A))
+}
+
+/*
+	The "label=mode" pairs of a list that was split at its commas: a label may hold commas itself, so pieces are
+	joined again until one ends in =1 or =2.
+*/
+string rowvector nw_join_modepairs(string rowvector tok)
+{
+	string rowvector res
+	string scalar cur, last
+	real scalar i, started, k
+
+	// the result is allocated once: a vector grown pair by pair takes time quadratic in the number of nodes
+	res = J(1, cols(tok), "")
+	k = 0
+	cur = ""
+	started = 0
+	for (i = 1; i <= cols(tok); i++) {
+		if (tok[i] == ",") {
+			if (started) cur = cur + ","
+			continue
+		}
+		cur = cur + tok[i]
+		started = 1
+		last = substr(cur, -2, 2)
+		if (last == "=1" | last == "=2") {
+			res[++k] = cur
+			cur = ""
+			started = 0
+		}
+	}
+	return(k ? res[|1 \ k|] : J(1, 0, ""))
+}
+
+/*
 	Reload side of get_modes_labeled_string() above - parses
 	"label=mode,label=mode,..." pairs and places each mode value at
 	whatever index that label currently occupies in `nodes' (via
@@ -10948,7 +11032,7 @@ void `NWdef'::set_modes_from_labeled_string(string scalar s){
 	// linear label search was O(n^2), minutes at 40,000 nodes.
 	t = tokeninit("", ",", "", 0, 0)
 	tokenset(t, s)
-	pairs = tokengetall(t)
+	pairs = nw_join_modepairs(tokengetall(t))
 	pos = asarray_create("string")
 	for (i = cols(nodes); i >= 1; i--) asarray(pos, nodes[i], i)
 	for (i = 1; i <= cols(pairs); i++) {
@@ -13078,6 +13162,11 @@ string scalar nw_suffixed_name(string scalar s, real scalar suffix){
 
 /* stops with error 198 unless s can be a network name (a valid Stata name: 1 to 32 characters, letters, digits and _) */
 void nw_assert_netname(string scalar s){
+	// the list of _nwreservedname.ado: other commands would read such a name as something else
+	if (anyof(("_all", "_n", "_N", "_pi", "_cons", "_rc", "_b", "_coef", "_se", "_pred", "_skip", "if", "in", "using", "with", "_nwnode", "_nwinclude", "byte", "int", "long", "float", "double", "strL"), s) | regexm(s, "^str[0-9]+$")) {
+		errprintf("%s is a reserved word and cannot be the name of a network\n", s)
+		exit(198)
+	}
 	if (!st_isname(s)) {
 		errprintf("network name %s is invalid: a network name must be a valid Stata name (1 to 32 characters; letters, digits and _; not starting with a digit; not a reserved word such as _all)\n", s)
 		exit(198)

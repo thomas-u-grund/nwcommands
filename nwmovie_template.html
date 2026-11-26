@@ -21,6 +21,8 @@ __NWMOVIE_WEBMMUXER__
   #toolbar button { padding: 6px 12px; border: 1px solid #b8b8c0; border-radius: 5px; background: #fff; cursor: pointer; font-size: 13px; }
   #toolbar button:hover { background: #eee; }
   #toolbar button:disabled { opacity: 0.5; cursor: default; }
+  /* one width for "Play" and "Pause": the other controls stay in place when the label changes */
+  #toolbar #btnPlay { width: 92px; flex: none; text-align: center; white-space: nowrap; }
   #scrub { flex: 1; }
   #label { min-width: 120px; font-size: 13px; color: #333; }
   #timeReadout { min-width: 90px; font-size: 12px; color: #666; text-align: right; }

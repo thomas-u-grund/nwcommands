@@ -338,11 +338,13 @@ temporal dimension via exactly one of three options - {bf:time()}, {bf:interval(
 was recorded (e.g. a wave number). Ties from different waves live in the same network object, each
 carrying its own recorded time. A pair listed in several rows with different times is a tie observed at
 each of those times, so ties can come and go: a tie of waves 1 and 3 is present at wave 1, absent at
-wave 2 and present again at wave 3 (see {help nwattime}){p_end}
+wave 2 and present again at wave 3 (see {help nwattime}). A third variable gives the value of the tie at that time;
+of several rows of a pair at the same time the last one counts{p_end}
 {p 8 12 2}{bf:interval({it:startvar endvar})}{p_end}
 {p 12 12 2}{bf:interval} semantics: each row is active for {it:startvar} <= {it:t} < {it:endvar} - a
 missing {it:endvar} means the tie is still ongoing (open-ended). A pair may have several rows, one for
-each period in which the tie exists{p_end}
+each period in which the tie exists. A third variable gives the value of the tie in that period; where periods of a
+pair overlap, the one that starts last counts (of several with the same start, the one that ends last){p_end}
 {p 8 12 2}{bf:eventtime({it:eventtimevar})}{p_end}
 {p 12 12 2}{bf:event} semantics: each row is a timestamped relational {it:event}, not a persistent
 tie - e.g. a message sent at a particular instant. Event data is never silently treated as an
@@ -470,4 +472,4 @@ time per pair and take 80 GB each at 100,000 nodes.
 {help nwattime}, {help nwintro##limits:feasible network sizes}{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

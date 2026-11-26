@@ -41,7 +41,19 @@ program nwtoedge
 		local __talname = cond("`alter'" == "", "`nw_alter'", "`alter'")
 		if "`temporaltype'" == "interval" local __tt "t1(_start) t2(_end)"
 		else local __tt "t1(_time)"
-		if `__tev' & `__tvalued' local __tt "`__tt' value(_value)"
+		// snapshots and intervals have a value column when the network is valued or a row has a value other than 1
+		if !`__tev' {
+			_nwsyntax `netname', max(1)
+			capture mata: mata drop __nwte_T
+			if "`temporaltype'" == "interval" mata: __nwte_T = *`netobj'->get_edge_start()
+			else mata: __nwte_T = *`netobj'->get_edge_time()
+			mata: st_local("__tother", strofreal(cols(__nwte_T) > 3 ? any(__nwte_T[., 4] :!= 1) : 0))
+			mata: st_local("__thas", strofreal(cols(__nwte_T) > 3))
+			mata: mata drop __nwte_T
+			if !`__thas' local __tvalued 0
+			else if `__tother' local __tvalued 1
+		}
+		if `__tvalued' local __tt "`__tt' value(_value)"
 		_nwtemporal pack `netname', ego(`__tegoname') alter(`__talname') `__tt' half
 		_nwtemporal drop
 		qui compress

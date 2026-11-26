@@ -32,8 +32,16 @@ program nwdrop
 			di "{err}{p 0 0 2}The condition selects every node of {bf:`netname'}. To drop the network, type {bf:nwdrop `netname'}.{p_end}"
 			exit 198
 		}
+		// a temporal network keeps its events, times and intervals among the nodes that remain (the node numbers change)
+		local __nwdtemporal = ("`istemporal'" == "true")
+		if `__nwdtemporal' _nwtemporal stash `netname'
 		mata: `netobj'->drop_nodes(`drop')
 		mata: mata drop `drop'
+		if `__nwdtemporal' {
+			_nwtemporal put `netname', filter
+			_nwtemporal drop
+			_nwsyntax `netname', max(1)
+		}
 		if "`clean'" != "" {
 			capture drop if `temp' == 1
 		}

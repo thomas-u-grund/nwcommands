@@ -71,7 +71,7 @@ program nwattime, rclass
 	mata: `netobj'->set_name("`name'")
 	mata: `netobj'->set_directed(`srcdirected')
 	mata: `netobj'->set_edge_from_triplets(`__edges'[.,1], `__edges'[.,2], `__edges'[.,3], `srcdirected')
-	mata: `netobj'->set_valued(`srcvalued')
+	mata: `netobj'->set_valued(`srcvalued' | (rows(`__edges') ? any(`__edges'[.,3] :!= 1) : 0))
 	if `__at2' {
 		mata: `netobj'->set_2mode(1)
 		mata: `netobj'->set_modes(`__atmodes')

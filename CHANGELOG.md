@@ -6,6 +6,26 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
+## [3.38.0] - 2026-11-26
+
+**Summary.** Fixes for temporal networks with tie values, for dropping nodes of temporal networks, and other fixes in the shared Mata library. Please update.
+
+### Results that change (read before you re-run old analyses)
+- Snapshot and interval networks **with tie values**: `nwattime` gave every time the value of the LAST row of a pair.
+  It now gives the value of that time or period. Recompute results from such slices. Networks saved to a file with an
+  earlier version hold no values per time: declare them again from the data.
+- `nwturnover` and `nwkcomponents` counted **missing** tie values as ties.
+- `nwdrop`, `nwkeep` and `nwsubset` with a condition on a temporal network left the events, times and intervals at the
+  old node numbers: time slices could show ties between the **wrong nodes**, or commands stopped with an error. Check
+  results obtained from temporal networks after dropping nodes this way (`nwdropnodes` was not affected).
+- `nwrecode` and `nwdichotomize` also end the temporal state of a snapshot or interval network when the rules change the
+  value at some time, even if no tie of the network itself changes.
+
+### Fixed
+- `nwmovie`: the controls moved when the play button changed between Play and Pause.
+- Node names with commas in two-mode networks: the modes were lost when the network was saved and used again.
+- The library refuses reserved words as network names in every command.
+
 ## [3.37.2] - 2026-11-26
 
 **Summary.** Fixes for commands that deleted or overwrote data and networks, and for wrong results. Please update.

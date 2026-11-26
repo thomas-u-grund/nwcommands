@@ -131,4 +131,4 @@ This example shows, e.g. that in the *glasgow3* network, there are 12 triads whe
 
 ---
 
-*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))

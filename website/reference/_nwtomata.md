@@ -92,4 +92,4 @@ One can also directly interact with the underlying adjacency matrix of a network
 
 ---
 
-*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))

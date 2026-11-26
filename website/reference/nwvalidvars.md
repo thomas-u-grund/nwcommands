@@ -52,4 +52,4 @@ One name per node goes into a Stata macro. When the *nodes* names do not fit int
 
 ---
 
-*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))

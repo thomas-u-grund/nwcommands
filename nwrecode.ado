@@ -53,6 +53,35 @@ program nwrecode
 		mata: st_local("__nchg", strofreal(sum(st_data(., "__nwrec_fq") :* (st_data(., "`onenet'") :!= st_data(., "__nwrec_old"))), "%18.0g"))
 		di "{txt}(" string(`__nchg', "%18.0gc") " changes made to `onenet')"
 
+		// a snapshot or interval network holds a value per time: when the rules change one of these, the times no longer
+		// describe the ties, even if no tie of the network itself changes
+		_nwsyntax `onenet'
+		if `__nchg' == 0 & "`istemporal'" == "true" & inlist("`temporaltype'", "snapshot", "interval") {
+			_nwtemporal stash `onenet'
+			mata: st_local("__ntv", strofreal(sum(__nwt_v :< .) ? rows(__nwt_v) : 0))
+			if `__ntv' > 0 {
+				tempfile __nwrec_keep
+				qui save "`__nwrec_keep'"
+				drop _all
+				qui set obs `__ntv'
+				qui gen double `onenet' = .
+				mata: st_store(., "`onenet'", __nwt_v)
+				qui gen double __nwrec_told = `onenet'
+				if `"`options'"' == "" {
+					qui recode `onenet' `rules'
+				}
+				else {
+					qui recode `onenet' `rules', `options'
+				}
+				qui count if `onenet' != __nwrec_told
+				local __nchgt = r(N)
+				qui use "`__nwrec_keep'", clear
+			}
+			else local __nchgt 0
+			_nwtemporal drop
+		}
+		else local __nchgt 0
+
 		if `__fast' {
 			// every target: the network itself, or a copy of it
 			local targets ""
@@ -83,9 +112,9 @@ program nwrecode
 				_nwsyntax `onenet'
 				mata: st_numscalar("__nwrec_sym", `netobj'->recode_weights(st_data(., "__nwrec_old"), st_data(., "`onenet'")))
 				nwname `onenet', newdirected(`onedirected')
-				if `__nchg' > 0 _nwdetemporal `onenet'
+				if `__nchg' > 0 | `__nchgt' > 0 _nwdetemporal `onenet'
 			}
-			if `__nchg' > 0 {
+			if `__nchg' > 0 | `__nchgt' > 0 {
 				foreach tg in `targets' {
 					_nwdetemporal `tg'
 				}

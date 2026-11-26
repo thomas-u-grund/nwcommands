@@ -57,4 +57,4 @@ This evaluates whatever is in *netexp* and generates a new mata matrix *matatrix
 
 ---
 
-*nwcommands version 3.37.2, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))

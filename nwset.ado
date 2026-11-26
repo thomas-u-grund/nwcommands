@@ -173,7 +173,15 @@ if "`overwrite'" != "" local replace "replace"
 			}
 		}
 
-		tempname tm_lab1m tm_lab2m tm_tval tm_tval2
+		tempname tm_lab1m tm_lab2m tm_tval tm_tval2 tm_tie
+		// snapshots and intervals keep the tie value of every row (third variable)
+		mata: `tm_tie' = J(0,1,.)
+		local __tm_v3 : word 3 of `varlist'
+		if "`eventtime'" == "" & "`__tm_v3'" != "" {
+			capture confirm numeric variable `__tm_v3'
+			if _rc == 0 mata: `tm_tie' = st_data(., "`__tm_v3'")
+			capture confirm number 0
+		}
 		mata: `tm_lab1m' = st_sdata(., "`tm_lab1'")
 		mata: `tm_lab2m' = st_sdata(., "`tm_lab2'")
 		mata: `tm_tval2' = J(0,1,.)
@@ -204,7 +212,7 @@ if "`overwrite'" != "" local replace "replace"
 		mata: st_local("symmetric", strofreal(!(`netobj'->is_directed_boolean())))
 
 		if "`time'" != "" {
-			mata: nw_set_temporal_values(`netobj', `tm_lab1m', `tm_lab2m', `tm_tval', J(0,1,.), `symmetric', 0)
+			mata: nw_set_temporal_values(`netobj', `tm_lab1m', `tm_lab2m', `tm_tval', J(0,1,.), `symmetric', 0, `tm_tie')
 			mata: `netobj'->set_temporal_type("snapshot")
 			mata: `netobj'->set_timevar("`time'")
 		}
@@ -214,13 +222,13 @@ if "`overwrite'" != "" local replace "replace"
 			mata: `netobj'->set_eventtimevar("`eventtime'")
 		}
 		else {
-			mata: nw_set_temporal_values(`netobj', `tm_lab1m', `tm_lab2m', `tm_tval', `tm_tval2', `symmetric', 1)
+			mata: nw_set_temporal_values(`netobj', `tm_lab1m', `tm_lab2m', `tm_tval', `tm_tval2', `symmetric', 1, `tm_tie')
 			mata: `netobj'->set_temporal_type("interval")
 			mata: `netobj'->set_startvar("`ivstart'")
 			mata: `netobj'->set_endvar("`ivend'")
 		}
 		mata: `netobj'->set_temporal(1)
-		mata: mata drop `tm_lab1m' `tm_lab2m' `tm_tval' `tm_tval2'
+		mata: mata drop `tm_lab1m' `tm_lab2m' `tm_tval' `tm_tval2' `tm_tie'
 		exit
 	}
 	// Temporal metadata declaration (two-mode/temporal architecture
@@ -330,6 +338,14 @@ if "`overwrite'" != "" local replace "replace"
 		// (trace happens to touch _rc as a side effect) but _rc==111
 		// without it - a real, confusing bug, not a flaky test.
 		mata: `__tval2' = J(0,1,.)
+		tempname __ttie
+		mata: `__ttie' = J(0,1,.)
+		local __v3 : word 3 of `varlist'
+		if "`eventtime'" == "" & "`__v3'" != "" {
+			capture confirm numeric variable `__v3'
+			if _rc == 0 mata: `__ttie' = st_data(., "`__v3'")
+			capture confirm number 0
+		}
 		if "`time'" != "" {
 			mata: `__tval' = st_data(., "`time'")
 		}
@@ -353,7 +369,7 @@ if "`overwrite'" != "" local replace "replace"
 		mata: st_local("symmetric", strofreal(!(`netobj'->is_directed_boolean())))
 
 		if "`time'" != "" {
-			mata: nw_set_temporal_values(`netobj', `__lab1', `__lab2', `__tval', J(0,1,.), `symmetric', 0)
+			mata: nw_set_temporal_values(`netobj', `__lab1', `__lab2', `__tval', J(0,1,.), `symmetric', 0, `__ttie')
 			mata: `netobj'->set_temporal_type("snapshot")
 			mata: `netobj'->set_timevar("`time'")
 		}
@@ -375,13 +391,13 @@ if "`overwrite'" != "" local replace "replace"
 			mata: `netobj'->set_eventtimevar("`eventtime'")
 		}
 		else {
-			mata: nw_set_temporal_values(`netobj', `__lab1', `__lab2', `__tval', `__tval2', `symmetric', 1)
+			mata: nw_set_temporal_values(`netobj', `__lab1', `__lab2', `__tval', `__tval2', `symmetric', 1, `__ttie')
 			mata: `netobj'->set_temporal_type("interval")
 			mata: `netobj'->set_startvar("`ivstart'")
 			mata: `netobj'->set_endvar("`ivend'")
 		}
 		mata: `netobj'->set_temporal(1)
-		mata: mata drop `__lab1' `__lab2' `__tval' `__tval2'
+		mata: mata drop `__lab1' `__lab2' `__tval' `__tval2' `__ttie'
 		exit
 	}
 	set more off

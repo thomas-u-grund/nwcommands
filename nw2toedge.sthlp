@@ -109,4 +109,4 @@ Build a small two-mode network (3 people x 2 events) and convert it to an edgeli
 	{help nw2fromedge}, {help nwtoedge}, {help nwsave}
 
 {hline}
-{pstd}{it:nwcommands version 3.37.2, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
