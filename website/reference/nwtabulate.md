@@ -140,7 +140,9 @@ Network:  gang      Directed: false
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. `plotoptions()` and `eiplotoptions()` remain the way to pass options to the two graphs (`twoway_options` cannot be used here: other options go to `tabulate`).
 
-- `. nwtabulate flomarriage flobusiness, plot export(tab.png, width(1200))`
+```stata
+. nwtabulate flomarriage flobusiness, plot export(tab.png, width(1200))
+```
 
 ## Remarks on plot
 

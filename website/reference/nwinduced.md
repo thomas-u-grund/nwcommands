@@ -62,18 +62,13 @@ The real computational cost is the leave-one-out reconstruction: computing induc
 . nwset, mat((0,1,1,1\1,0,0,0\1,0,0,0\1,0,0,0)) name(starnet) undirected labs(A,B,C,D)
 . nwinduced starnet, measure(degree) generate(_induced)
 ```
-- A hub (A, degree 3) and three leaves (B/C/D, degree 1) - endogenous exactly reproduces plain
-- degree; induced is exactly twice that (6 for A, 2 for each leaf); exogenous equals endogenous
-- again (3 for A, 1 for each leaf) - the free identity described above, verified here on a concrete
-- example.
+A hub (A, degree 3) and three leaves (B/C/D, degree 1) - endogenous exactly reproduces plain degree; induced is exactly twice that (6 for A, 2 for each leaf); exogenous equals endogenous again (3 for A, 1 for each leaf) - the free identity described above, verified here on a concrete example.
 
 ```stata
 . nwwebuse florentine, nwclear
 . nwinduced flobusiness, measure(betweenness) generate(bw)
 ```
-- Which Florentine family props up OTHERS' betweenness the most, independent of its own
-- standing? - the **bw_exog** column answers that, distinct from **bw_endog** (the family's own
-- plain betweenness score).
+Which Florentine family props up OTHERS' betweenness the most, independent of its own standing? - the **bw_exog** column answers that, distinct from **bw_endog** (the family's own plain betweenness score).
 
 ## Stored results
 

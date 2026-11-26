@@ -90,8 +90,10 @@ A network held as stored ties is counted from its ties (each tie is matched with
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
 
-- `. nwwebuse florentine, nwclear`
-- `. nwdyads flomarriage, plot export(dyads.png, width(1200))`
+```stata
+. nwwebuse florentine, nwclear
+. nwdyads flomarriage, plot export(dyads.png, width(1200))
+```
 
 ## Stored results
 

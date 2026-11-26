@@ -50,19 +50,18 @@ With a list of models the coefficients of different models are drawn in one row 
 
 ## Examples
 
-- `. nwergm flomarriage, edges gwesp(.5)`
-- `. nwcoefplot, eform title("ERGM of the marriage network")`
-
-- `. nwergm flomarriage, edges triangle`
-- `. estimates store m0`
-- `. nwergm flomarriage, edges gwesp(.5)`
-- `. estimates store m1`
-- `. nwcoefplot m0 m1, keep(edges) export(coefs.png, width(1200))`
-
-- `. nwcoefplot m0 m1, msymbol(O D) export(coefs_gray.png, width(1200))`
-
-- `. nwlsm advice, dim(2) influence(belief2 belief1 tenure) neighbors(10)`
-- `. nwcoefplot, noconstant`
+```stata
+. nwergm flomarriage, edges gwesp(.5)
+. nwcoefplot, eform title("ERGM of the marriage network")
+. nwergm flomarriage, edges triangle
+. estimates store m0
+. nwergm flomarriage, edges gwesp(.5)
+. estimates store m1
+. nwcoefplot m0 m1, keep(edges) export(coefs.png, width(1200))
+. nwcoefplot m0 m1, msymbol(O D) export(coefs_gray.png, width(1200))
+. nwlsm advice, dim(2) influence(belief2 belief1 tenure) neighbors(10)
+. nwcoefplot, noconstant
+```
 
 ## Stored results
 

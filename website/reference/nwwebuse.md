@@ -54,21 +54,31 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 ## Examples
 
-- Report URL from which network datasets will be obtained
-- `. nwwebuse query`
+Report URL from which network datasets will be obtained
 
-- Change URL from which datasets will be obtained
-- `. nwwebuse set http://www.zzz.edu/users/~sue`
+```stata
+. nwwebuse query
+```
+Change URL from which datasets will be obtained
 
-- Reset URL to the default
-- `. nwwebuse set`
+```stata
+. nwwebuse set http://www.zzz.edu/users/~sue
+```
+Reset URL to the default
 
-- Load the [Florentine network dataset](netexample) that is stored at
-- https://nwcommands.org/examples
-- `. nwwebuse florentine, nwclear`
+```stata
+. nwwebuse set
+```
+Load the [Florentine network dataset](netexample) that is stored at https://nwcommands.org/examples
 
-- Equivalent to above command
-- `. nwwebuse https://nwcommands.org/examples/florentine, nwclear`
+```stata
+. nwwebuse florentine, nwclear
+```
+Equivalent to above command
+
+```stata
+. nwwebuse https://nwcommands.org/examples/florentine, nwclear
+```
 
 ## See also
 

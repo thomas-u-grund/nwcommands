@@ -59,7 +59,7 @@ The memory needed is proportional to the number of ties; no N-by-N matrix is bui
 . nwfactions flomarriage, groups(3) generate(_faction)
 . tab _faction
 ```
-- The adjacency matrix with the nodes ordered by faction, the factions as blocks ([nwplotmatrix](nwplotmatrix)):
+The adjacency matrix with the nodes ordered by faction, the factions as blocks ([nwplotmatrix](nwplotmatrix)):
 
 ```stata
 . nwplotmatrix flomarriage, sortby(_faction) group(_faction)

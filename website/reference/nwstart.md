@@ -10,27 +10,25 @@ search_exclude: false
 
 ## Contents
 
-**SectionDescription**
-
-- hline 46
-- [**[NW-4.1]****A first session**](nwstart)
-- [**[NW-4.2]****Three ideas to know**](nwstart)
-- [**[NW-4.3]****Getting your own data in**](nwstart)
-- [**[NW-4.4]****Tutorials**](nwstart)
-- [**[NW-4.5]****Where to look next**](nwstart)
+- [NW-4.1] [A first session](#a-first-session)
+- [NW-4.2] [Three ideas to know](#three-ideas-to-know)
+- [NW-4.3] [Getting your own data in](#getting-your-own-data-in)
+- [NW-4.4] [Tutorials](#tutorials)
+- [NW-4.5] [Where to look next](#where-to-look-next)
 
 ## A first session
 
 Load the marriage and business ties between 16 Florentine families, look at what is in memory, and describe, plot and analyze the marriage network. Click a command to run it.
 
-- `. nwwebuse florentine, nwclear`
-- `. nwds`
-- `. nwsummarize flomarriage`
-- `. nwplot flomarriage, lab`
-- `. nwdegree flomarriage, generate(deg)`
-- `. nwbetween flomarriage, generate(btw)`
-- `. list _nwnode deg btw in 1/5`
-
+```stata
+. nwwebuse florentine, nwclear
+. nwds
+. nwsummarize flomarriage
+. nwplot flomarriage, lab
+. nwdegree flomarriage, generate(deg)
+. nwbetween flomarriage, generate(btw)
+. list _nwnode deg btw in 1/5
+```
 `nwwebuse` loads two networks, *flomarriage* and *flobusiness*. `nwdegree` and `nwbetween` store one value per node in ordinary Stata variables, which you can list, summarize or use in a regression.
 
 ## Three ideas to know

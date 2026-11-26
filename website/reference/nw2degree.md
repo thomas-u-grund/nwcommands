@@ -64,7 +64,7 @@ where *k_i* is node *i*'s plain tie count and *s_i* is its tie-*value* sum (its 
 . nw2set, mat(net) name(mynet)
 . nw2degree mynet, generate(_2degree)
 ```
-- Weighted (strength-aware) variant, on a valued two-mode network:
+Weighted (strength-aware) variant, on a valued two-mode network:
 
 ```stata
 . nwclear

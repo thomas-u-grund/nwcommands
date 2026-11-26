@@ -25,11 +25,11 @@ Versions follow semantic versioning (MAJOR.MINOR.PATCH). The current release is 
 
 ## Stored results
 
-- `nwversion` stores `r(version)` (for example `3.0.0`) and `r(date)` (for example `24oct2026`) in `r()`.
+`nwversion` stores `r(version)` (for example `3.0.0`) and `r(date)` (for example `24oct2026`) in `r()`.
 
 ## Author
 
-- Thomas U. Grund, RWTH Aachen University
+Thomas U. Grund, RWTH Aachen University
 
 ---
 

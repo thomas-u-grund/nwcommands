@@ -73,12 +73,10 @@ Some statistics are fixed by the dyad census (reciprocity, for example). With **
 
 For a two-mode network the null networks are two-mode networks with the same nodes (and the same node names and attributes) as [netname](netname); the draws are made by a kernel of the native plugin, so the time of a test is that of the statistic. The conditions are
 
-- **condition(density)** (the default): the same number of ties between a random mode-1 node and a random mode-2 node, no pair twice (`igraph::sample_bipartite(type = "gnm")`,
-- `vegan::nullmodel(method = "r00")`).
+- **condition(density)** (the default): the same number of ties between a random mode-1 node and a random mode-2 node, no pair twice (`igraph::sample_bipartite(type = "gnm")`, `vegan::nullmodel(method = "r00")`).
 - **condition(mode1degree)**: every mode-1 node keeps its degree and takes its partners at random among all mode-2 nodes (`vegan` method `r0`).
 - **condition(mode2degree)**: the same for the mode-2 nodes (`vegan` method `c0`).
-- **condition(degrees)**: both degree sequences stay, the curveball algorithm of Strona et al. (2014) (`vegan` method `curveball`; the same null model as [nwpermute](nwpermute) with
-- `swap`, which exchanges the partners of two ties). The draws form a chain; `trades()` sets the number of trades between two draws.
+- **condition(degrees)**: both degree sequences stay, the curveball algorithm of Strona et al. (2014) (`vegan` method `curveball`; the same null model as [nwpermute](nwpermute) with `swap`, which exchanges the partners of two ties). The draws form a chain; `trades()` sets the number of trades between two draws.
 
 The values of a valued two-mode network are shuffled over the ties of every draw (the number of ties and the degrees count ties, not values). **condition(census)** counts the dyads of a directed one-mode network and is refused for a two-mode network (error 198); **condition(mode1degree)** and **condition(mode2degree)** are refused for a one-mode network. For example, to test whether the nestedness of the Southern women is unusual for their degrees:
 
@@ -100,8 +98,10 @@ Every draw of the null distribution is a new random network ([nwrandom](nwrandom
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
 
-- `. nwwebuse florentine, nwclear`
-- `. nwcug flomarriage, stat(nwclustering) rname(cluster_global) condition(degrees) reps(500) seed(3) plot export(cug.png, width(1200))`
+```stata
+. nwwebuse florentine, nwclear
+. nwcug flomarriage, stat(nwclustering) rname(cluster_global) condition(degrees) reps(500) seed(3) plot export(cug.png, width(1200))
+```
 
 ## Stored results
 

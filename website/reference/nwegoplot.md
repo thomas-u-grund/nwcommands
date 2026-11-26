@@ -42,12 +42,13 @@ The plot is drawn by [nwplot](nwplot) with `nodexy()` and `if`, so all options o
 
 ## Examples
 
-- `. nwwebuse lazega, nwclear`
-- `. nwegoplot lazega_adv, ego(n41) label(_nwnode) color(officenum) symbol(partner)`
-- `. nwegoplot lazega_adv, ego(n41) sortby(officenum) color(officenum) arrowfactor(0)`
-
-- `. nwwebuse glasgow, nwclear`
-- `. nwegoplot glasgow1, ego(n2) hop(2)`
+```stata
+. nwwebuse lazega, nwclear
+. nwegoplot lazega_adv, ego(n41) label(_nwnode) color(officenum) symbol(partner)
+. nwegoplot lazega_adv, ego(n41) sortby(officenum) color(officenum) arrowfactor(0)
+. nwwebuse glasgow, nwclear
+. nwegoplot glasgow1, ego(n2) hop(2)
+```
 
 ## Also see
 

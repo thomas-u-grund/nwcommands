@@ -64,18 +64,25 @@ Observation *i* of the data set in memory must hold node *i* of the network, as 
 
 ## Examples
 
-- Friends among 50 pupils in Glasgow: does a pupil's alcohol consumption follow that of the friends?
-- `. nwclear`
-- `. nwwebuse glasgow, nwclear`
-- `. nwspmatrix glasgow2, name(W)`
-- `. spregress alcohol2 smoke2 sport2, ml dvarlag(W)`
+Friends among 50 pupils in Glasgow: does a pupil's alcohol consumption follow that of the friends?
 
-- Treat the friendships as mutual only, without row normalisation, and compare
-- `. nwspmatrix glasgow2, name(Wm) direction(mutual) normalize(none)`
-- `. spregress alcohol2 smoke2 sport2, ml dvarlag(Wm)`
+```stata
+. nwclear
+. nwwebuse glasgow, nwclear
+. nwspmatrix glasgow2, name(W)
+. spregress alcohol2 smoke2 sport2, ml dvarlag(W)
+```
+Treat the friendships as mutual only, without row normalisation, and compare
 
-- Influence also through the covariates of the friends (spatially lagged covariates)
-- `. spregress alcohol2 smoke2 sport2, ml dvarlag(W) ivarlag(W: smoke2)`
+```stata
+. nwspmatrix glasgow2, name(Wm) direction(mutual) normalize(none)
+. spregress alcohol2 smoke2 sport2, ml dvarlag(Wm)
+```
+Influence also through the covariates of the friends (spatially lagged covariates)
+
+```stata
+. spregress alcohol2 smoke2 sport2, ml dvarlag(W) ivarlag(W: smoke2)
+```
 
 ## Stored results
 

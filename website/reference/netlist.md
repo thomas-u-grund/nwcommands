@@ -53,7 +53,7 @@ The networks in the dataset can be reordered with [nworder](nworder).
 . nwwebuse glasgow, nwclear
 . nwset
 ```
-- The next four commands are all equivalent.
+The next four commands are all equivalent.
 
 ```stata
 . nwsummarize glasgow1 glasgow2 glasgow3

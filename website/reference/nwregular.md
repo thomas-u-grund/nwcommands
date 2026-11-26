@@ -33,20 +33,23 @@ The exact classes are all or nothing on many real networks: when every node send
 
 ## Examples
 
-- A small office: juniors ask team leaders, team leaders ask the head
-- `. nwclear`
-- `. clear`
-- `. input str8 ego str8 alter`
-- `. "Anna" "Gwen"`
-- `. "Sophie" "Gwen"`
-- `. "Fion" "Leh"`
-- `. "Magalie" "Leh"`
-- `. "Gwen" "Antonia"`
-- `. "Leh" "Antonia"`
-- `. end`
-- `. nwset ego alter, edgelist directed name(firm)`
-- `. nwregular firm, generate(regular)`
-- `. matrix list r(image)`
+A small office: juniors ask team leaders, team leaders ask the head
+
+```stata
+. nwclear
+. clear
+. input str8 ego str8 alter
+. "Anna" "Gwen"
+. "Sophie" "Gwen"
+. "Fion" "Leh"
+. "Magalie" "Leh"
+. "Gwen" "Antonia"
+. "Leh" "Antonia"
+. end
+. nwset ego alter, edgelist directed name(firm)
+. nwregular firm, generate(regular)
+. matrix list r(image)
+```
 
 ## Stored results
 

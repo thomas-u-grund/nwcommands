@@ -62,12 +62,12 @@ A network with no ties at all is rejected (there is no structure to fit a core-p
 . nwwebuse florentine, nwclear
 . nwcoreperiphery flomarriage, generate(_core)
 ```
-- The best of 50 searches (the degree-based start and 49 random starts):
+The best of 50 searches (the degree-based start and 49 random starts):
 
 ```stata
 . nwcoreperiphery flomarriage, generate(_core) replace restarts(50) seed(1)
 ```
-- The adjacency matrix with the core nodes first and the periphery last ([nwplotmatrix](nwplotmatrix)):
+The adjacency matrix with the core nodes first and the periphery last ([nwplotmatrix](nwplotmatrix)):
 
 ```stata
 . nwplotmatrix flomarriage, sortby(_core) group(_core)

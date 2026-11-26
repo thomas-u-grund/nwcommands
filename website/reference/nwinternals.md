@@ -10,22 +10,13 @@ search_exclude: false
 
 ## Contents
 
-**SectionDescription**
-
-- hline 46
-- [**[NW-7.1]****Overview**](nwinternals)
-
-- [**[NW-7.2]****Network resolution and identification**](nwinternals)
-
-- [**[NW-7.3]****Network-expression parsing**](nwinternals)
-
-- [**[NW-7.4]****Dialog-box generation**](nwinternals)
-
-- [**[NW-7.5]****egen extension functions**](nwinternals)
-
-- [**[NW-7.6]****Other small utilities**](nwinternals)
-
-- [**[NW-7.7]****Shared error-code definitions**](nwinternals)
+- [NW-7.1] [Overview](#overview)
+- [NW-7.2] [Network resolution and identification](#network-resolution-and-identification)
+- [NW-7.3] [Network-expression parsing](#network-expression-parsing)
+- [NW-7.4] [Dialog-box generation](#dialog-box-generation)
+- [NW-7.5] [egen extension functions](#egen-extension-functions)
+- [NW-7.6] [Other small utilities](#other-small-utilities)
+- [NW-7.7] [Shared error-code definitions](#shared-error-code-definitions)
 
 ## Overview
 

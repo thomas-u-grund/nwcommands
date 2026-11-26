@@ -60,9 +60,7 @@ adopt(varlist) one 0/1 variable for each period (in the order of the periods): 1
 
 `nwdiffuse simulate` runs a simple contagion in discrete steps and stores the period in which each node adopts (missing if it never does). The initial adopters (`nseeds()` random nodes or the nodes marked by `seedvar()`) adopt in period 1. In each step all decisions are taken at the same time from the state of the previous period. A step uses the network given for it (the single network, or the *s*th of the networks for step *s*).
 
-- `cascade`: independent cascade. A node that adopted in the previous period passes the behaviour on to each of its
-- (not yet adopted) neighbours with probability `prob()`, once; it never tries again. A node influenced by *c* such
-- neighbours adopts with probability 1-(1-`prob()`)^*c*. Tie values are ignored.
+- `cascade`: independent cascade. A node that adopted in the previous period passes the behaviour on to each of its (not yet adopted) neighbours with probability `prob()`, once; it never tries again. A node influenced by *c* such neighbours adopts with probability 1-(1-`prob()`)^*c*. Tie values are ignored.
 - `threshold`: a node adopts when the number of its adopting neighbours (the sum of tie values with `valued`) reaches its threshold.
 - `fraction`: a node adopts when the share of its adopting neighbours reaches its threshold. A node without neighbours never adopts this way.
 
@@ -74,9 +72,11 @@ With `spont()`, every node that has not adopted also adopts with that probabilit
 
 `nwdiffuse curve` `graph` (or its synonym `plot`) draws the cumulative proportion of adopters. `name()` names the graph in memory (it stays unnamed when `name()`, `saving()` and `export()` are all absent), `saving()` writes a `.gph` file and `export()` writes the graph with `graph export`; the file extension sets the format and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced. Other options go to `twoway` and come last. `saving()` and `export()` need `graph` or `plot`.
 
-- `. nwwebuse glasgow, nwclear`
-- `. generate toa = cond(smoke1 > 1, 1, cond(smoke2 > 1, 2, cond(smoke3 > 1, 3, .)))`
-- `. nwdiffuse curve, toa(toa) plot export(curve.png, width(1200))`
+```stata
+. nwwebuse glasgow, nwclear
+. generate toa = cond(smoke1 > 1, 1, cond(smoke2 > 1, 2, cond(smoke3 > 1, 3, .)))
+. nwdiffuse curve, toa(toa) plot export(curve.png, width(1200))
+```
 
 ## Remarks
 
@@ -86,26 +86,33 @@ With `spont()`, every node that has not adopted also adopts with that probabilit
 
 ## Examples
 
-- Exposure and thresholds from adoption times
-- `. nwclear`
-- `. nwwebuse glasgow, nwclear`
-- `. generate toa = cond(smoke1 > 1, 1, cond(smoke2 > 1, 2, cond(smoke3 > 1, 3, .)))`
-- `. nwdiffuse exposure glasgow1, toa(toa) generate(expo) count(nexp) lag(1)`
-- `. nwdiffuse threshold glasgow1, toa(toa) generate(thresh) lag(1)`
-- `. nwdiffuse curve, toa(toa) graph`
-- `. nwdiffuse curve, toa(toa) plot(both) export(curve.png, width(1000))`
+Exposure and thresholds from adoption times
 
-- Hazard model of adoption with lagged exposure
-- `. preserve`
-- `. nwdiffuse long glasgow1, toa(toa) clear`
-- `. logit adopt exposure i.period`
-- `. restore`
+```stata
+. nwclear
+. nwwebuse glasgow, nwclear
+. generate toa = cond(smoke1 > 1, 1, cond(smoke2 > 1, 2, cond(smoke3 > 1, 3, .)))
+. nwdiffuse exposure glasgow1, toa(toa) generate(expo) count(nexp) lag(1)
+. nwdiffuse threshold glasgow1, toa(toa) generate(thresh) lag(1)
+. nwdiffuse curve, toa(toa) graph
+. nwdiffuse curve, toa(toa) plot(both) export(curve.png, width(1000))
+```
+Hazard model of adoption with lagged exposure
 
-- Simulate an independent cascade and a threshold model on a random network
-- `. nwrandom 200, prob(0.03) name(rnd) directed`
-- `. nwdiffuse simulate rnd, model(cascade) prob(0.2) nseeds(5) seed(1) generate(t_ic) steps(30)`
-- `. nwdiffuse simulate rnd, model(fraction) threshold(0.3) nseeds(20) seed(1) generate(t_fr) steps(30)`
-- `. nwdiffuse curve rnd, toa(t_ic) graph`
+```stata
+. preserve
+. nwdiffuse long glasgow1, toa(toa) clear
+. logit adopt exposure i.period
+. restore
+```
+Simulate an independent cascade and a threshold model on a random network
+
+```stata
+. nwrandom 200, prob(0.03) name(rnd) directed
+. nwdiffuse simulate rnd, model(cascade) prob(0.2) nseeds(5) seed(1) generate(t_ic) steps(30)
+. nwdiffuse simulate rnd, model(fraction) threshold(0.3) nseeds(20) seed(1) generate(t_fr) steps(30)
+. nwdiffuse curve rnd, toa(t_ic) graph
+```
 
 ## Stored results
 

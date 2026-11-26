@@ -70,38 +70,55 @@ The recode is applied to the distinct tie values and then to the stored ties, so
 
 **Setup**
 
-- `. nwwebuse gang, nwclear`
+```stata
+. nwwebuse gang, nwclear
+```
+List the network adjacency matrix
 
-- List the network adjacency matrix
-- `. nwsummarize gang, mat`
+```stata
+. nwsummarize gang, mat
+```
+For *gang*, change 1 to 5, leave all other values unchanged, and store the results in `nx`
 
-- For *gang*, change 1 to 5, leave all other values unchanged, and store
-- the results in `nx`
-- `. nwrecode gang (1 = 5), generate(nx)`
+```stata
+. nwrecode gang (1 = 5), generate(nx)
+```
+List the network adjacency matrix
 
-- List the network adjacency matrix
-- `. nwsummarize gang nx, mat`
+```stata
+. nwsummarize gang nx, mat
+```
+For *gang*, swap 1 and 2, and store the results in `nx1`
 
-- For *gang*, swap 1 and 2, and store the results in `nx1`
-- `. nwrecode gang (1 = 2) (2 = 1), generate(nx1)`
+```stata
+. nwrecode gang (1 = 2) (2 = 1), generate(nx1)
+```
+List the network adjacency matrix
 
-- List the network adjacency matrix
-- `. nwsummarize gang nx1, mat`
+```stata
+. nwsummarize gang nx1, mat
+```
+For *gang*, collapse 1 and 2 into 1, change 3 through 4 to 2, and store the results in `nx2`
 
-- For *gang*, collapse 1 and 2 into 1, change 3 through 4
-- to 2, and store the results in `nx2`
-- `. nwrecode gang (1 2 = 1) (3/4 = 2), generate(nx2)`
+```stata
+. nwrecode gang (1 2 = 1) (3/4 = 2), generate(nx2)
+```
+List the network adjacency matrix
 
-- List the network adjacency matrix
-- `. nwsummarize gang nx2, mat`
+```stata
+. nwsummarize gang nx2, mat
+```
+For *glasgow1*, *glasgow2*, and *glasgow3*, change dyad values 1 to 99 and store the transformed networks in *new_glasgow1*, *new_glasgow2*, and *new_glasgow3*.
 
-- For *glasgow1*, *glasgow2*, and *glasgow3*, change dyad values 1 to 99 and store the
-- transformed networks in *new_glasgow1*, *new_glasgow2*, and *new_glasgow3*.
-- `. nwwebuse glasgow, nwclear`
-- `. nwrecode glasgow1-glasgow3 (1=99), prefix(new) test`
+```stata
+. nwwebuse glasgow, nwclear
+. nwrecode glasgow1-glasgow3 (1=99), prefix(new) test
+```
+List the network adjacency matrices
 
-- List the network adjacency matrices
-- `. nwsummarize glasgow1-glasgow3 newglasgow1-newglasgow3, mat`
+```stata
+. nwsummarize glasgow1-glasgow3 newglasgow1-newglasgow3, mat
+```
 
 ## See also
 

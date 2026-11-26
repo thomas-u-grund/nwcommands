@@ -49,12 +49,12 @@ Imports networks from popular network file formats. A Pajek file with ties in an
 
 The following network formats are supported:
 
-- [- Ucinet](nwimport)
-- [- Pajek](nwimport)
-- [- Raw adjacency matrix](nwimport)
-- [- Raw edgelist](nwimport)
-- [- Compressed edgelist](nwimport)
-- [- GML](nwimport)
+- [Ucinet](nwimport)
+- [Pajek](nwimport)
+- [Raw adjacency matrix](nwimport)
+- [Raw edgelist](nwimport)
+- [Compressed edgelist](nwimport)
+- [GML](nwimport)
 
 *`filename`* can also be a URL, so networks can be imported directly from the internet without downloading a local copy first, e.g.:
 
