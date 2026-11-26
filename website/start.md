@@ -41,7 +41,7 @@ numbers may be newer.
 ```stata
 . nwversion
 
-nwcommands 3.38.0 (26nov2026), core package; Stata 17, MacOSX
+nwcommands 3.39.0 (26nov2026), core package; Stata 17, MacOSX
 Model packages (separate, GPL-3; install with nwinstall, models):
   nwsaom  1.9.2  (22nov2026)
   nwergm  1.16.1  (24nov2026)

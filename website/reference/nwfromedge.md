@@ -53,6 +53,8 @@ selfloop]
 
 `nwfromedge` imports a network from a dataset in edgelist format.
 
+Blanks at the start or end of node identifiers are removed. When two identifiers differ only in such blanks, they become one node and a warning says so; give them different names first if they are different nodes.
+
 An edgelist or arclist is a set of two (or three in the case of a valued network) variables representing relations. Nodes are identified by entries in the cells.  For example, the data
 
 ```stata
@@ -128,4 +130,4 @@ This loads a network dataset from the internet and transforms the network *glasg
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

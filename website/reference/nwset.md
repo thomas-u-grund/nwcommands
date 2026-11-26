@@ -62,6 +62,7 @@ nwset, nwclear
 | `nooutput` | Suppress the summary display normally printed after declaring a network |
 | `clear` | Clear all networks (but keep Stata variables) |
 | `nwclear` | Clear all networks and the Stata dataset (as [nwclear](nwclear)) |
+| `dropvars` | Edge list declarations: allow unsaved variables that are not part of the edge list to be discarded (see [below](nwset)) |
 | `time(varname)` | Declare a snapshot temporal network - each row's own time value (see [Declare a temporal network](nwset) below) |
 | `interval(startvar endvar)` | Declare an interval temporal network - each row active for start<=t<end (see [Declare a temporal network](nwset) below) |
 | `eventtime(varname)` | Declare an event temporal network - each row a timestamped event, not a persistent tie (see [Declare a temporal network](nwset) below) |
@@ -209,6 +210,8 @@ Here **net** is a 3 (mode 1) x 3 (mode 2) matrix - **bipartite** tells **nwset**
 
 Ordinary **nw*** commands inspect a network's own two-mode status and behave accordingly rather than requiring a separate command family for bipartite data - see each command's own help file for whether it has a native bipartite definition, works on the raw bipartite structure directly, requires an explicit projection (see [nw2project](nw2project) - **nwset** and the rest of the package never project automatically), or does not support two-mode data at all.
 
+**The data in memory.** A declaration from an edge list (`edgelist`, `twomode`, `time()`, `interval()` or `eventtime()`) replaces the edge list in memory with the data of the nodes. When the data have unsaved changes and hold variables other than those of the edge list (the two node variables, the tie value and the times), `nwset` stops with error 4 and changes nothing. Save the data first, or give `dropvars` to discard those variables. Data that are saved on disk, or that hold only the variables of the edge list, are replaced without a message. [nwfromedge](nwfromedge) with option `noclear` keeps the data and adds the rows of the nodes.
+
 - **ul:5. Declare a temporal network**
 
 Time belongs to edges/ties, not to a separate network copy per timepoint. An edgelist can carry a temporal dimension via exactly one of three options - **time()**, **interval()**, or **eventtime()** - matching three distinct semantics that are never conflated:
@@ -292,4 +295,4 @@ Options `time()` and `interval()` keep the times as a list with one entry per ro
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

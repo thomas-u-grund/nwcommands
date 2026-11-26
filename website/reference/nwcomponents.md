@@ -91,4 +91,4 @@ The components are found from the stored ties. A network with more than 1,000 co
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

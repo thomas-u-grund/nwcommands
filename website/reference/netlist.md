@@ -68,4 +68,4 @@ The networks in the dataset can be reordered with [nworder](nworder).
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

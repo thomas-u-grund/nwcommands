@@ -149,4 +149,4 @@ Zweig, K. A. and M. Kaufmann. 2011. A systematic approach to the one-mode projec
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

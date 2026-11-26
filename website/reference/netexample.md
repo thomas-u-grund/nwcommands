@@ -388,7 +388,7 @@ These files are a derived subset, adapted by Thomas U. Grund: only the Senates o
 **Loaded as:** a plain (not pre-declared) Stata dataset, unlike the ready-made networks above. `nwwebuse manufacturing` loads three variables, *sender*, *receiver* and *t*, one row per email, 50,233 rows sorted by time. Declare the event network with [`nwset`](nwset):
 
 - `. nwwebuse manufacturing, nwclear`
-- `. nwset sender receiver, eventtime(t) name(mail)`
+- `. nwset sender receiver, eventtime(t) directed name(mail)`
 
 **Vertex attributes:** a companion dataset, `manufacturing_nodes.dta` (`nwwebuse` `manufacturing_nodes`), holds *label*, *supervisor*, *level* and *division* for the 154 employees (144 of them send or receive an email in the data). *supervisor* is the direct supervisor (empty for the CEO, E86), *level* the number of steps to the CEO in the reporting hierarchy (0 = CEO) and *division* the branch of the CEO that the employee belongs to. After `nwset` the node-level dataset carries each employee's label in `_nwnode`; rename it to `label`, merge, then rename back:
 
@@ -497,4 +497,4 @@ The networks of Game of Thrones (`got`, one per season), 54 tennis networks (`at
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

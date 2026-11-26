@@ -43,7 +43,7 @@ Imports networks from popular network file formats. A Pajek file with ties in an
 
 **Data in memory.** A failed import changes nothing: data, networks and the current network stay as they are, also with `nwclear` or `clear`. With networks in memory, `nwappend` or `nwclear` is required. A successful import leaves the data in memory unchanged, with two exceptions. With `nwclear` or `clear` the data and the networks are replaced. If there are no data (no variables and no observations), the data set holds what the file gives: the node names (`_nwnode`) of an edge list, or the matrix columns and node attributes of a matrix. `xvars` adds the variables of the network to the data.
 
-**Node names** cannot hold commas or double quotes. In names read from a file, commas become blanks and double quotes apostrophes, with a suffix _2, _3, ... where two names become equal; a note says so.
+**Node names** cannot hold commas or double quotes. In names read from a file, commas become blanks and double quotes apostrophes, with a suffix _2, _3, ... where two names become equal; a note says so. Text files in UTF-8 are read as they are. For **type(edgelist)**, a byte-order mark is skipped, UTF-16 files with a byte-order mark are converted, and a text that is not valid UTF-8 is read as Windows-1252 (which covers Latin-1). Check accented letters in the node names of other imports, and convert a file in another encoding first (see `unicode translate`).
 
 **Self-loops** (ties of a node with itself) in Pajek, GML, UCINET and edge list files are imported, and the network allows self-loops. The diagonal of a file read with `type(matrix)` is ignored, and so is a node listed with itself in a compressed edge list.
 
@@ -142,4 +142,4 @@ This imports networks in compressed edgelist format. As delimiter "," is allowed
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

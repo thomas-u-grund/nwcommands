@@ -96,7 +96,14 @@ The lower 48 states only (the variable **state** of `usmap` holds the postal cod
 . nwwebuse lazega, nwclear
 . nwplot lazega_adv, color(gender) symbol(gender) interactive
 ```
-Pictograms are shown only in the interactive view and in its PNG export, because Stata has no such marker symbols. **Save do-file** and the saved CSV files hold the ordinary shape of each node. A Stata graph has one color per group of `color()`, so colors picked separately for the pictograms of one color group are not kept in it. The choice of pictograms is not stored: it has to be made again in a new page.
+Option `pictograms()` sets them in the command, so that nothing has to be chosen by hand. One name gives every node that pictogram. Several names are given to the groups of nodes in the order of the legend, one name per group: the groups of `symbol()` when there is more than one, otherwise those of `color()`. A full stop (**.**) leaves the nodes of a group with their ordinary shape. Another number of names, or a name that is not in the list above, stops with error 198. The nodes can still be changed on the page.
+
+```stata
+. nwwebuse lazega, nwclear
+. nwplot lazega_adv, color(gender) symbol(gender) interactive pictograms(man woman)
+. nwplot lazega_adv, interactive pictograms(briefcase)
+```
+Pictograms are shown only in the interactive view and in its PNG export, because Stata has no such marker symbols. **Save do-file** and the saved CSV files hold the ordinary shape of each node. A Stata graph has one color per group of `color()`, so colors picked separately for the pictograms of one color group are not kept in it. A choice made on the page is not stored: give `pictograms()` to have it in a new page. **Save do-file** leaves `pictograms()` out, because it writes a command for a Stata graph.
 
 The button **Save do-file** does all of this in one step. It saves **nwedit_plot.do**, which writes the two files (**nwedit_nodes.csv** and **nwedit_edges.csv**) into the working directory and then calls `nwplot` with the network, `if` / `in` and options of the call that wrote the page, completed with `nodexy()`, `importcoords()` and `edgeimport()` (the options of the page itself, of exporting and of saving coordinates are left out). Run it with the same data in memory as when the page was written:
 
@@ -282,4 +289,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page [Ho
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

@@ -168,7 +168,7 @@ These networks are valued networks whose ties are +1 (positive: alliance, co-ope
 - **Load:**
   ```stata
   . nwwebuse manufacturing, nwclear
-  . nwset sender receiver, eventtime(t) name(mail)
+  . nwset sender receiver, directed eventtime(t) name(mail)
   ```
 
 ## Networks that are not social
