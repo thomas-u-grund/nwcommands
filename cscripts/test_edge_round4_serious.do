@@ -229,4 +229,29 @@ set obs 3
 gen mine = _n
 nwimport "`base'.csv", type(edgelist, time directed)
 
+* the network name comes from the file name, whatever separators the path holds (Windows paths hold "\" and "/"; on
+* macOS and Linux a backslash can be part of a file name, which stands in for such a path here)
+nwclear
+local sl = char(92)
+foreach form in "plain" "double" "back" "mixed" {
+	local d "`c(tmpdir)'"
+	if "`form'" == "plain" local f "`d'/r4a-net"
+	if "`form'" == "double" local f "`d'//r4b-net"
+	if "`c(os)'" != "Windows" {
+		if "`form'" == "back" local f "`d'/dir`sl'r4c-net"
+		if "`form'" == "mixed" local f "`d'//x`sl'y`sl'r4d-net"
+	}
+	else {
+		if "`form'" == "back" local f = subinstr("`d'/r4c-net", "/", "`sl'", .)
+		if "`form'" == "mixed" local f = subinstr("`d'", "/", "`sl'", .) + "//r4d-net"
+	}
+	local want = cond("`form'" == "plain", "r4a_net", cond("`form'" == "double", "r4b_net", cond("`form'" == "back", "r4c_net", "r4d_net")))
+	nwclear
+	mata: __w(st_local("f") + ".net", "*Vertices 2|*Edges|1 2|", "")
+	nwimport "`f'.net", type(pajek)
+	nwds
+	assert "`r(netlist)'`r(nets)'" == "`want'" | strpos("`r(netlist)' `r(nets)'", "`want'") > 0
+	nwname `want'
+}
+
 display "PASS test_edge_round4_serious"
