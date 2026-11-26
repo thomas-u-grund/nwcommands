@@ -48,6 +48,9 @@ program nwcoreperiphery, rclass
 			}
 		}
 		_opts_oneof "binary valued" "measure" "`netmeasure'" 6556
+		_nwsyntax `netname_temp'
+		mata: st_local("__neg", strofreal(sum(`netobj'->edgelist()[., 3] :< 0) > 0))
+		if `__neg' noi di "{txt}{p 0 0 2}(warning: the network has negative tie values, for which a core-periphery fit is not meaningful){p_end}"
 
 		if "`generate'" == "" {
 			noi di "{err}option {bf:generate()} required."

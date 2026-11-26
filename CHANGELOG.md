@@ -6,6 +6,33 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ## [Unreleased]
 
+### Results that change
+- `nwattime`, `nwlambda`, `nwsimindex`, `nw2project` and `nwneighbor ..., subnet() subreplace` with a target network that
+  exists could compute the result from another network, without a message, or stop and lose the old target (when the
+  target was created before the source). `nwcorrelate, keepexpand` could stop with an error for the same reason.
+- `nwimport, type(pajek)`: a file with tab-separated tie lines was read as a network without ties.
+- `nwspectral` on a network with missing ties returned missing values and no components; missing ties now count as 0.
+- `nwdichotomize ..., generate(name)` with a name in use marked the network of that name as binary.
+- `nwset` from an edge list (`edgelist`, `twomode`, `time()`, `interval()`, `eventtime()`) now stops with error 4 when
+  the data have unsaved changes and hold variables that are not part of the edge list; they were dropped without a
+  message. New option `dropvars` allows it.
+
+### Fixed
+- Pajek and UCINET DL files with a byte-order mark, and DL files with blank lines, are imported.
+- `nwfromedge` warns when identifiers that differ only in blanks at the ends become one node.
+- `nwrecode`, `nwdichotomize`, `nwsimilar` and `nwdissimilar` say under which name a result is stored when the requested
+  name is in use; `nwdichotomize` refuses a name given twice in `generate()`.
+- `nwsummarize, detail` on a two-mode network; `nwplot` with a condition that no node meets; `nwegoplot` after a failed
+  earlier run.
+- Clearer errors: unknown names in `nwgenerate` and `nwreplace` expressions, `nwhierarchy` with missing dissimilarities
+  or one node, `nwgenerate` with a condition that selects no node.
+- Option values are checked: `nwqap type()` and `mode()`, `nwcorrelate permutations()`, `nwhomophily density()`,
+  `nwconstraint` with both `directed` and `undirected`. Notes for a negative `alpha()` of `nwkatz`, negative `size()` in
+  `nwplot` and negative tie values in `nwspectral` and `nwcoreperiphery`.
+- `nwexport`: no stray quotes in the message; an ending given in `fname()` is not added twice.
+- Help: the event data example declares the network as directed; sort order after network commands; encoding of
+  imported files.
+
 ### Added
 - `nwplot, interactive pictograms(names)`: the pictograms of the interactive view can be set in the command, one for all
   nodes or one per group of `symbol()` or `color()`.

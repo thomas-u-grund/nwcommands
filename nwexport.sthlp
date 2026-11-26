@@ -50,7 +50,8 @@
 Exports a network to 1) Pajek .NET, 2) Ucinet .DL, 3) GML or 4) plain-text edge list file format. Only exports one network and no node level
 attributes. By default, the
 new network file is saved in the working directory. When no {opt fname} is specified, the program calls the new file {it:netname.dl} (Ucinet),
-{it:netname.net} (Pajek), {it:netname.gml} (GML) or {it:netname.txt} (edge list).
+{it:netname.net} (Pajek), {it:netname.gml} (GML) or {it:netname.txt} (edge list). The ending of the format is added to
+{opt fname()}; when it is given already, it is not added twice.
 
 
 {title:Network types}

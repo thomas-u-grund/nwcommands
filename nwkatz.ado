@@ -138,6 +138,9 @@ program nwkatz
 		mata: mata drop `__nwkatz_M'
 	}
 	else {
+		if `alpha' < 0 & `alpha' != -999999 {
+			di "{txt}{p 0 0 2}(note: with a negative alpha() the weights change sign with every step of distance, and the scores can be negative){p_end}"
+		}
 		if `alpha' == -999999 {
 			local alpha = 1
 		}

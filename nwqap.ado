@@ -17,6 +17,17 @@ syntax [anything (name=formula)] [, detail type(string) typeoptions(string) mode
 		local type = "logit"
 	}
 	
+	capture unabcmd `type'
+	if _rc {
+		di "{err}{p 0 0 2}type(): {bf:`type'} is not a Stata command; give an estimation command such as logit or regress.{p_end}"
+		exit 198
+	}
+	foreach __nwq_m of local mode {
+		if !inlist("`__nwq_m'", "same", "dist", "absdist", "distinv", "absdistinv", "sender", "receiver") {
+			di "{err}{p 0 0 2}mode(): {bf:`__nwq_m'} is not allowed; choose from same, dist, absdist, distinv, absdistinv, sender and receiver.{p_end}"
+			exit 198
+		}
+	}
 	if `permutations' < 1 {
 		di "{err}Option {bf:permutations()} must be 1 or more."
 		exit 198

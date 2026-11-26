@@ -139,7 +139,12 @@ program nwreplace, rclass
 		local cmd `"`newcmd' = (`newnetexp')`subset'"'
 	}
 	
-	mata: `cmd'
+	capture noisily mata: `cmd'
+	if _rc {
+		local __nwr_rc = _rc
+		if `__nwr_rc' == 3499 di "{err}{p 0 0 2}A name in the expression is neither a network nor something Mata knows (see the message above). {help nwds} lists the networks.{p_end}"
+		exit `__nwr_rc'
+	}
 	mata: `netobj'->invalidate_sparse()
 
 	_nwsyntax `netname'

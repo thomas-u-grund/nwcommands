@@ -93,7 +93,8 @@ data set holds what the file gives: the node names ({cmd:_nwnode}) of an edge li
 
 {pstd}
 {bf:Node names} cannot hold commas or double quotes. In names read from a file, commas become blanks and double quotes apostrophes, with a suffix
-_2, _3, ... where two names become equal; a note says so.
+_2, _3, ... where two names become equal; a note says so. Files are read as UTF-8; a file in another encoding (for example
+Latin-1) imports with wrong accented letters in the names, so convert it first (see {help unicode translate}).
 
 {pstd}
 {bf:Self-loops} (ties of a node with itself) in Pajek, GML, UCINET and edge list files are imported, and the network allows self-loops. The diagonal of a
