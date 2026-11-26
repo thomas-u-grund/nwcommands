@@ -36,6 +36,10 @@ outcome of the actors in which the outcomes of the others, weighted by their dis
 `latentnet` (Krivitsky and Handcock 2008; version 2.12.0 is the reference) and is not a replacement for it: `latentnet` is the more mature and the more widely used program. `nwlsm` is not affiliated with or endorsed by the authors of `latentnet`; errors in `nwlsm` are the author's.
 Which model suits which question, latent space, [stochastic block model](../nwsbm/) or [ERGM](../nwergm/), is explained on [Which package do I need?](../which-package/#latent-space-block-model-or-ergm).
 
+**Speed is a good reason to use it.** On three simulated networks of 50 to 200 actors, `nwlsm` was 3.6 to 5.0 times
+as fast as `latentnet` with one thread (`nwlsm` 1.0.6, `latentnet` 2.12.0, one Linux computer). Longer runs can show a
+smaller lead. The [speed page](speed/) has the times and the method.
+
 A latent space is a summary of the network, not a measurement of anything. The positions are identified only up to rotation, reflection and translation, and their dimensions have no meaning of their own. The model is for one network at one time.
 
 ## Key facts
@@ -53,6 +57,7 @@ A latent space is a summary of the network, not a measurement of anything. The p
 | Agreement with latentnet | posterior means of the coefficients, log likelihoods, distance matrices and goodness-of-fit statistics agree with `latentnet` 2.12.0 within Monte Carlo error on the test networks (Sampson's monks, random networks, planted clusters, valued networks) |
 | Recovery | on simulated networks with planted positions and coefficients, the coefficients and the distances are recovered; for the influence model, 95% posterior intervals of the influence effect covered the true value in 90 to 100 percent of the replications in three simulation scenarios |
 | Engine | a compiled plugin for the sampler; there is no slower fallback |
+| Speed | See [Speed compared with latentnet](speed/) |
 | Version | 1.0.6 (22 November 2026) |
 | License | GNU General Public License, version 3 |
 

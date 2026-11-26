@@ -60,8 +60,8 @@ The manual (PDF) gives the validation in detail.
 ## Speed
 
 `nwsaom` runs its simulations in a compiled, multithreaded plugin and evaluates the change statistics of an
-actor in batches. In our benchmark on a single thread, `nwsaom` was faster than RSiena in all 28 models
-(median 2.1 times, 1.5 to 9.0; version 1.1.1). The tables, the cases where it is not faster and the
+actor in batches. In our benchmark on a single thread, `nwsaom` was faster than RSiena in all 27 models
+(median 3.9 times, 2.0 to 14.3; version 1.9.2). The tables, the cases where it is not faster and the
 method are on the page [Speed compared with RSiena](../speed/).
 
 ## Translation table

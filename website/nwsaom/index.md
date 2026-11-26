@@ -40,9 +40,9 @@ implementation and the more complete program, and the page [nwsaom and RSiena](r
 errors in `nwsaom` are the author's.
 
 **Speed is a good reason to use it.** On one thread, `nwsaom` was faster than RSiena in all 27 models of our
-benchmark: 3.8 times in the median, from 1.9 to 11.5 times (`nwsaom` 1.5.7, RSiena 1.6.14, one Mac laptop). With
-several cores the lead can be smaller: on 200 actors, ten threads were 2.0 to 4.2 times as fast as RSiena's best
-multi-process setting. The [speed page](speed/) has the times and the method.
+benchmark: 3.9 times in the median, from 2.0 to 14.3 times (`nwsaom` 1.9.2, RSiena 1.6.14, one Linux computer). With
+several cores the lead can be smaller: in an earlier test on 200 actors (`nwsaom` 1.5.7), ten threads were 2.0 to 4.2
+times as fast as RSiena's best multi-process setting. The [speed page](speed/) has the times and the method.
 
 ## Key facts
 
@@ -56,7 +56,7 @@ multi-process setting. The [speed page](speed/) has the times and the method.
 | Engine | a compiled, multithreaded plugin for macOS, Linux and Windows |
 | Postestimation | goodness of fit, score tests, time-heterogeneity test (with plot), convergence ratios, relative importance, simulation; plots of the time test and of `nwsaom meta` from version 1.9.0 |
 | Dialog boxes | `db nwsaom` (every option and effect), `db nwsaom_multinet`, `db nwsaom_bayes`, `db nwsaom_meta`, `db nwsaom_describe`, `db nwsaom_estat` (from version 1.0.3) |
-| Speed | On one thread faster than RSiena in all 27 benchmark models of the article (median 3.8 times); see [Speed compared with RSiena](speed/) |
+| Speed | On one thread faster than RSiena in all 27 benchmark models (median 3.9 times, version 1.9.2); see [Speed compared with RSiena](speed/) |
 | Version | 1.9.2 (22 November 2026) |
 | License | GNU General Public License, version 3 |
 

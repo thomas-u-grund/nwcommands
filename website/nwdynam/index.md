@@ -39,10 +39,11 @@ the author's. For how a DyNAM differs from the other longitudinal models of the 
 [Intro to Longitudinal Network Models](../tutorials/19-intro-longitudinal-models/); the sister package for
 the simpler relational event model is [nwrem](../nwrem/).
 
-**Speed is a good reason to use it.** `nwdynam` was faster than goldfish in all 16 cases of our benchmark of choice
-and rate models (simulated logs of 200 to 20,000 events): 7 to 119 times as fast as goldfish's faster engine, with
-estimates that agree (`nwdynam` 1.8.0, goldfish 1.6.12, one Linux server). Coordination models were not compared.
-The [speed page](speed/) has the times and the method.
+**Speed is a good reason to use it.** `nwdynam` was faster than goldfish in all 30 cases of our benchmark of choice
+and rate models (simulated logs of 200 to 20,000 events): 20 to 249 times as fast as goldfish's compiled engine, 114
+in the median, with the same estimates in the 29 cases in which goldfish converged (`nwdynam` 1.11.2, goldfish 1.6.12,
+one Linux computer, one thread). Coordination models were not compared. The [speed page](speed/) has the times and the
+method.
 
 ## Key facts
 
@@ -53,7 +54,7 @@ The [speed page](speed/) has the times and the method.
 | Networks | directed one-mode, undirected one-mode (coordination), two-mode (a narrow set of effects) |
 | Agreement with goldfish | coefficients and log likelihoods compared with goldfish 1.6.12 on its bundled Social Evolution data, on the manufacturing email data of the tutorials and on small hand-built examples |
 | Engine | a compiled plugin for the likelihood, gradient and Hessian of every fit (macOS, Linux, Windows); the optimization runs in Mata |
-| Speed | Faster than goldfish in every timed cell: 7 to 119 times against its `default_c` engine and 12 to 1,637 times against its default engine (choice and rate models, every fit in the compiled plug-in); see [Speed compared with goldfish](speed/) |
+| Speed | Faster than goldfish in all 30 timed cases: 20 to 249 times against its compiled engine `default_c` and 38 to 1,991 times against its default engine (the largest in a case where goldfish did not converge); see [Speed compared with goldfish](speed/) |
 | Version | 1.11.2 (26 November 2026) |
 | License | GNU General Public License, version 3 |
 

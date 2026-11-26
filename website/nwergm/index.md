@@ -38,8 +38,8 @@ to replace `ergm`. R's `ergm` is the reference implementation and the more compl
 [nwergm and R's ergm](rergm/) says exactly what `nwergm` has and what it lacks.
 
 **Speed is a good reason to use it.** In our benchmark of eight ERGMs (30 to 1,000 nodes), `nwergm` was faster
-than R's `ergm` on every model, 2.1 to 4.0 times by the median of seven fits, with the same algorithm and default
-settings (`nwergm` 1.5.2, `ergm` 4.12.0, one Mac laptop). On very small models the gain can be smaller. The
+than R's `ergm` on every model with default settings: 3.3 to 5.6 times, 3.5 in the median (`nwergm` 1.16.1, `ergm`
+4.12.0, one Linux computer, one thread). The two programs do not make the same number of sampling steps. The
 [speed page](speed/) has the times, the method and the cases where `nwergm` is not faster.
 
 ## Key facts
@@ -57,7 +57,7 @@ settings (`nwergm` 1.5.2, `ergm` 4.12.0, one Mac laptop). On very small models t
 | Dialog boxes | `db nwergm` sets every term and option; `db nwergm_simulate` and `db nwergm_estat` cover simulation and postestimation (from version 1.1.1) |
 | Postestimation | goodness of fit (`estat gof`), MCMC diagnostics (`estat mcmcdiag`), plots with `saving()`, `export()` and graph options (from version 1.11.0), simulation from a fit (`nwergm simulate`) |
 | Engine | a compiled plugin for the Monte Carlo sampler (macOS, Linux, Windows) |
-| Speed | Faster than R's `ergm` on all eight of our benchmark models (2.1 to 4.0 times, medians of seven fits, version 1.5.2), with the same algorithm and about the same number of proposals per fit; see [Speed compared with ergm](speed/) |
+| Speed | Faster than R's `ergm` on all eight of our benchmark models (3.3 to 5.6 times, default settings, one thread, version 1.16.1); see [Speed compared with ergm](speed/) |
 | Version | 1.16.1 (24 November 2026) |
 | License | GNU General Public License, version 3 |
 

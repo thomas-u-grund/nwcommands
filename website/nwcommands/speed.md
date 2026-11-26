@@ -2,108 +2,96 @@
 title: "Speed compared with R"
 parent: "Packages and reference"
 nav_order: 3
-description: "Run times of nwergm, nwsaom, nwdynam and nwrem against ergm, RSiena, goldfish and relevent on the same data, with the cases where the Stata package is not faster."
+description: "Run times of the Stata model packages against ergm, RSiena, goldfish, latentnet, sbm, blockmodels and relevent, with the cases where R is faster and what the ratios do not show."
 permalink: /nwcommands/speed/
 ---
 
 # Speed compared with R
 {: .no_toc }
 
-This page compares the run time of the four model packages, nwergm, nwsaom, nwdynam and nwrem, with the R
-packages they follow: ergm, RSiena, goldfish and relevent. It says where the Stata packages were faster, where
-they were not, and what we know about the reason. Times depend on the model, the data and the machine. Treat
-the tables as examples, not as promises. Measured on 26 and 27 October 2026 (nwergm: 9 November; nwsaom: 8 and 9 November) with Stata 18 on one laptop (nwdynam and nwrem: 15 and 16 November on a Linux server with Stata 19.5 MP, see their pages); Stata
-17 was not timed for the other packages.
+This page compares the run time of the model packages with the R packages for the same models. It says where the Stata
+packages were faster, where they were not, and what a ratio of times does not show. Times depend on the model, the
+data and the machine. Treat the tables as examples, not as promises.
 
 1. TOC
 {:toc}
 
 ## Summary
 
-None of the four R packages is slow R code. ergm's sampler is C, RSiena's simulation is C++, goldfish has C++
-estimation engines and relevent has compiled code. A difference in time is therefore not a difference between
-compiled and interpreted code. The model packages run their inner loops in a compiled plug-in written in C
-(nwergm, nwsaom, nwdynam and nwrem); Mata, Stata's matrix language, drives the optimizer.
+The table gives the time of the R program divided by the time of the Stata command: above 1 means that Stata was
+faster. A *case* is one model on one data set. All but the `nwrem` row were measured on 26 November 2026 on one Linux
+computer with one thread.
 
-The algorithms are the same as in R, and the estimates agree: the largest difference between the mean estimates
-of the two programs was 0.09 standard errors for nwergm, 0.10 for nwsaom, 0.01 for nwrem and 0.002 for nwdynam
-(standard errors of the R package).
+| Comparison | Cases | Median | Range | Agreement of the results |
+|---|---:|---:|---:|---|
+| [nwergm 1.16.1 and ergm 4.12.0](../../nwergm/speed/), default settings | 8 | 3.5 | 3.3 to 5.6 | within 0.07 standard errors |
+| [nwsaom 1.9.2 and RSiena 1.6.14](../../nwsaom/speed/) | 27 | 3.9 | 2.0 to 14.3 | within 0.09 standard errors |
+| [nwdynam 1.11.2 and goldfish 1.6.12](../../nwdynam/speed/), compiled engine | 30 | 114 | 20 to 249 | same estimates in 29 cases |
+| nwdynam and goldfish, default engine | 30 | 403 | 38 to 1,991 | same estimates in 29 cases |
+| [nwlsm 1.0.6 and latentnet 2.12.0](../../nwlsm/speed/) | 3 | 4.7 | 3.6 to 5.0 | similar effective sample size per draw |
+| [nwsbm 1.1.0 and sbm 1.0.0](../../nwsbm/speed/), reference BLAS | 4 | 3.3 | 2.7 to 4.2 | same partition and ICL |
+| nwsbm and blockmodels 1.2.1, reference BLAS | 4 | 3.2 | 2.8 to 4.2 | same partition and ICL |
+| nwsbm and sbm, R with the MKL library | 1 | **0.8: R faster** | | same partition and ICL |
 
-| Comparison | Faster than the R package | Not faster |
-|---|---|---|
-| nwergm 1.5.2 and ergm 4.12.0 | all 8 models, 2.1 to 4.0 times | none of the eight; the fixed overhead matters on very small models |
-| nwsaom 1.5.7 and RSiena 1.6.14 | all 27 models on one thread, median 3.8 times, 1.9 to 11.5 | none of the 27; with several cores on 200 actors only 2.0 to 4.2 times RSiena's best setting |
-| nwdynam 1.8.0 and goldfish 1.6.12 (Linux, 16 November) | all 16 cells (choice, rate with intercept): 7 to 119 times against goldfish's `default_c` engine, 12 to 1,637 times against its default engine | none; the smallest gain is in the smallest cells (200 events) |
-| nwrem 1.4.0 and relevent 1.2-1 (Linux, 16 November) | all cells where both finished: 22 to 3,560 times with a Hessian in relevent, 16 to 2,208 times without | none; the closest are the recency effects (29 to 257 times with a Hessian) |
+| Earlier measurement (16 November 2026, another run) | Result |
+|---|---|
+| [nwrem 1.4.0 and relevent 1.2-1](../../nwrem/speed/) | all cases that both finished: 22 to 3,560 times with a Hessian in relevent, 16 to 2,208 times without; estimates within 0.01 standard errors |
+
+In the cases in which every fit converged, the medians are about the same (3.8 for nwsaom; 108 and 391 for the two
+engines of goldfish). The largest ratio against goldfish's default engine, 1,991, belongs to a case in which goldfish
+did not converge; without it the largest is 765. `nwalaam` has not been compared.
+
+### What a ratio does not show
+
+- **Not the same work.** The programs do not always do the same amount of work, for example in the number of
+  simulation steps or optimization runs of a fit. On the Lazega network `nwergm` made about 1.16 times as many Monte
+  Carlo proposals as `ergm` (counted with `nwergm` 1.16.0).
+- **One computer, one thread.** Several threads, another computer or other settings can change the ratios.
+- **The library behind R matters.** With Intel's MKL, tried on one network, R's block model packages were faster than
+  `nwsbm`. The R times for that test come from an earlier run of the same R versions.
+- **Parts of a fit can differ.** In an earlier profile, `ergm` was faster at the maximum pseudolikelihood step alone.
+- **Millisecond fits** are close to the resolution of the timer; do not read their ratios as precise.
 
 ### Where the advantage comes from
 
-The reasons are in the design of the packages, and they are the same in outline for the three that have a plug-in.
-
-- **The core is native code.** The simulation (nwsaom), the Markov chain Monte Carlo sampler (nwergm) and the
-  likelihood, gradient and Hessian (nwdynam, nwrem) run in a plug-in written in C. There are no
-  interpreted loops in the part of the program that takes most of the time.
-- **Change statistics are updated, not recomputed.** When a tie is proposed or an actor makes a step, the plug-in
-  works out how the statistics change because of that one step. It does not recompute the statistics of the whole
-  network.
-- **Degree effects are evaluated directly.** Effects that depend on degrees are computed from the stored degree
-  counts and need no pass over the ties.
-- **Sparse data structures.** The networks are stored as lists of ties (and, in nwergm, as a bit matrix), so the
-  work depends on the number of ties and not on the square of the number of actors. The counters are 64-bit, so
-  networks with many ties do not overflow.
-- **Threads.** nwsaom spreads the simulations over threads, and the estimates are identical for any number of
-  threads (the `cores()` option).
-
-These are reasons, not measurements: we did not separate how much each one contributes. The advantage is smaller
-where R can use several processes (RSiena with 5 or 10 R processes on large networks), and in nwrem, which is closest to
-relevent for recency effects (29 to 257 times). The speed page of each package gives the details.
-
-How the numbers were made is at the end of this page and on each package's page. All raw timings, scripts and data are in the
-[bench folder](https://github.com/thomas-u-grund/nwcommands/tree/main/bench) of the repository.
+None of the R packages is slow R code: ergm's and latentnet's samplers are C, RSiena's simulation and the block model
+code of sbm and blockmodels are C++, goldfish has C++ estimation engines and relevent has compiled code. A difference
+in time is therefore not one between compiled and interpreted code. The Stata packages run their inner loops in a
+compiled plug-in written in C, with Mata driving the rest. The plug-ins update the statistics from each single change
+instead of recomputing them, store networks as lists of ties where possible and, in several packages, can use threads.
+These are descriptions of the design, not measurements: how much each point contributes was not separated.
 
 ---
 
 ## The packages one by one
 
-The benchmarks, the reasons for the differences and the cases where a package is not faster are on the speed page
-of each package:
+The tables, the cases and their limits are on the speed page of each package:
 
 - [nwergm and ergm](../../nwergm/speed/)
 - [nwsaom and RSiena](../../nwsaom/speed/)
 - [nwdynam and goldfish](../../nwdynam/speed/)
-- [nwrem and relevent](../../nwrem/speed/)
+- [nwrem and relevent](../../nwrem/speed/) (earlier measurement)
+- [nwlsm and latentnet](../../nwlsm/speed/)
+- [nwsbm, sbm and blockmodels](../../nwsbm/speed/)
 
 ---
 
 ## How we measured
 
-- **Machine.** Apple M5 Pro, macOS, one laptop. The nwergm, nwrem and nwdynam runs (26 and 27 October) had no
-  other R or Stata process running. The one-minute load average before each fit is in the data files: median 2.4
-  over 1,238 fits (3.3 in the nwergm run), which includes the benchmark process itself and one to two cores of
-  other background load. Two fits started above a load of 7.
-- **Machine, nwergm run of 9 November.** The same laptop, with no other Stata or R job running (load average
-  1.8 to 3.4 before the fits).
-- **Machine, nwsaom run of 8 and 9 November.** The same laptop; RSiena ran on 8 November and nwsaom on 9 November,
-  with no other Stata or R job running during a fit (median load average 2.2 and 2.9).
-- **Software.** Stata 18 BE, R 4.6.0. nwcommands core 3.10.0 (3.17.2 for the nwergm and nwsaom runs), nwergm 1.5.2, nwsaom 1.5.7 (nwdynam and nwrem: versions given above) (Stata 17, core 3.25.1, 15 November 2026; relevent timed on 26 and 27 October); ergm 4.12.0, RSiena 1.6.14, relevent 1.2-1,
-  goldfish 1.6.12. All timings are with Stata 18 except those of nwdynam and nwrem, which are with StataNow 19.5 MP on a Linux server (Intel Core i7-12700K, Ubuntu 22.04; nwdynam 1.8.0, nwrem 1.4.0, relevent 1.2-1 and goldfish 1.6.12 timed on the same server). The plug-ins are the released builds.
-- **One fit per process.** Each fit runs in its own Stata or R process after an untimed warm-up fit, so the first
-  call (loading libraries) is not in the time. The timer covers the estimation command (for goldfish, the
-  `estimate()` call including its preprocessing). Loading the data is not timed.
-- **Interleaved, medians.** The programs run in turn, R, Stata, R, Stata, one process at a time, with 7 repeats and
-  a different seed for each repeat in both programs. The tables show medians. A single pair of fits can differ
-  from the median ratio.
-- **Same data, same model, defaults.** Both programs get the same data and the same specification with their default
-  control settings. Neither side is tuned. Convergence is checked in every fit with the package's own
-  criterion; the tables give the number of converged fits where it differs between the programs.
-- **Time limit.** Each fit has a limit of 600 seconds. A fit that reaches it is reported as a time-out, not dropped.
-- **Agreement.** For every comparison we computed the largest difference between the mean estimates of the two
-  programs, in standard errors of the R package. The values are given in each section.
-- **Data.** The nwergm models are the eight of the nwergm article. The nwsaom models use the Glasgow data of
-  RSiena (tiled for larger networks) and generated two-mode and multi-network data. The nwrem and nwdynam data are
-  simulated event logs from the generator scripts in the repository.
-- **Scripts and raw timings.** [github.com/thomas-u-grund/nwcommands/tree/main/bench](https://github.com/thomas-u-grund/nwcommands/tree/main/bench)
-  holds the scripts, the data, one row per fit with the load average, the summaries and a short description of how
-  to repeat each comparison.
+- **Date and machine.** 26 November 2026, one desktop computer: Intel Core i7-12700K (8 performance and 4 efficiency
+  cores), 125 GB of memory, Ubuntu 22.04.
+- **One thread.** Every fit was pinned to one core, and every program was limited to one thread. Stata was
+  StataNow 19.5 MP. Up to three benchmarks ran at once, each on its own physical core.
+- **Versions.** `nwcommands` 3.39.0, `nwergm` 1.16.1, `nwsaom` 1.9.2, `nwdynam` 1.11.2, `nwlsm` 1.0.6, `nwsbm` 1.1.0; R 4.6.0 with its reference BLAS, `ergm` 4.12.0, RSiena 1.6.14, goldfish 1.6.12, `latentnet` 2.12.0, `sbm` 1.0.0, `blockmodels` 1.2.1.
+- **What is timed.** Each fit ran in its own process after an untimed warm-up fit in the same process, which loads
+  the code and the compiled library. The timer covers the estimation call only, not loading the data.
+- **Repeats.** The two programs ran in turn. The tables show medians over up to five fits per case, seven for the ERGMs (fewer for fits over 60 seconds), with different seeds. A fit had a
+  limit of 600 seconds.
+- **Same data and model.** Both programs read the same data and fit the same model with their default control settings.
+- **Scripts and raw timings** of this run are not yet in the public repository.
 
-Last updated 15 November 2026.
+The `nwrem` comparison, its scripts and raw timings, and earlier measurements of the other packages are described on
+the [nwrem speed page](../../nwrem/speed/) and in the
+[bench folder](https://github.com/thomas-u-grund/nwcommands/tree/main/bench) of the repository.
+
+Last updated 26 November 2026.

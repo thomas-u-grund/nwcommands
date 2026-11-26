@@ -74,7 +74,7 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 
 ## Creating, importing and exporting networks
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwset` | + | K | K | D |  | ● | twomode and bipartite declare a two-mode network; valued/unvalued set the flag; the flag is set only here and in the other creating commands |
 | `nw2set` | + | K | K | U |  | ● | declares a two-mode network from a rectangular matrix |
@@ -92,10 +92,11 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nwtomata` | + | K | K | D |  | ● | square matrix; missing cells between nodes of the same mode in a two-mode network |
 | `nwtomatafast` | + | K | K | D |  | ● | pointer to the matrix |
 | `nwtostata` | - | - | - | - |  | ● | copies a Mata matrix into variables; it reads no network |
+{: .compact-table .note-table }
 
 ## Changing and deriving networks
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwdropnodes` | + | K | K | D |  | ● | keeps the flag, the modes and the level labels (as does nwkeepnodes) |
 | `nwkeepnodes` | + | K | K | D |  | ● | keeps the flag, the modes and the level labels |
@@ -116,10 +117,11 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nwpreserve` | + | K | K | D |  |  | saves the state of all networks |
 | `nwrestore` | + | K | K | D |  |  | restores the state |
 | `nwattime` | + | K | - | D |  | ● | temporal networks: the slice keeps the tie values and the direction; a temporal network cannot be two-mode (not yet supported as a source) |
+{: .compact-table .note-table }
 
 ## Describing a network and its nodes
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwsummarize` | + | K | N | D |  | ● | shows both levels and their labels; density over the pairs between the modes |
 | `nwname` | + | K | K | D |  |  | reads and sets properties; new2mode(true) is checked (error 459) |
@@ -135,10 +137,11 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nwneighbor` | + | N | G | D |  | ● | neighbours of a node, mode(incoming/outgoing/either) |
 | `nwaltergen` | + | I | G | D | ● | ○ | node attribute from the alters (out-neighbours) |
 | `nwcontext` | + | V | G | D |  | ● | statistic of the neighbours attribute; mode(); the tie values weight the neighbours by default, noweight gives the presence-only result |
+{: .compact-table .note-table }
 
 ## Paths, reachability and flows
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwgeodesic` | + | V | G | D | ● | ○ | valued: step cost 1/w^alpha; alpha(-1) reads values as lengths; a directed network is used as directed, sym symmetrizes it first; Valued network above 100 nodes: plug-in only (no Mata version). |
 | `nwpath` | + | V | G | D |  | ● | least cost path; a directed network is used as directed, sym symmetrizes it first; r(path_cost) |
@@ -146,10 +149,11 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nwmaxflow` | + | O | G | D |  | ● | weighted: values are capacities |
 | `nwrandomwalk` | + | V | O | D |  | ● | hitting times; a directed network: the walk follows the direction of the ties (step probability w_ij / out-strength), a node from which the target is not reached with certainty has a missing hitting time; sym gives the walk on the symmetrized network |
 | `nwmatching` | + | V | Q | U | ● | ○ | maximum matching between the modes; valued: largest total value |
+{: .compact-table .note-table }
 
 ## Centrality, brokerage and structural holes
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwdegree` | + | V | N | D |  | ● | valued: strength; alpha(); in- and out-degree for directed; two-mode form (ties / size of the other mode, raw) by default, onemode forces the one-mode degree |
 | `nw2degree` | + | V | Q | U |  | ● | alias of nwdegree on a two-mode network: degree / size of the other mode; raw gives the count |
@@ -164,10 +168,11 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nwburt` | + | V | G | D | ● | ○ | values are investments; no binary mode; not symmetrized; Valued network: plug-in only (no Mata version). |
 | `nwconstraint` | + | V | G | D | ● | ○ | values are investments; not symmetrized |
 | `nwutility` | + | I | G | S | ● | ○ | connections model |
+{: .compact-table .note-table }
 
 ## Cohesion, clustering, components and communities
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwcomponents` | + | N | G | D |  | ● | a directed network: strongly connected components (weak gives the weakly connected components) |
 | `nwbridges` | + | N | G | D |  | ● | type(): local, global, arcs, edges |
@@ -189,10 +194,11 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nwcommunity` | + | O | N | P | ● | ○ | two-mode: Barber modularity; onemode for Newman; algorithm(dirtlpa) (Beckett 2016, two-mode, plug-in only) |
 | `nwmodularity` | + | O | N | P |  | ● | two-mode: Barber modularity; onemode for Newman |
 | `nwspectral` | + | O | O | P |  | ● | Fiedler vector, algebraic connectivity; a directed network with unreciprocated ties is refused (error 198) unless sym |
+{: .compact-table .note-table }
 
 ## Positions, similarity and equivalence
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwsimilar` | + | O | N | D | ● | ○ | two-mode: nodes compared within their own mode, other mode missing |
 | `nwdissimilar` | + | O | N | D | ● | ○ | two-mode: nodes compared within their own mode, other mode missing |
@@ -203,18 +209,20 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nwconcor` | + | O | R | D |  | ● | CONCOR blockmodel |
 | `nwcoreperiphery` | + | O | R | P |  | ● | discrete core-periphery model; a directed network with unreciprocated ties is refused (error 198) unless sym |
 | `nwfactions` | + | O | R | P | ● | ○ | a directed network with unreciprocated ties is refused (error 198) unless sym |
+{: .compact-table .note-table }
 
 ## Null models and statistical helpers
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwcug` | + | I | N | D | only | ● | conditional uniform graph draws; condition(degrees) keeps every degree of a one-mode or two-mode network; two-mode also mode1degree, mode2degree (the plug-in only for the degree conditions and the two-mode form; size, density and census are Mata) |
 | `nwqap` | + | O | R | D |  | ● | QAP regression over the dyads |
 | `nwturnover` | + | N | N | D |  | ● | compares two networks of the same nodes; on a two-mode network only the ties between the modes count |
+{: .compact-table .note-table }
 
 ## Random and structured generators
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwrandom` | + | I | - | D | only | ● | always one-mode; undirected option; degree(), or outdegree() and indegree(), give a random network with given degrees (plug-in only for these) |
 | `nwring` | + | I | - | D |  | ● | always one-mode |
@@ -227,20 +235,22 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nwhomophily` | + | I | - | D |  | ● | always one-mode |
 | `nwexpand` | + | I | - | - |  | ● | network from an attribute; always one-mode; the direction is not taken from a network |
 | `nwdyadprob` | + | I | - | D |  | ● | always one-mode |
+{: .compact-table .note-table }
 
 ## Visualization
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwplot` | + | V | N | D | ● | ○ | layout(bipartite) puts the two modes in two rows; values set the widths and, in the layouts kk and frucht, pull strongly tied nodes together (binary); signs the colour and dash (nosign), the modes get symbols; legend |
 | `nwplotmatrix` | + | K | N | D |  |  | colour legend of the value classes (legend(off) switches off); a two-mode network is sorted by mode with a line between the modes |
 | `nwmovie` | + | V | - | D | ● | ○ | temporal networks; widths, layouts, sign colours and binary/nosign as nwplot; not two-mode |
 | `nwmoviexy` | + | V | - | D | ● | ○ | alias of nwmovie |
 | `animate` | - | - | - | - |  |  | help page |
+{: .compact-table .note-table }
 
 ## Bookkeeping, utilities and help pages
 
-| Command | Binary | Valued | Two-mode | Directed | C plug-in | Mata | Note |
+| Command | Binary | Valued | Two‑mode | Directed | C plug‑in | Mata | Note |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|---|
 | `nwcurrent` | - | - | - | - |  | ● | sets the current network |
 | `nwdrop` | - | - | - | - |  | ● | removes networks |
@@ -270,4 +280,5 @@ If a command is slow, update to the latest release (`nwinstall`) so that the plu
 | `nw_resetrc` | - | - | - | - |  |  | internal |
 | `schemeinfo` | - | - | - | - |  |  | internal |
 | `unw_defs` | - | - | - | - |  |  | internal |
+{: .compact-table .note-table }
 
