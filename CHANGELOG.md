@@ -19,6 +19,9 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ### Fixed
 - Pajek and UCINET DL files with a byte-order mark, and DL files with blank lines, are imported.
+- `nwimport, type(edgelist)`: files with a byte-order mark, in UTF-16 or in Windows-1252 gave a wrong network or
+  changed node names without any message (the header read as a tie, a single nonsense node, accented letters lost).
+  They are now converted to UTF-8 before they are read.
 - `nwimport` of matrix, edge list and compressed text files: Stata could take a short file, mostly one with Windows
   line ends, for UTF-16 text, and the import stopped. Such files are now read.
 - `nwimport` without `name()`: on Windows, a path with both kinds of separator gave a network name that included

@@ -1242,6 +1242,15 @@ program _nwimport_edgelist
 	local pot_delimiters_length : word count `pot_delimiters'
 	local i = 1
 
+	// insheet takes the bytes of a file as they are: a file with a byte-order mark, in UTF-16 or in an 8-bit
+	// encoding is read from a copy in plain UTF-8
+	if strpos(lower(`"`anything'"'), ".xls") == 0 {
+		tempfile __nwi_u8
+		gettoken __nwi_file : anything
+		mata: st_local("__nwi_conv", strofreal(nwimp_utf8copy(st_local("__nwi_file"), st_local("__nwi_u8"))))
+		if `__nwi_conv' local anything `""`__nwi_u8'""'
+	}
+
 	// Excel file detected
 	if (strpos(lower(`"`anything'"'), ".xls") != 0 ){
 		local excel = 1
@@ -1953,6 +1962,7 @@ capture mata: mata drop nwimp_lines()
 capture mata: mata drop nwimp_pajekline()
 capture mata: mata drop nwimp_notabs()
 capture mata: mata drop nwimp_textenc()
+capture mata: mata drop nwimp_utf8copy()
 capture mata: mata drop nwimp_squareblankdiag()
 capture mata: mata drop nwimp_dlrename()
 capture mata: mata drop nwimp_dljoin()
@@ -2195,6 +2205,54 @@ string scalar nwimp_textenc(string scalar fname)
 	fclose(fh)
 	if (ustrinvalidcnt(carry)) utf8 = 0
 	return(utf8 ? "utf-8" : "windows-1252")
+}
+
+// writes a copy of a text file in UTF-8 without byte-order mark and returns 1; returns 0, and writes nothing, if the
+// file is such a text already or cannot be read here. Without a byte-order mark, text that is not valid UTF-8 is taken
+// to be in Windows-1252
+real scalar nwimp_utf8copy(string scalar fname, string scalar to)
+{
+	real scalar fi, fo, bom, k
+	string scalar fn, head, all, enc, bom8, le, be
+	string matrix piece
+
+	fn = fname
+	if (!fileexists(fn) & fileexists(fn + ".raw")) fn = fn + ".raw"
+	fi = _fopen(fn, "r")
+	if (fi < 0) return(0)
+	piece = fread(fi, 3)
+	head = (piece == J(0, 0, "") ? "" : piece)
+	bom8 = char((239, 187, 191))
+	le = char((255, 254))
+	be = char((254, 255))
+	if (substr(head, 1, 2) == le | substr(head, 1, 2) == be) {
+		fseek(fi, 2, -1)
+		all = ""
+		while ((piece = fread(fi, 1048576)) != J(0, 0, "")) all = all + piece
+		fclose(fi)
+		fo = fopen(to, "rw")
+		all = ustrfrom(all, substr(head, 1, 2) == le ? "UTF-16LE" : "UTF-16BE", 1)
+		if (strlen(all)) fwrite(fo, all)
+		fclose(fo)
+		return(1)
+	}
+	fclose(fi)
+	bom = (head == bom8)
+	// empty for a file with zero bytes (UTF-16 without byte-order mark, or no text): it is left as it is
+	enc = nwimp_textenc(fn)
+	if (enc == "" | (enc == "utf-8" & !bom)) return(0)
+	fi = fopen(fn, "r")
+	fo = fopen(to, "rw")
+	if (bom) fseek(fi, 3, -1)
+	k = (!bom & enc == "windows-1252")
+	while ((piece = fread(fi, 65536)) != J(0, 0, "")) {
+		// one byte is one character in Windows-1252, so each chunk can be converted by itself
+		if (k) fwrite(fo, ustrfrom(piece, "windows-1252", 1))
+		else fwrite(fo, piece)
+	}
+	fclose(fi)
+	fclose(fo)
+	return(1)
 }
 
 // a copy of a UCINET DL file for the readers: tabs replaced by blanks, no byte-order mark, no blank lines
