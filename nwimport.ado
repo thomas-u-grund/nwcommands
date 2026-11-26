@@ -911,7 +911,24 @@ program _nwimport_text
 	else if `"`d'"' == "comma" local dopt `"delimiters(",")"'
 	else if `"`d'"' == "blank" | `"`d'"' == " " local dopt `"delimiters(" ", collapse)"'
 	else local dopt `"delimiters(`"`d'"')"'
-	import delimited using `anything', `dopt' varnames(nonames) stringcols(_all) clear
+	_nwimport_delimited using `anything', `dopt' varnames(nonames) stringcols(_all) clear
+end
+
+
+capture program drop _nwimport_delimited
+program _nwimport_delimited
+	// import delimited, which guesses the encoding. For short files it can take plain 8-bit text (often one with
+	// Windows line ends) for UTF-16 and read nonsense. UTF-16 text holds zero bytes: without any, the file is
+	// read again with the encoding it can have.
+	import delimited `0'
+	local enc = upper("`r(encoding)'")
+	if !inlist(substr("`enc'", 1, 5), "UTF-1", "UTF-3") exit
+	gettoken file rest : 0, parse(" ,")
+	if `"`file'"' == "using" gettoken file : rest, parse(" ,")
+	mata: st_local("enc", nwimp_textenc(st_local("file")))
+	if "`enc'" != "" {
+		import delimited `0' encoding("`enc'")
+	}
 end
 
 
@@ -1414,7 +1431,7 @@ program _nwimport_compressed
 	clear
 	
 	local anyting "compressed_example.txt"
-	import delimited `anything', delimiter(`delimiter') varnames(noname) clear
+	_nwimport_delimited `anything', delimiter(`delimiter') varnames(noname) clear
 	rename v1 ego
 	capture replace v2 = ego if v2 == ""
 	capture replace v2 = ego if v2 == .
@@ -2147,6 +2164,39 @@ string rowvector nwimp_dlrect(string scalar fn, real scalar nr, real scalar nc)
 }
 
 // a copy of a UCINET DL file for the readers: tabs replaced by blanks, no byte-order mark, no blank lines
+// the encoding of a text file without zero bytes: "utf-8" if all of it is valid UTF-8, else "windows-1252"; empty if
+// the file holds zero bytes (as UTF-16 text does) or cannot be read here
+string scalar nwimp_textenc(string scalar fname)
+{
+	real scalar fh, k, utf8
+	string scalar fn, buf, carry
+	string matrix piece
+
+	fn = fname
+	if (!fileexists(fn) & fileexists(fn + ".csv")) fn = fn + ".csv"
+	fh = _fopen(fn, "r")
+	if (fh < 0) return("")
+	utf8 = 1
+	carry = ""
+	while (1) {
+		piece = fread(fh, 65536)
+		if (piece == J(0, 0, "")) break
+		if (strpos(piece, char(0))) {
+			fclose(fh)
+			return("")
+		}
+		buf = carry + piece
+		// a character of several bytes is not cut apart: the last one waits for the next chunk
+		k = strlen(buf)
+		while (k > 1 & k > strlen(buf) - 3 & ascii(substr(buf, k, 1))[1] >= 128 & ascii(substr(buf, k, 1))[1] < 192) k--
+		if (ustrinvalidcnt(substr(buf, 1, k - 1))) utf8 = 0
+		carry = substr(buf, k, .)
+	}
+	fclose(fh)
+	if (ustrinvalidcnt(carry)) utf8 = 0
+	return(utf8 ? "utf-8" : "windows-1252")
+}
+
 void nwimp_notabs(string scalar from, string scalar to)
 {
 	real scalar fi, fo, k, last, first

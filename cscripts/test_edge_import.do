@@ -441,6 +441,21 @@ ei_net c3 3 true "(0,1,0 \ 0,0,1 \ 0,0,0)" "Smith John,bob,cid"
 ei_file c4.csv `""Smith, John",Doe"' "0,1" "1,0"
 nwimport "`dir'/c4.csv", type(matrix) nwclear
 ei_net c4 2 false "(0,1 \ 1,0)" "Smith John,Doe"
+* short files with Windows line ends: Stata can take them for UTF-16 (the bytes are written here, so that the test
+* is the same on every system; char(246) is the o with two dots in an 8-bit encoding, which is not valid UTF-8)
+foreach kind in ascii latin1 {
+	local file "`dir'/c5_`kind'.csv"
+	capture erase "`file'"
+	mata: __nl = char(13) + char(10)
+	mata: __o = st_local("kind") == "ascii" ? "o" : char(246)
+	mata: __fh = fopen(st_local("file"), "w")
+	mata: fwrite(__fh, char(34) + "Sm" + __o + "th, John" + char(34) + ",Doe" + __nl + "0,1" + __nl + "1,0" + __nl)
+	mata: fclose(__fh)
+	mata: mata drop __nl __o __fh
+	local want = cond("`kind'" == "ascii", "Smoth John,Doe", "Sm" + uchar(246) + "th John,Doe")
+	nwimport "`file'", type(matrix) nwclear
+	ei_net c5_`kind' 2 false "(0,1 \ 1,0)" "`want'"
+}
 di "PASS 7 commas"
 
 * ---- Pajek *Matrix
