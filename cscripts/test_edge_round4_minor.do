@@ -78,4 +78,37 @@ foreach p in "pajek net" "gml gml" "ucinet dl" "edgelist txt" {
 	nwexport a, type(`type') fname("`f'") replace
 }
 
+* nwdichotomize: generate() and prefix() together give both sets of results, all binary; names in use are left alone
+nwclear
+mata: __V = (0,5,1\5,0,0\1,0,0)
+nwset, mat(__V) name(n1)
+nwset, mat(__V) name(taken)
+nwset, mat(__V) name(p_n1)
+nwdichotomize n1, threshold(2) generate(fa) prefix(p_)
+qui nwset
+local nets `r(nets)'
+assert `: word count `nets'' == 5
+foreach x in n1 taken p_n1 {
+	qui nwname `x'
+	assert "`r(valued)'" != "false"
+}
+local new : list nets - __none
+local new : subinstr local new "n1 taken p_n1" ""
+foreach x of local new {
+	qui nwname `x'
+	assert "`r(valued)'" == "false"
+}
+* two sources and one name: the second source is recoded in place
+nwclear
+nwset, mat(__V) name(n1)
+nwset, mat(__V) name(n2)
+nwdichotomize n1 n2, threshold(2) generate(fa)
+foreach x in fa n2 {
+	qui nwname `x'
+	assert "`r(valued)'" == "false"
+}
+qui nwname n1
+assert "`r(valued)'" != "false"
+mata: mata drop __V
+
 display "PASS test_edge_round4_minor"
