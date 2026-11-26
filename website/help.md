@@ -7,7 +7,7 @@ has_children: true
 has_toc: false
 ---
 
-# Get help and community
+# Help and about
 {: .no_toc }
 
 Also here: [citing and licenses](/citing/), [literature](/literature/), [links](/links/) and [about](/about/).
@@ -37,9 +37,12 @@ New releases and workshops are announced on the **nwcommands mailing list** (a G
 
 ## Before you ask
 
-1. Look in the [tutorials](../nwcommands/install/) and the help file (`help <command>` in Stata).
+1. Look in the [tutorials](../tutorials/) and the help file (`help <command>` in Stata).
 2. If you are coming from R, see the pages that compare the packages with RSiena ([nwsaom](../nwsaom/rsiena/)), ergm ([nwergm](../nwergm/rergm/)), goldfish ([nwdynam](../nwdynam/r-goldfish/)) and relevent ([nwrem](../nwrem/r-relevent/)).
 3. Update to the latest release (see [Install](../nwcommands/install/)); the problem may be fixed.
+
+If a compiled plugin or a Mata library does not load, see
+[building them on your own computer](/book/troubleshooting/).
 
 ## How to ask so that we can help
 

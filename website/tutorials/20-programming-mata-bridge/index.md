@@ -442,3 +442,6 @@ see `help nwprogramming`), which needs memory in proportion to the number of tie
 | `nwload`, `nwsync` | network and variables | the network as Stata variables, and back |
 
 For the commands of the network itself see `help nwprogramming` and `help nwinternals`.
+
+See also [Programming with networks in Mata](/book/programming/) in the book companion: writing a network command, with
+a reference of the `nwapi` functions.

@@ -1,7 +1,7 @@
 ---
 title: "Course outlines"
 parent: "Teaching and workshops"
-nav_order: 1
+nav_order: 2
 description: "Three course outlines for Network Analysis with Stata: a 12-week course on descriptive and inferential network analysis, a 12-week course on statistical models, and a 5-day workshop."
 permalink: /book/teaching/outlines/
 ---

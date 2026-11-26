@@ -43,6 +43,7 @@ PowerPoint files with speaker notes (and PDFs); instructors are free to use, ada
 - [Tutorials](/tutorials/): step-by-step introductions to the core commands, with data and do-files.
 - [Installation and setup](/tutorials/01-installation-setup/): what students need on their computers before the first class.
 - [Data sets](/datasets/): the example data and how to load them with `nwwebuse`.
-- The manuals of the model packages: [nwsaom](/nwsaom/), [nwergm](/nwergm/), [nwrem](/nwrem/manual/) and [nwdynam](/nwdynam/manual/).
+- The manuals of the model packages: [nwergm](/nwergm/manual/), [nwsaom](/nwsaom/manual/), [nwdynam](/nwdynam/manual/), [nwrem](/nwrem/manual/),
+  [nwalaam](/nwalaam/manual/), [nwlsm](/nwlsm/manual/) and [nwsbm](/nwsbm/manual/).
 
 The software is free (GNU General Public License, version 3), and Stata/BE, the smallest edition, runs every example.

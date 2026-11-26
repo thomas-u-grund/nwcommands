@@ -9,7 +9,9 @@ permalink: /book/programming/
 # Programming with networks in Mata
 {: .no_toc }
 
-This page goes with the book *Network Analysis with Stata*.
+This page goes with the book *Network Analysis with Stata*. For step-by-step introductions with output, see
+[Tutorial 20: Programming with Mata](/tutorials/20-programming-mata-bridge/) and
+[Tutorial 21: Reading networks in Mata with the nwapi functions](/tutorials/21-programming-mata-internals/).
 
 Every command in the book is an ordinary Stata `.ado` program. This page is for a reader who wants to write a new network command, for example to compute a measure the package does not have, or to read networks in a Mata program of their own. A program gets at a network in one of two supported ways: it copies the network to a Mata matrix with `nwtomata` (and back with `nwset, mat()`), or, with nwcommands 3.24 or later, it reads the network with the Mata functions `nwapi_*`. How the package stores a network internally (the Mata classes behind it, the pointer `netobj`) is not part of the interface and can change in any release; do not write code that depends on it.
 
