@@ -7,9 +7,12 @@ permalink: /
 
 <h1><img src="{{ '/assets/images/nwcommands-logo.png' | relative_url }}" alt="nwcommands" width="480"></h1>
 
-Network analysis in Stata: import, generate, describe, analyze and plot networks, and fit statistical
+Fast network analysis in Stata: import, generate, describe, analyze and plot networks, and fit statistical
 network models, from the Stata command line or from dialog boxes.
 {: .fs-6 .fw-300 }
+
+[How fast? The model packages compared with R](nwcommands/speed/)
+{: .fs-3 }
 
 [Start here](start/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [Tutorials](tutorials/){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
@@ -45,18 +48,22 @@ network models, from the Stata command line or from dialog boxes.
   <a class="pkg-card" href="{{ '/nwergm/' | relative_url }}">
     <span class="pkg-card-logo"><img src="{{ '/assets/images/packages/nwergm.png' | relative_url }}" alt="nwergm" width="140" height="50"></span>
     <span class="pkg-card-text">Exponential random graph models (ERGM)</span>
+    <span class="pkg-card-speed">3.5&times; as fast as ergm*</span>
   </a>
   <a class="pkg-card" href="{{ '/nwsaom/' | relative_url }}">
     <span class="pkg-card-logo"><img src="{{ '/assets/images/packages/nwsaom.png' | relative_url }}" alt="nwsaom" width="167" height="50"></span>
     <span class="pkg-card-text">Stochastic actor-oriented models (SAOM)</span>
+    <span class="pkg-card-speed">3.9&times; as fast as RSiena*</span>
   </a>
   <a class="pkg-card" href="{{ '/nwdynam/' | relative_url }}">
     <span class="pkg-card-logo"><img src="{{ '/assets/images/packages/nwdynam.png' | relative_url }}" alt="nwdynam" width="203" height="50"></span>
     <span class="pkg-card-text">Dynamic network actor models (DyNAM)</span>
+    <span class="pkg-card-speed">114&times; as fast as goldfish*</span>
   </a>
   <a class="pkg-card" href="{{ '/nwrem/' | relative_url }}">
     <span class="pkg-card-logo"><img src="{{ '/assets/images/packages/nwrem.png' | relative_url }}" alt="nwrem" width="129" height="50"></span>
     <span class="pkg-card-text">Relational event models (REM)</span>
+    <span class="pkg-card-speed">At least 16&times; as fast as relevent&dagger;</span>
   </a>
   <a class="pkg-card" href="{{ '/nwalaam/' | relative_url }}">
     <span class="pkg-card-logo"><img src="{{ '/assets/images/packages/nwalaam.png' | relative_url }}" alt="nwalaam" width="168" height="50"></span>
@@ -65,12 +72,20 @@ network models, from the Stata command line or from dialog boxes.
   <a class="pkg-card" href="{{ '/nwlsm/' | relative_url }}">
     <span class="pkg-card-logo"><img src="{{ '/assets/images/packages/nwlsm.png' | relative_url }}" alt="nwlsm" width="127" height="50"></span>
     <span class="pkg-card-text">Latent space models</span>
+    <span class="pkg-card-speed">4.7&times; as fast as latentnet*</span>
   </a>
   <a class="pkg-card" href="{{ '/nwsbm/' | relative_url }}">
     <span class="pkg-card-logo"><img src="{{ '/assets/images/packages/nwsbm.png' | relative_url }}" alt="nwsbm" width="140" height="50"></span>
     <span class="pkg-card-text">Stochastic block models</span>
+    <span class="pkg-card-speed">3.3&times; as fast as sbm*&Dagger;</span>
   </a>
 </div>
+
+\* Median over the models of our benchmark: one Linux computer, one thread, default settings, 26 November 2026. For goldfish, its compiled engine, the faster one.
+&dagger; `nwrem`: the smallest ratio of an earlier benchmark (16 November 2026).
+&Dagger; With R's reference linear algebra library; with Intel's MKL, tried on one network, R was faster.
+The programs do not always do the same amount of work: [method, all results and limits](nwcommands/speed/).
+{: .fs-2 }
 
 ## Install
 
