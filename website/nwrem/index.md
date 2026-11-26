@@ -37,7 +37,7 @@ the sister package that splits each event into the choice of the actor and the c
 
 **Speed is a good reason to use it.** In our benchmark on simulated logs of 200 to 20,000 events, `nwrem` was faster
 than relevent in every case that both programs finished: at least 16 times as fast, and often hundreds of times,
-also when relevent was allowed to skip the standard errors (`nwrem` 1.4.0, relevent 1.2-1, one Linux server). The
+also when relevent was allowed to skip the standard errors (`nwrem` 1.4.0, relevent 1.2-1, one Linux server, 16 November 2026). The
 [speed page](speed/) has all times, the method and the cases that relevent did not finish.
 
 ## Key facts

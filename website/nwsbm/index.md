@@ -33,6 +33,11 @@ Blocks are not communities. A community model looks for groups with many ties in
 ICL and the model names, and `greed` (Côme, Jouvin, Latouche and Bouveyron) for the degree-corrected model and the exact ICL. It does not replace them. `nwsbm` is not affiliated with or endorsed by their authors; errors in `nwsbm` are the author's.
 Which model suits which question, block model, [latent space model](../nwlsm/) or [ERGM](../nwergm/), is explained on [Which package do I need?](../which-package/#latent-space-block-model-or-ergm).
 
+**Speed is a good reason to use it.** On four simulated networks of 50 to 300 actors, `nwsbm` was 2.7 to 4.2 times as
+fast as `sbm` and 2.8 to 4.2 times as fast as `blockmodels`, when R used its reference linear algebra library
+(`nwsbm` 1.1.0, one Linux computer, one thread). With Intel's MKL library, tried on one network, R was faster. The
+[speed page](speed/) has the times and the method.
+
 ## Key facts
 
 | | |
@@ -47,6 +52,7 @@ Which model suits which question, block model, [latent space model](../nwlsm/) o
 | Agreement with R | the number of blocks, the memberships (adjusted Rand index 1) and the ICL agree with `sbm` 1.0.0 and `blockmodels` 1.2.1 on the test networks (Bernoulli, Poisson, Gaussian, two-mode, with and without covariates; the ICL to a relative difference of about 5e-8 with covariates), and with `greed` 0.6.2 for the degree-corrected model and the exact ICL |
 | Recovery | planted partitions and planted covariate coefficients are recovered on simulated networks |
 | Engine | a compiled plugin; there is no slower fallback |
+| Speed | See [Speed compared with sbm and blockmodels](speed/) |
 | Version | 1.1.0 (23 November 2026) |
 | License | GNU General Public License, version 3 |
 
