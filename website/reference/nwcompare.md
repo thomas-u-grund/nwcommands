@@ -78,4 +78,4 @@ With `graph`, `nwcompare` adds a graph of the coefficients (point estimates with
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

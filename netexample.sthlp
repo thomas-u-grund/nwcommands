@@ -704,7 +704,7 @@ code.
 email, 50,233 rows sorted by time. Declare the event network with {help nwset##temporal:{cmd:nwset}}:{p_end}
 
 {phang2}{cmd:. nwwebuse manufacturing, nwclear}{p_end}
-{phang2}{cmd:. nwset sender receiver, eventtime(t) name(mail)}{p_end}
+{phang2}{cmd:. nwset sender receiver, eventtime(t) directed name(mail)}{p_end}
 
 {pstd}
 {bf:Vertex attributes:} a companion dataset, {cmd:manufacturing_nodes.dta} ({cmd:nwwebuse}
@@ -909,4 +909,4 @@ Schoch, D. (2022), {it:networkdata: Repository of Network Datasets}, doi:10.5281
 {cmd:nwnetworkdata describe} {it:name} and the page {browse "https://nwcommands.org/datasets/schoch/":nwcommands.org/datasets/schoch} give it. See {help nwnetworkdata}.
 
 {hline}
-{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.39.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

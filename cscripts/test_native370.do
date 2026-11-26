@@ -389,7 +389,10 @@ local qr = r(modularity)
 global NW_NOFASTKERNELS 1
 qui nwcommunity davis, generate(crm) replace silent resolution(1.5)
 global NW_NOFASTKERNELS
-assert abs(`qr' - r(modularity)) < 1e-9
+* both are heuristics, and the Mata run breaks ties by Stata's sort state: it finds the same partition as the kernel or
+* one that is better by up to .0022 (9 of 25 sort states, with 30 to 300 starts, also before 3.39.0). A wrong
+* objective would differ by far more (the unit resolution gives .35 here, resolution 1.5 gives .22)
+assert abs(`qr' - r(modularity)) < .003
 
 * ------------------------------------------------------------------ 46 tie swapping
 nwclear

@@ -78,7 +78,8 @@ _cell i5 1 2 2
 * without a value variable every tie is 1, and the list of times has no value column
 nwclear
 _mkt
-nwset a b, time(wave) name(s) directed
+* the values are not used: they are discarded
+nwset a b, time(wave) name(s) directed dropvars
 nwattime s, at(2) name(w2)
 _cell w2 1 2 1
 nwtoedge s, time
@@ -149,9 +150,9 @@ foreach cmd in drop keep {
 		gen double v = real(word("5 3 4 2", _n))
 		gen t = cond(_n == 1, 1, 2)
 		gen t1 = t + 1
-		if "`kind'" == "snapshot" nwset e a v, time(t) name(N) directed
-		if "`kind'" == "interval" nwset e a v, interval(t t1) name(N) directed
-		if "`kind'" == "event" nwset e a, eventtime(t) name(N) directed
+		if "`kind'" == "snapshot" nwset e a v, time(t) name(N) directed dropvars
+		if "`kind'" == "interval" nwset e a v, interval(t t1) name(N) directed dropvars
+		if "`kind'" == "event" nwset e a, eventtime(t) name(N) directed dropvars
 		clear
 		if "`cmd'" == "drop" nwdrop N if _n == 1
 		else nwkeep N if _n != 1
@@ -208,12 +209,25 @@ mata:
 n = 40000
 lab = "x, " :+ strofreal(1..n)
 s = invtokens(lab :+ "=" :+ strofreal(1 :+ (mod(1..n, 2) :== 0)), ",")
-t = tokeninit("", ",", "", 0, 0)
-tokenset(t, s)
 timer_clear(1)
 timer_on(1)
-res = nw_join_modepairs(tokengetall(t))
+res = nw_join_modepairs(nw_splitchunks(s, "", ","))
 timer_off(1)
+// the splitter returns what tokengetall() returns, also across the borders of its chunks
+for (i = 1; i <= 8; i++) {
+	x = ("", ",", ",,", "a", "a,", ",a", "ä, b=1,c=2", 5000 * "a," + 9000 * "b" + ",," + 300 * "ü,")[i]
+	t = tokeninit("", ",", "", 0, 0)
+	tokenset(t, x)
+	y = tokengetall(t)
+	assert(cols(nw_splitchunks(x, "", ",")) == cols(y))
+	if (cols(y)) assert(nw_splitchunks(x, "", ",") == y)
+	x = subinstr(x, ",", char(1))
+	t = tokeninit(char(1), "", "", 0, 0)
+	tokenset(t, x)
+	y = tokengetall(t)
+	assert(cols(nw_splitchunks(x, char(1), "")) == cols(y))
+	if (cols(y)) assert(nw_splitchunks(x, char(1), "") == y)
+}
 assert(cols(res) == n)
 assert(res == lab :+ "=" :+ strofreal(1 :+ (mod(1..n, 2) :== 0)))
 assert(timer_value(1)[1] < 5)

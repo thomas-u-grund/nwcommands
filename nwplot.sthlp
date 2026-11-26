@@ -152,6 +152,7 @@ file with the outline coordinates in {bf:_X} and {bf:_Y} (the {bf:*_shp.dta} fil
 	{opt interactive} view back in before plotting; requires {opt nodexy()}{p_end}
 {p2col:{opt edgeimport}({it:filename})}merge edge color/pattern edits saved from an {opt interactive}
 	view back in before plotting; optional companion to {opt importcoords()}{p_end}
+{p2col:{opt picto:grams}({it:names})}with {opt interactive}: draw the nodes as pictograms, e.g. {bf:pictograms(man woman)}; see {help nwplot##pictograms:below}{p_end}
 {p2col:{opt movieexport}({it:filename})}with {opt interactive}: also write the resolved node/edge
 	color/shape/position data as plain JSON to {it:filename}, with no HTML page or viewer window -
 	{help nwmovie} uses this internally, once per network in its own sequence, rather than
@@ -316,6 +317,7 @@ with {opt importcoords()} (paired with {opt nodexy()}, same matched-pair idea as
 	{cmd:. nwplot flomarriage, nodexy(x y) importcoords("nodes.csv") edgeimport("edges.csv") color(wealth)}
 
 {pstd}
+{marker pictograms}{...}
 {it:Pictograms.} The shape drop-downs of the interactive view also offer pictograms: people (person,
 woman, man, child, senior, couple, family, group), places and organisations (house, building, factory,
 school, hospital, bank, church, shop), work and communication (briefcase, laptop, phone, envelope,
@@ -330,10 +332,22 @@ own; with a single color group each of these rows has its own color picker. For 
 	{cmd:. nwplot lazega_adv, color(gender) symbol(gender) interactive}
 
 {pstd}
+Option {opt pictograms()} sets them in the command, so that nothing has to be chosen by hand. One name gives
+every node that pictogram. Several names are given to the groups of nodes in the order of the legend, one name per
+group: the groups of {opt symbol()} when there is more than one, otherwise those of {opt color()}. A full stop
+({bf:.}) leaves the nodes of a group with their ordinary shape. Another number of names, or a name that is not in
+the list above, stops with error 198. The nodes can still be changed on the page.
+
+	{cmd:. nwwebuse lazega, nwclear}
+	{cmd:. nwplot lazega_adv, color(gender) symbol(gender) interactive pictograms(man woman)}
+	{cmd:. nwplot lazega_adv, interactive pictograms(briefcase)}
+
+{pstd}
 Pictograms are shown only in the interactive view and in its PNG export, because Stata has no such marker
 symbols. {bf:Save do-file} and the saved CSV files hold the ordinary shape of each node. A Stata graph
 has one color per group of {opt color()}, so colors picked separately for the pictograms of one color
-group are not kept in it. The choice of pictograms is not stored: it has to be made again in a new page.
+group are not kept in it. A choice made on the page is not stored: give {opt pictograms()} to have it in a
+new page. {bf:Save do-file} leaves {opt pictograms()} out, because it writes a command for a Stata graph.
 
 {pstd}
 The button {bf:Save do-file} does all of this in one step. It saves {bf:nwedit_plot.do}, which writes the two
@@ -598,4 +612,4 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page {br
 		{help nwplotmatrix}, {help nwegoplot}, {help nwmovie}, {help netexample}
 
 {hline}
-{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.39.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

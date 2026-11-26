@@ -1,0 +1,257 @@
+* edge round 4: Pajek files with tabs or a byte-order mark, UCINET DL with a byte-order mark and blank lines, nwspectral
+* with missing ties, the note of nwfromedge on trimmed identifiers, nwset not dropping unsaved variables
+clear all
+do unw_core.do
+
+* writes a file; "|" is a line break, "~" a tab
+capture program drop _write
+program _write
+	args fn text bom
+	mata: __w(st_local("fn"), st_local("text"), st_local("bom"))
+end
+mata:
+void __w(string scalar fn, string scalar text, string scalar bom)
+{
+	real scalar fh
+	(void) _unlink(fn)
+	fh = fopen(fn, "w")
+	if (bom == "bom") fwrite(fh, char((239, 187, 191)))
+	fwrite(fh, subinstr(subinstr(text, "|", char(10)), "~", char(9)))
+	fclose(fh)
+}
+end
+mata:
+string scalar __slurp(string scalar fn)
+{
+	real scalar fh
+	string scalar s
+	fh = fopen(fn, "r")
+	s = fread(fh, 1000000)
+	fclose(fh)
+	return(s)
+}
+end
+mata:
+// the file with carriage returns as line ends; without final: no line end after the last line
+void __cr(string scalar fn, real scalar final)
+{
+	real scalar fh
+	string scalar t
+
+	t = subinstr(__slurp(fn), char(10), char(13))
+	while (substr(t, strlen(t), 1) == char(13)) t = substr(t, 1, strlen(t) - 1)
+	if (final) t = t + char(13)
+	(void) _unlink(fn)
+	fh = fopen(fn, "w")
+	fwrite(fh, t)
+	fclose(fh)
+}
+end
+capture program drop _check
+program _check
+	args net nodes total
+	nwsummarize `net'
+	assert r(nodes) == `nodes'
+	tempname M
+	nwtomata `net', mat(`M')
+	mata: assert(sum(editmissing(`M', 0)) == `total')
+	mata: mata drop `M'
+end
+
+tempfile base
+local pj `"*Vertices 4|1 "a"|2 "b"|3 "c"|4 "d"|*Edges|1 2 1|2 3 2|3 4 3|"'
+local pjtab `"*Vertices 4|1~"a"|2~"b"|3~"c"|4~"d"|*Edges|1~2~1|2~3~2|3~4~3|"'
+foreach v in plain tab bom tabbom {
+	local t = cond(strpos("`v'", "tab"), `"`pjtab'"', `"`pj'"')
+	local b = cond(strpos("`v'", "bom"), "bom", "")
+	_write "`base'_`v'.net" `"`t'"' "`b'"
+	nwimport "`base'_`v'.net", type(pajek) name(p_`v') nwclear
+	_check p_`v' 4 12
+}
+
+local dl "dl n=4 format=fullmatrix|labels:|a,b,c,d|data:|0 1 0 0|1 0 2 0|0 2 0 3|0 0 3 0|"
+local dlblank "dl n=4 format=fullmatrix||labels:|a,b,c,d||data:||0 1 0 0|1 0 2 0||0 2 0 3|0 0 3 0||"
+foreach v in plain bom blank blankbom {
+	local t = cond(strpos("`v'", "blank"), "`dlblank'", "`dl'")
+	local b = cond(strpos("`v'", "bom"), "bom", "")
+	_write "`base'_`v'.dl" "`t'" "`b'"
+	nwimport "`base'_`v'.dl", type(ucinet) name(d_`v') nwclear
+	_check d_`v' 4 12
+}
+
+* line ends: carriage returns only, no final line break, and files longer than one 64 KB chunk
+mata:
+void __long(string scalar fn, string scalar head, real scalar n, string scalar eol, real scalar final)
+{
+	real scalar fh, i
+	string scalar s, row
+	(void) _unlink(fn)
+	fh = fopen(fn, "w")
+	fwrite(fh, subinstr(head, "|", eol))
+	for (i = 1; i < n; i++) {
+		row = strofreal(i) + char(9) + strofreal(i + 1) + char(9) + "1"
+		fwrite(fh, row + eol)
+		if (!mod(i, 97)) fwrite(fh, eol)
+	}
+	fwrite(fh, "1" + char(9) + strofreal(n) + char(9) + "1" + (final ? eol : ""))
+	fclose(fh)
+}
+end
+foreach v in lf cr crlf {
+	foreach final in 0 1 {
+		local eol = cond("`v'" == "lf", "char(10)", cond("`v'" == "cr", "char(13)", "char((13,10))"))
+		mata: __long(st_local("base") + "_long.net", "*Vertices 9000|*Edges|", 9000, `eol', `final')
+		mata: assert(strlen(invtokens(cat(st_local("base") + "_long.net")')) > 70000)
+		nwimport "`base'_long.net", type(pajek) name(L) nwclear
+		nwsummarize L
+		assert r(nodes) == 9000 & r(edges) == 9000
+	}
+}
+foreach final in 0 1 {
+	_write "`base'_cr.dl" "`dlblank'" ""
+	mata: __cr(st_local("base") + "_cr.dl", `final')
+	nwimport "`base'_cr.dl", type(ucinet) name(C) nwclear
+	_check C 4 12
+}
+
+* nwspectral: a missing tie counts as 0
+nwclear
+mata: M = (0,1,1,0 \ 1,0,1,0 \ 1,1,0,1 \ 0,0,1,0)
+nwset, mat(M) name(full) undirected
+mata: M[1,4] = . ; M[4,1] = .
+nwset, mat(M) name(miss) undirected
+foreach meas in binary valued {
+	nwspectral full, generate(a) measure(`meas') replace
+	local c = r(components)
+	local l = r(algebraic_connectivity)
+	nwspectral miss, generate(b) measure(`meas') replace
+	assert r(components) == `c' & `c' == 1
+	assert reldif(r(algebraic_connectivity), `l') < 1e-8
+	assert !missing(b) in 1/4
+}
+
+mata:
+// lines of a log that hold want (a log without output is an empty file)
+real scalar __found(string scalar fn, string scalar want)
+{
+	string colvector L
+	L = cat(fn)
+	if (length(L) == 0) return(0)
+	return(sum(strpos(L, want) :> 0))
+}
+end
+* nwfromedge: identifiers that differ only in blanks are merged, with a note
+capture program drop _log
+program _log, rclass
+	args cmd want
+	tempfile lf
+	quietly log using "`lf'", text replace name(r4)
+	`cmd'
+	quietly log close r4
+	mata: st_local("found", strofreal(__found(st_local("lf"), st_local("want"))))
+	return scalar found = `found'
+end
+nwclear
+clear
+input str6 a str6 b
+" Bob" "Ann"
+"Bob " "Cid"
+end
+_log "nwfromedge a b, name(t) undirected" "Warning: blanks"
+assert r(found) > 0
+nwsummarize t
+assert r(nodes) == 3
+nwclear
+clear
+input str6 a str6 b
+" Bob" "Ann"
+" Bob" "Cid"
+end
+_log "nwfromedge a b, name(t) undirected" "Warning: blanks"
+assert r(found) == 0
+* rows left out by if do not count
+nwclear
+clear
+input str6 a str6 b byte k
+" Bob" "Ann" 1
+"Bob " "Cid" 0
+end
+_log "nwfromedge a b if k == 1, name(t) undirected" "Warning: blanks"
+assert r(found) == 0
+
+* nwset: unsaved variables that are not part of the edge list are not dropped silently
+foreach form in "edgelist" "time(t)" "interval(t u)" "eventtime(t)" "twomode" {
+	nwclear
+	clear
+	set obs 2
+	gen str3 a = word("x y", _n)
+	gen str3 b = word("p q", _n)
+	gen t = 1
+	gen u = 1 + _n
+	gen extra = 6 + _n
+	if "`form'" == "edgelist" | "`form'" == "twomode" drop t u
+	capture noisily nwset a b, `form' name(n)
+	assert _rc == 4
+	* nothing changed
+	assert _N == 2 & extra[2] == 8 & a[1] == "x"
+	capture nwsummarize n
+	assert _rc != 0
+	nwset a b, `form' name(n) dropvars
+	nwsummarize n
+}
+* only variables of the edge list: no stop
+nwclear
+clear
+input str3 a str3 b w t
+"x" "y" 2 1
+"y" "z" 3 2
+end
+nwset a b w, time(t) name(n) directed
+nwsummarize n
+assert r(nodes) == 3
+* saved data: no stop
+nwclear
+clear
+input str3 a str3 b extra
+"x" "y" 7
+"y" "z" 8
+end
+tempfile saved
+save "`saved'"
+nwset a b, edgelist name(n)
+nwsummarize n
+assert r(nodes) == 3
+* an edge list file with times is imported as before
+nwclear
+_write "`base'.csv" "ego,alter,time|x,y,1|y,z,2|" ""
+clear
+set obs 3
+gen mine = _n
+nwimport "`base'.csv", type(edgelist, time directed)
+
+* the network name comes from the file name, whatever separators the path holds (Windows paths hold "\" and "/"; on
+* macOS and Linux a backslash can be part of a file name, which stands in for such a path here)
+nwclear
+local sl = char(92)
+foreach form in "plain" "double" "back" "mixed" {
+	local d "`c(tmpdir)'"
+	if "`form'" == "plain" local f "`d'/r4a-net"
+	if "`form'" == "double" local f "`d'//r4b-net"
+	if "`c(os)'" != "Windows" {
+		if "`form'" == "back" local f "`d'/dir`sl'r4c-net"
+		if "`form'" == "mixed" local f "`d'//x`sl'y`sl'r4d-net"
+	}
+	else {
+		if "`form'" == "back" local f = subinstr("`d'/r4c-net", "/", "`sl'", .)
+		if "`form'" == "mixed" local f = subinstr("`d'", "/", "`sl'", .) + "//r4d-net"
+	}
+	local want = cond("`form'" == "plain", "r4a_net", cond("`form'" == "double", "r4b_net", cond("`form'" == "back", "r4c_net", "r4d_net")))
+	nwclear
+	mata: __w(st_local("f") + ".net", "*Vertices 2|*Edges|1 2|", "")
+	nwimport "`f'.net", type(pajek)
+	nwds
+	assert "`r(netlist)'`r(nets)'" == "`want'" | strpos("`r(netlist)' `r(nets)'", "`want'") > 0
+	nwname `want'
+}
+
+display "PASS test_edge_round4_serious"

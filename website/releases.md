@@ -13,16 +13,31 @@ The current version of each package and every release, newest first. Each entry 
 
 | Package | Current version | Released | Release notes | Package page |
 |---|---|---|---|---|
-| **nwcommands** | 3.38.0 | 26 November 2026 | [all releases of nwcommands](https://github.com/thomas-u-grund/nwcommands/releases) | [nwcommands](../nwcommands/) |
+| **nwcommands** | 3.39.0 | 26 November 2026 | [all releases of nwcommands](https://github.com/thomas-u-grund/nwcommands/releases) | [nwcommands](../nwcommands/) |
 | **nwsaom** | 1.9.2 | 22 November 2026 | [all releases of nwsaom](https://github.com/thomas-u-grund/nwsaom/releases) | [nwsaom](../nwsaom/) |
 | **nwergm** | 1.16.1 | 24 November 2026 | [all releases of nwergm](https://github.com/thomas-u-grund/nwergm/releases) | [nwergm](../nwergm/) |
-| **nwdynam** | 1.11.1 | 22 November 2026 | [all releases of nwdynam](https://github.com/thomas-u-grund/nwdynam/releases) | [nwdynam](../nwdynam/) |
+| **nwdynam** | 1.11.2 | 26 November 2026 | [all releases of nwdynam](https://github.com/thomas-u-grund/nwdynam/releases) | [nwdynam](../nwdynam/) |
 | **nwrem** | 1.7.2 | 23 November 2026 | [all releases of nwrem](https://github.com/thomas-u-grund/nwrem/releases) | [nwrem](../nwrem/) |
 | **nwalaam** | 1.4.0 | 22 November 2026 | [all releases of nwalaam](https://github.com/thomas-u-grund/nwalaam/releases) | [nwalaam](../nwalaam/) |
 | **nwlsm** | 1.0.6 | 22 November 2026 | [all releases of nwlsm](https://github.com/thomas-u-grund/nwlsm/releases) | [nwlsm](../nwlsm/) |
 | **nwsbm** | 1.1.0 | 23 November 2026 | [all releases of nwsbm](https://github.com/thomas-u-grund/nwsbm/releases) | [nwsbm](../nwsbm/) |
 
 ## All releases
+
+<a id="nwcommands-3-39-0"></a>
+<a id="nwdynam-1-11-2"></a>
+
+### 26 November 2026: nwcommands 3.39.0, nwdynam 1.11.2
+
+**nwcommands 3.39.0** ([release notes](https://github.com/thomas-u-grund/nwcommands/releases/tag/v3.39.0)). Please update. **A do-file may now stop:** `nwset` from an edge list (`edgelist`, `twomode`, `time()`, `interval()`, `eventtime()`) stops when the data have unsaved changes and hold variables that are not part of the edge list. Before, they were dropped without a message. Save the data, drop the variables, or add the new option `dropvars`.
+
+Results that change: with an existing target network and `replace`, `nwattime`, `nwlambda`, `nwsimindex`, `nw2project` and `nwneighbor, subnet() subreplace` could compute from another network without a message. `nwimport` could return a wrong network or changed node names without a message for edge lists with a byte-order mark, in UTF-16 or in Windows-1252, and read Pajek files with tab-separated ties as networks without ties: **check networks imported from such files.** `nwspectral` now treats missing ties as 0.
+
+Also fixed: other file imports (Pajek and UCINET files with a byte-order mark or blank lines, short text files with Windows line ends, paths on Windows), several error messages and option checks. Reading back the node names and modes of large two-mode networks is faster. New: `nwplot, interactive pictograms()` sets the pictograms of the interactive view in the command.
+
+**nwdynam 1.11.2** ([release notes](https://github.com/thomas-u-grund/nwdynam/releases/tag/v1.11.2)). The help examples declare their event networks as directed, so that they run.
+
+The core Mata library is rebuilt; the plugins are unchanged. The other model packages need no update.
 
 <a id="nwcommands-3-38-0"></a>
 

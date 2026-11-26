@@ -89,6 +89,7 @@ program nwrecode
 			if "`prefix'" != "" {
 				nwvalidate `prefix'`onenet'
 				local prefixtarget = r(validname)
+				if "`prefixtarget'" != "`prefix'`onenet'" di "{txt}{p 0 0 2}Warning! Switched to netname {res}`prefixtarget'{txt} because {res}`prefix'`onenet'{txt} already in use.{p_end}"
 				nwduplicate `onenet', name(`prefixtarget')
 				local targets "`targets' `prefixtarget'"
 			}
@@ -96,6 +97,7 @@ program nwrecode
 				if "``i''" != "" {
 					nwvalidate ``i''
 					local gentarget = r(validname)
+					if "`gentarget'" != "``i''" di "{txt}{p 0 0 2}Warning! Switched to netname {res}`gentarget'{txt} because {res}``i''{txt} already in use.{p_end}"
 					nwduplicate `onenet', name(`gentarget')
 					local targets "`targets' `gentarget'"
 				}
@@ -151,6 +153,7 @@ program _nwrecode_dense
 		if "`prefix'" != "" {
 			nwvalidate `prefix'`onenet'
 			local prefixtarget = r(validname)
+			if "`prefixtarget'" != "`prefix'`onenet'" di "{txt}{p 0 0 2}Warning! Switched to netname {res}`prefixtarget'{txt} because {res}`prefix'`onenet'{txt} already in use.{p_end}"
 			nwduplicate `onenet', name(`prefixtarget')
 			nwreplacemat `prefixtarget', newmat(__nwrec_M)
 		}
@@ -158,6 +161,7 @@ program _nwrecode_dense
 			if "``gi''" != "" {
 				nwvalidate ``gi''
 				local gentarget = r(validname)
+				if "`gentarget'" != "``gi''" di "{txt}{p 0 0 2}Warning! Switched to netname {res}`gentarget'{txt} because {res}``gi''{txt} already in use.{p_end}"
 				nwduplicate `onenet', name(`gentarget')
 				nwreplacemat `gentarget', newmat(__nwrec_M)
 			}

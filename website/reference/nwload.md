@@ -36,6 +36,7 @@ force]
 | `viewoff` | Unconnect view from network to dataset; default |
 | `viewon` | Establish view of network to dataset |
 | `overwrite` | replace existing variables that have the names of the node variables (otherwise error 110); also forwarded to [_nwdatasync](_nwdatasync) |
+| `keepuser` | Keep your variables that have the names of node variables and print a note, instead of stopping |
 | `force` | By default, matrix is not loaded for networks with more than 1000 nodes unless **force** is specified |
 
 ## Description
@@ -95,4 +96,4 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

@@ -6134,12 +6134,9 @@ void nw_reorder_to_labels(pointer(class nw_def scalar) scalar p, string rowvecto
 /* the labels of a "label=mode,label=mode,..." string (a comma inside a label is kept: pairs end after "=mode,") */
 string rowvector nw_labels_from_modestring(string scalar s){
 	string rowvector pr
-	transmorphic t
 
 	if (s == "") return(J(1, 0, ""))
-	t = tokeninit(char(1), "", "", 0, 0)
-	tokenset(t, ustrregexra(s, "(=[0-9.]*),", "$1" + char(1)))
-	pr = tokengetall(t)
+	pr = nw_splitchunks(ustrregexra(s, "(=[0-9.]*),", "$1" + char(1)), char(1), "")
 	return(substr(pr, 1, strlen(pr) :- strpos(strreverse(pr), "=")))
 }
 
@@ -10969,6 +10966,47 @@ pointer(real matrix) scalar nw_undirected01(real matrix M, real scalar arcs)
 }
 
 /*
+	What tokengetall() returns for a string split at one character, which is a parse character (pch, returned as a token)
+	or a white-space character (wh, left out); no quotes. The time of tokengetall() grows with the square of the number
+	of tokens (3 seconds for 40,000 node names), so the string is handed to it in chunks that end at a separator.
+*/
+string rowvector nw_splitchunks(string scalar s, string scalar wh, string scalar pch)
+{
+	string rowvector res, part
+	string scalar sep
+	transmorphic t
+	real scalar len, a, b, c, k
+
+	sep = wh + pch
+	len = strlen(s)
+	// at most one token between two separators, and the separators themselves
+	res = J(1, 2 * (len - strlen(subinstr(s, sep, ""))) + 1, "")
+	k = 0
+	a = 1
+	while (a <= len) {
+		b = a + 4095
+		while (b < len) {
+			c = strpos(substr(s, b, 256), sep)
+			if (c) {
+				b = b + c - 1
+				break
+			}
+			b = b + 256
+		}
+		if (b > len) b = len
+		t = tokeninit(wh, pch, "", 0, 0)
+		tokenset(t, substr(s, a, b - a + 1))
+		part = tokengetall(t)
+		if (cols(part)) {
+			res[|k + 1 \ k + cols(part)|] = part
+			k = k + cols(part)
+		}
+		a = b + 1
+	}
+	return(k ? res[|1 \ k|] : J(1, 0, ""))
+}
+
+/*
 	The "label=mode" pairs of a list that was split at its commas: a label may hold commas itself, so pieces are
 	joined again until one ends in =1 or =2.
 */
@@ -11023,16 +11061,14 @@ void `NWdef'::set_modes_from_labeled_string(string scalar s){
 	string rowvector pairs
 	string scalar lab, md, onepair
 	real scalar idx, eqpos, i
-	transmorphic scalar t, pos
+	transmorphic scalar pos
 
 	if (s == "") return
 	get_modes()
 	// Split at every comma (no whitespace splitting) and look labels up in a
 	// hash of the node names: the former character-by-character scan with a
 	// linear label search was O(n^2), minutes at 40,000 nodes.
-	t = tokeninit("", ",", "", 0, 0)
-	tokenset(t, s)
-	pairs = nw_join_modepairs(tokengetall(t))
+	pairs = nw_join_modepairs(nw_splitchunks(s, "", ","))
 	pos = asarray_create("string")
 	for (i = cols(nodes); i >= 1; i--) asarray(pos, nodes[i], i)
 	for (i = 1; i <= cols(pairs); i++) {

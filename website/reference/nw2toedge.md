@@ -82,4 +82,4 @@ Build a small two-mode network (3 people x 2 events) and convert it to an edgeli
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

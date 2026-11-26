@@ -1,4 +1,41 @@
 
+capture mata: mata drop nw_trimmerge()
+mata:
+// how many identifiers are lost when the blanks at both ends are removed; an example for the message
+void nw_trimmerge(string scalar from, string scalar to, string scalar use)
+{
+	string colvector raw, cut
+	real colvector o
+	real scalar i, n
+
+	raw = st_sdata(., from, use) \ st_sdata(., to, use)
+	if (rows(raw) == 0) {
+		st_local("__nwfe_nm", "0")
+		return
+	}
+	// nothing to compare (and nothing to sort) when no identifier has blanks at its ends
+	if (all(raw :== strtrim(raw))) {
+		st_local("__nwfe_nm", "0")
+		return
+	}
+	raw = uniqrows(raw)
+	cut = strtrim(raw)
+	raw = select(raw, cut :!= "")
+	cut = select(cut, cut :!= "")
+	n = rows(cut) - rows(uniqrows(cut))
+	st_local("__nwfe_nm", strofreal(n, "%18.0g"))
+	if (n == 0) return
+	o = order(cut, 1)
+	cut = cut[o]
+	for (i = 2; i <= rows(cut); i++) {
+		if (cut[i] == cut[i - 1]) {
+			st_local("__nwfe_ex", subinstr(subinstr(cut[i], char(34), "'"), char(96), "'"))
+			return
+		}
+	}
+}
+end
+
 capture program drop nwfromedge
 program nwfromedge
 	// when the command stops with an error, the data set is left as it was (preserve restores it)
@@ -125,6 +162,21 @@ program _nwfromedge_main
 		}
 	}
 	
+	// blanks at the start or end of identifiers are removed; a note says so when two different identifiers become one
+	capture confirm string variable `fromvar' `tovar'
+	if _rc == 0 {
+		tempvar __nwfe_use
+		qui gen byte `__nwfe_use' = 0
+		qui replace `__nwfe_use' = 1 `if'
+		// the check must not change what later commands do: sorting moves the state that breaks ties in later sorts
+		local __nwfe_srt = c(sortrngstate)
+		mata: nw_trimmerge("`fromvar'", "`tovar'", "`__nwfe_use'")
+		set sortrngstate `__nwfe_srt'
+		drop `__nwfe_use'
+		if `__nwfe_nm' > 0 {
+			noi di `"{txt}{p 0 0 2}Warning: blanks at the start or end of node identifiers are removed, and `__nwfe_nm' `=cond(`__nwfe_nm' == 1, "identifier that differs", "identifiers that differ")' only in such blanks became the same node as another, for example {bf:`__nwfe_ex'}. If these are different nodes, give them different names first.{p_end}"'
+		}
+	}
 	capture replace `fromvar' = trim(`fromvar')	
 	capture replace `tovar' = trim(`tovar')	
 		

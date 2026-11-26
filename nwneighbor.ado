@@ -76,6 +76,8 @@ program nwneighbor
 	// `generate()''s own neighbor-only variable, and must not silently
 	// gain ego's own position too) with ego's own position added in.
 	if "`subnet'" != "" {
+		_nwtargetcheck `subnet', source(`netname') given(0)
+		local __nwneighbor_origname `netname'
 		mata: __nwneighbor_sel = __nwneighbor_select
 		mata: __nwneighbor_sel[`egoid'] = 1
 		nwvalidate `subnet'
@@ -86,6 +88,8 @@ program nwneighbor
 				exit 483
 			}
 			capture nwdrop `subnet'
+			// the drop moves the stored networks: netobj has to be looked up again
+			_nwsyntax `__nwneighbor_origname', max(1)
 		}
 		// `_nwsyntax' sets `netname' itself too, via its own `c_local
 		// netname' (_nwsyntax.ado) - a real, easy-to-miss side effect
@@ -98,7 +102,6 @@ program nwneighbor
 		// display header, silently kept operating on the new subnet
 		// network). Fixed by saving the original name into its own local
 		// FIRST, never relying on `netname' surviving the subnet call.
-		local __nwneighbor_origname `netname'
 		tempname __nwneighbor_src
 		mata: `__nwneighbor_src' = `netobj'
 		mata: __nw.nws.add("`subnet'")

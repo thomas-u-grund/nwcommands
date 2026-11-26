@@ -4,6 +4,9 @@ program nwegoplot, rclass
 	version 12
 	syntax [anything(name=netname)] , ego(string) [hop(integer 1) SORTby(varname) GENerate(string) replace EDGEColor(string) SIZE(string) ASPECTratio(string) *]
 
+	// a helper network left by an earlier run is dropped first: a drop moves the stored networks, so nothing may be
+	// looked up before it
+	if "`edgecolor'" == "" capture nwdrop _nwegoplot_ties
 	_nwsyntax `netname'
 	_nw2guard `netname', cmd(nwegoplot)
 	if !inlist(`hop', 1, 2) {
@@ -70,7 +73,6 @@ program nwegoplot, rclass
 	local tienet ""
 	if "`edgecolor'" == "" {
 		local tienet "_nwegoplot_ties"
-		capture nwdrop `tienet'
 		tempname T
 		mata: `T' = nw_egoplot_tietype(`srcmata', `egoid')
 		local und = cond("`directed'" == "true", "", "undirected")

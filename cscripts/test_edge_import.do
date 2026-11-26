@@ -441,6 +441,68 @@ ei_net c3 3 true "(0,1,0 \ 0,0,1 \ 0,0,0)" "Smith John,bob,cid"
 ei_file c4.csv `""Smith, John",Doe"' "0,1" "1,0"
 nwimport "`dir'/c4.csv", type(matrix) nwclear
 ei_net c4 2 false "(0,1 \ 1,0)" "Smith John,Doe"
+* short files with Windows line ends: Stata can take them for UTF-16 (the bytes are written here, so that the test
+* is the same on every system; char(246) is the o with two dots in an 8-bit encoding, which is not valid UTF-8)
+foreach kind in ascii latin1 {
+	local file "`dir'/c5_`kind'.csv"
+	capture erase "`file'"
+	mata: __nl = char(13) + char(10)
+	mata: __o = st_local("kind") == "ascii" ? "o" : char(246)
+	mata: __fh = fopen(st_local("file"), "w")
+	mata: fwrite(__fh, char(34) + "Sm" + __o + "th, John" + char(34) + ",Doe" + __nl + "0,1" + __nl + "1,0" + __nl)
+	mata: fclose(__fh)
+	mata: mata drop __nl __o __fh
+	local want = cond("`kind'" == "ascii", "Smoth John,Doe", "Sm" + uchar(246) + "th John,Doe")
+	nwimport "`file'", type(matrix) nwclear
+	ei_net c5_`kind' 2 false "(0,1 \ 1,0)" "`want'"
+}
+* edge lists in other encodings: a byte-order mark, UTF-16 and an 8-bit encoding (written as bytes)
+capture mata: mata drop ei_enc()
+mata:
+void ei_enc(string scalar fn, string scalar kind, real scalar header)
+{
+	real scalar fh, i
+	string scalar t, out, nl
+	real rowvector b
+
+	nl = char((13, 10))
+	t = (header ? "ego,alter" + nl : "") + "Zo" + uchar(235) + "," + uchar(220) + "nal" + nl + uchar(220) + "nal," + uchar(197) + "sa" + nl
+	if (kind == "bom") out = char((239, 187, 191)) + t
+	if (kind == "cp1252") out = ustrto(t, "windows-1252", 1)
+	if (kind == "u16le") out = char((255, 254)) + ustrto(t, "UTF-16LE", 1)
+	if (kind == "u16be") out = char((254, 255)) + ustrto(t, "UTF-16BE", 1)
+	if (fileexists(fn)) unlink(fn)
+	fh = fopen(fn, "w")
+	fwrite(fh, out)
+	fclose(fh)
+}
+end
+foreach kind in bom cp1252 u16le u16be {
+	foreach header in 1 0 {
+		foreach opt in "" "delimiter(,)" {
+			mata: ei_enc(st_local("dir") + "/en_`kind'.csv", "`kind'", `header')
+			nwimport "`dir'/en_`kind'.csv", type(edgelist) nwclear `opt'
+			qui nwname
+			local labs `"`r(labs)'"'
+			assert r(nodes) == 3
+			foreach w in `=uchar(197) + "sa"' `=uchar(220) + "nal"' `=char(90) + char(111) + uchar(235)' {
+				assert strpos(`"`labs'"', "`w'") > 0
+			}
+			assert ustrlen(`"`labs'"') == 12
+			qui nwsummarize
+			assert cond(missing(r(arcs)), 0, r(arcs)) + cond(missing(r(edges)), 0, r(edges)) == 2
+		}
+	}
+}
+
+* nwimport.ado can be run again while its Mata functions are in memory
+qui findfile nwimport.ado
+local ado "`r(fn)'"
+qui run "`ado'"
+qui run "`ado'"
+* an empty or quoted file name is left to insheet (no message from Mata)
+mata: assert(nwimp_utf8copy("", "x") == 0)
+mata: assert(nwimp_utf8copy(char(34) + "x" + char(34), "x") == 0)
 di "PASS 7 commas"
 
 * ---- Pajek *Matrix

@@ -77,6 +77,9 @@ program nwspectral, rclass
 	// identical degenerate input cleanly (via clustermat's own "1x1
 	// matrix not allowed" error); nwspectral had no equivalent guard at
 	// all.
+	mata: st_local("__neg", strofreal(sum(`netobj'->edgelist()[., 3] :< 0) > 0))
+	if `__neg' & `val' di "{txt}{p 0 0 2}(warning: the network has negative tie values, for which this decomposition is not meaningful){p_end}"
+
 	if `nodes' < 2 {
 		di "{err}{p 0 0 2}Network {bf:`netname'} has fewer than 2 nodes; spectral decomposition needs at least 2 nodes.{p_end}"
 		exit 198
@@ -106,6 +109,8 @@ program nwspectral, rclass
 		di "{txt}{p 0 0 2}(note: nwspectral decomposes the dense `nodes' x `nodes' Laplacian completely and takes minutes above about 4,000 nodes){p_end}"
 	}
 	mata: `__nw_L' = `netobj'->calculate_laplacian(`val')
+	// missing ties count as 0 (the diagonal already leaves them out); a missing cell would spoil the decomposition
+	mata: _editmissing(`__nw_L', 0)
 	mata: symeigensystem(`__nw_L', `__nw_EC' = ., `__nw_EV' = .)
 	mata: `__nw_ord' = order((`__nw_EV'', (1::cols(`__nw_EV'))), (1, 2))
 	mata: `__nw_EV' = (`__nw_EV''[`__nw_ord'])'
@@ -149,6 +154,8 @@ program nwspectral, rclass
 		if `"`__symmsg'"' != "" {
 			noi di `"`__symmsg'"'
 		}
+		_nwmissnote `netname', quiet
+		if r(nmissing) > 0 noi di "{txt}{p 4 4 2}(`r(nmissing)' missing ties treated as 0){p_end}"
 		noi di "{txt}  Connected components: {res}`lcomponents'"
 		noi di "{txt}  Algebraic connectivity: {res}`=strtrim(string(round((`lalgconn')*1000)/1000,"%9.0g"))'"
 		noi sum `netgenerate'

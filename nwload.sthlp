@@ -37,6 +37,7 @@ generators) offer{p_end}
 {synopt:{opt viewoff}}Unconnect view from network to dataset; default{p_end}
 {synopt:{opt viewon}}Establish view of network to dataset{p_end}
 {synopt:{opt overwrite}}replace existing variables that have the names of the node variables (otherwise error 110); also forwarded to {help _nwdatasync}{p_end}
+{synopt:{opt keepuser}}Keep your variables that have the names of node variables and print a note, instead of stopping{p_end}
 {synopt:{opt force}}By default, matrix is not loaded for networks with more than 1000 nodes unless {bf:force} is specified{p_end}
 		
 {title:Description}
@@ -149,4 +150,4 @@ hold its ties aggregated over all times, and the command says so in a note; the 
    {help nwcurrent}, {help nwsync}, {help nwuse}, {help nwimport}, {help nwintro##limits:feasible network sizes}
 
 {hline}
-{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.39.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

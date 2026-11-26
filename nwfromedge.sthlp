@@ -59,6 +59,10 @@ about the {it:network}, not Stata variables{p_end}
 {pstd}
 {cmd:nwfromedge} imports a network from a dataset in edgelist format. 
 
+{pstd}
+Blanks at the start or end of node identifiers are removed. When two identifiers differ only in such blanks, they become
+one node and a warning says so; give them different names first if they are different nodes.
+
 {marker edgelist}{...}
 {pstd}
 An edgelist or arclist is a set of two (or three in the case of a valued network) variables representing
@@ -168,4 +172,4 @@ hand or imported from an external source, give each isolate a row with a missing
 	{help nwtoedge}, {help nwuse}, {help nwsave}, {help nwwebuse}, {help nwset}, {help nwimport}, {help nw2fromedge}
 
 {hline}
-{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.39.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

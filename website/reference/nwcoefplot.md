@@ -80,4 +80,4 @@ With a list of models the coefficients of different models are drawn in one row 
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

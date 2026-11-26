@@ -37,6 +37,9 @@ program nwsimilar
 	}
 
 	nwvalidate `name'
+	if "`r(validname)'" != "`name'" {
+		di "{txt}{p 0 0 2}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use.{p_end}"
+	}
 	local name = "`r(validname)'"
 
 	local dtype = 0

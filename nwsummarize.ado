@@ -92,11 +92,15 @@ program nwinf
 			qui nwdegree `netname', silent binary generate(`nwsumdeg1' `nwsumdeg2')
 		}
 		if ("`localdirected'"=="false"){
-			local central = `r(dg_central)'
+			// nwdegree returns no centralization for a two-mode network
+			local central "`r(dg_central)'"
+			if "`central'" == "" local central .
 		}
 		else {
-			local incentral = `r(indg_central)'
-			local outcentral = `r(outdg_central)'
+			local incentral "`r(indg_central)'"
+			local outcentral "`r(outdg_central)'"
+			if "`incentral'" == "" local incentral .
+			if "`outcentral'" == "" local outcentral .
 		}
 	}
 	

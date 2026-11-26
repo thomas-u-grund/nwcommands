@@ -484,9 +484,7 @@ program define _nwuse_nodelist
 	quietly gen byte `ok' = .
 	// the pairs are separated by the comma that follows "=mode"; a comma inside a name ("Smith, J.") is not a separator
 	mata: nwu_s = ustrregexra(__nwmd[1], "(=[0-9.]*),", "$1" + char(1))
-	mata: nwu_t = tokeninit(char(1), "", "", 0, 0)
-	mata: tokenset(nwu_t, nwu_s)
-	mata: nwu_p = tokengetall(nwu_t)
+	mata: nwu_p = nw_splitchunks(nwu_s, char(1), "")
 	// "name=mode": the name is everything before the last "="
 	mata: nwu_nm = substr(nwu_p, 1, strlen(nwu_p) :- strpos(strreverse(nwu_p), "="))
 	mata: nwu_A = asarray_create()
@@ -498,7 +496,7 @@ program define _nwuse_nodelist
 	mata: st_store(., st_varindex(st_local("ok")), nwu_ok)
 	mata: st_global("_dta[nwtoedge_nodes]", invtokens(nwu_nm, ";"))
 	quietly keep if `ok' == 1
-	capture mata: mata drop nwu_s nwu_t nwu_p nwu_nm nwu_i nwu_A nwu_e nwu_a nwu_ok
+	capture mata: mata drop nwu_s nwu_p nwu_nm nwu_i nwu_A nwu_e nwu_a nwu_ok
 end
 
 // a second name for the object that holds all networks (Mata assigns a class

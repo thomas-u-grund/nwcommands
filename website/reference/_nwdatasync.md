@@ -34,7 +34,7 @@ force]
 
 ## Description
 
-Node attributes are saved in the normal Stata dataset. The observations in the dataset correspond to the nodes in a network. Both are automatically matched by the name of the nodes. In the dataset this match is performed on the variable **_nwnode**. In case this variable does not exist, it is automatically created.
+Node attributes are saved in the normal Stata dataset. The observations in the dataset correspond to the nodes in a network. Both are automatically matched by the name of the nodes. In the dataset this match is performed on the variable **_nwnode**. In case this variable does not exist, it is automatically created. When the observations are not in the order of the nodes, they are put back into that order: after you have sorted the data, a network command that reads node variables undoes your sort order. Values stay with their nodes; sort again if needed.
 
 Normally, there is no need to explicitly call **_nwdatasync**. All other nwcommands that make use of variables in the Stata dataset (e.g. node attributes) sync automatically.
 
@@ -53,4 +53,4 @@ Generate a variable indicating which dataset observations correspond to nodes in
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

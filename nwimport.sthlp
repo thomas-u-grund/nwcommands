@@ -93,7 +93,10 @@ data set holds what the file gives: the node names ({cmd:_nwnode}) of an edge li
 
 {pstd}
 {bf:Node names} cannot hold commas or double quotes. In names read from a file, commas become blanks and double quotes apostrophes, with a suffix
-_2, _3, ... where two names become equal; a note says so.
+_2, _3, ... where two names become equal; a note says so. Text files in UTF-8 are read as they are. For
+{bf:type(edgelist)}, a byte-order mark is skipped, UTF-16 files with a byte-order mark are converted, and a text that is
+not valid UTF-8 is read as Windows-1252 (which covers Latin-1). Check accented letters in the node names of other
+imports, and convert a file in another encoding first (see {help unicode translate}).
 
 {pstd}
 {bf:Self-loops} (ties of a node with itself) in Pajek, GML, UCINET and edge list files are imported, and the network allows self-loops. The diagonal of a
@@ -342,4 +345,4 @@ two-mode networks with level labels (not UCINET); a tie inside a mode is refused
 (see {help nwimport##edgelist_time:edge lists with times}). See {help nwnetworktypes}.{p_end}
 
 {hline}
-{pstd}{it:nwcommands version 3.38.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}
+{pstd}{it:nwcommands version 3.39.0, 26 November 2026} ({help nwversion:check your installed version}){p_end}{* nwversion}

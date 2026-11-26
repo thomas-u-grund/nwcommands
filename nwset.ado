@@ -1,7 +1,7 @@
 
 capture program drop nwset	
 program nwset
-syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite REPLACE bipartite TWOmode biprownames(varname) selfloop labs(string) vars(string) keeporiginal xvars clear nwclear nooutput edgelist name(string) labsfromvar(string) edgelabs(string asis) detail mat(string) undirected directed time(varname) interval(varlist min=2 max=2) eventtime(varname)]
+syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite REPLACE bipartite TWOmode biprownames(varname) selfloop labs(string) vars(string) keeporiginal xvars clear nwclear nooutput edgelist name(string) labsfromvar(string) edgelabs(string asis) detail mat(string) undirected directed time(varname) interval(varlist min=2 max=2) eventtime(varname) dropvars]
 	// _nwsyntax (called below) redefines the locals valued/directed: keep the options
 	local __optvalued "`valued'"
 	// a network name must be a valid Stata name of at most 32 characters (refused before anything is changed)
@@ -19,6 +19,24 @@ syntax [varlist (default=none)][, valued unvalued nodenames(string) overwrite RE
 // any existing caller already passing it (it did nothing before, so
 // no prior behavior is lost by finally giving it one).
 if "`overwrite'" != "" local replace "replace"
+
+	// An edge list is replaced by the data of the nodes. When the data have unsaved changes and hold variables that do
+	// not go into the network, those would be lost: stop, before anything is changed, unless dropvars allows it.
+	if "`varlist'" != "" & "`edgelist'`twomode'`time'`interval'`eventtime'" != "" & "`dropvars'" == "" & c(changed) & c(k) > 0 {
+		unab __nws_all : _all
+		local __nws_used `varlist' `time' `interval' `eventtime' _nwnode _nwinclude
+		local __nws_lost : list __nws_all - __nws_used
+		if "`__nws_lost'" != "" {
+			local __nws_n : word count `__nws_lost'
+			local __nws_show ""
+			forvalues __nws_i = 1/`=min(`__nws_n', 8)' {
+				local __nws_show `__nws_show' `: word `__nws_i' of `__nws_lost''
+			}
+			if `__nws_n' > 8 local __nws_show "`__nws_show' ..."
+			di "{err}{p 0 0 2}The data have unsaved changes, and {bf:nwset} replaces the edge list in memory with the data of the nodes: `=cond(`__nws_n' == 1, "variable", "variables")' {bf:`__nws_show'} would be lost. Save the data first ({bf:save}), or add option {bf:dropvars} to discard `=cond(`__nws_n' == 1, "it", "them")'. ({help nwfromedge} with option {bf:noclear} keeps the data.){p_end}"
+			exit 4
+		}
+	}
 
 	// twomode is a genuinely different declaration shape from
 	// bipartite, not a synonym for it - bipartite (long-established,

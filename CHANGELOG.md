@@ -4,7 +4,49 @@ All notable changes to the nwcommands core package. The format follows [Keep a C
 versions follow [Semantic Versioning](https://semver.org/). The model families have their own packages and changelogs
 (`nwsaom`, `nwergm`, `nwdynam`, `nwrem`, `nwalaam`, `nwsbm`, `nwlsm`).
 
-## [Unreleased]
+## [3.39.0] - 2026-11-26
+
+**Summary.** Fixes for wrong results with `replace` targets and imported files, a safeguard against losing data in `nwset`, and pictograms in `nwplot` from the command line. **A do-file may now stop:** `nwset` from an edge list stops when unsaved variables outside the edge list would be dropped; add `dropvars` to drop them as before. Please update.
+
+### Results that change (read before you re-run old analyses)
+- `nwattime`, `nwlambda`, `nwsimindex`, `nw2project` and `nwneighbor ..., subnet() subreplace` with a target network that
+  exists could compute the result from another network, without a message, or stop and lose the old target (when the
+  target was created before the source). `nwcorrelate, keepexpand` could stop with an error for the same reason.
+- `nwimport, type(pajek)`: a file with tab-separated tie lines was read as a network without ties.
+- `nwspectral` on a network with missing ties returned missing values and no components; missing ties now count as 0.
+- `nwdichotomize ..., generate(name)` with a name in use marked the network of that name as binary.
+- `nwset` from an edge list (`edgelist`, `twomode`, `time()`, `interval()`, `eventtime()`) now stops with error 4 when
+  the data have unsaved changes and hold variables that are not part of the edge list; they were dropped without a
+  message. New option `dropvars` allows it.
+
+### Fixed
+- Reading back the node names and modes of a large two-mode network is faster: the time of this step grew with the square of
+  the number of nodes.
+- Pajek and UCINET DL files with a byte-order mark, and DL files with blank lines, are imported.
+- `nwimport, type(edgelist)`: files with a byte-order mark, in UTF-16 or in Windows-1252 gave a wrong network or
+  changed node names without any message (the header read as a tie, a single nonsense node, accented letters lost).
+  They are now converted to UTF-8 before they are read.
+- `nwimport` of matrix, edge list and compressed text files: Stata could take a short file, mostly one with Windows
+  line ends, for UTF-16 text, and the import stopped. Such files are now read.
+- `nwimport` without `name()`: on Windows, a path with both kinds of separator gave a network name that included
+  folder names; the name now comes from the file name.
+- `nwfromedge` warns when identifiers that differ only in blanks at the ends become one node.
+- `nwrecode`, `nwdichotomize`, `nwsimilar` and `nwdissimilar` say under which name a result is stored when the requested
+  name is in use; `nwdichotomize` refuses a name given twice in `generate()`.
+- `nwsummarize, detail` on a two-mode network; `nwplot` with a condition that no node meets; `nwegoplot` after a failed
+  earlier run.
+- Clearer errors: unknown names in `nwgenerate` and `nwreplace` expressions, `nwhierarchy` with missing dissimilarities
+  or one node, `nwgenerate` with a condition that selects no node.
+- Option values are checked: `nwqap type()` and `mode()`, `nwcorrelate permutations()`, `nwhomophily density()`,
+  `nwconstraint` with both `directed` and `undirected`. Notes for a negative `alpha()` of `nwkatz`, negative `size()` in
+  `nwplot` and negative tie values in `nwspectral` and `nwcoreperiphery`.
+- `nwexport`: no stray quotes in the message; an ending given in `fname()` is not added twice.
+- Help: the event data example declares the network as directed; sort order after network commands; encoding of
+  imported files.
+
+### Added
+- `nwplot, interactive pictograms(names)`: the pictograms of the interactive view can be set in the command, one for all
+  nodes or one per group of `symbol()` or `color()`.
 
 ## [3.38.0] - 2026-11-26
 

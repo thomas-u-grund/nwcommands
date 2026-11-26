@@ -31,14 +31,13 @@ program nwsimindex, rclass
 	// which is only applied here when replace was NOT given.
 	// the input cannot receive the result: it would be dropped before or while the result is formed
 	_nwtargetcheck `name', source(`netname') given(0)
+	local __replacing 0
 	nwvalidate `name'
 	if "`r(exists)'" == "true" {
+		local __replacing = ("`replace'" != "")
 		if "`replace'" == "" {
 			di "{txt}{p 0 0 2}Warning! Switched to netname {res}`r(validname)'{txt} because {res}`name'{txt} already in use.{p_end}"
 			local name = r(validname)
-		}
-		else {
-			capture nwdrop `name'
 		}
 	}
 
@@ -48,6 +47,9 @@ program nwsimindex, rclass
 	// node names go to nwset in a Mata variable (a long Stata option string gets blanks inserted, see GOTCHA.md)
 	tempname __nw_names
 	mata: `__nw_names' = `netobj'->get_nodenames()
+	// The old network under replace is dropped only here, after everything has been read from the source: a drop moves
+	// the stored networks, so that netobj would point to another network (and a failed computation keeps the old one).
+	if `__replacing' capture nwdrop `name'
 	nwset, mat(`__nw_sim') name(`name') undirected nodenames(`__nw_names')
 	mata: mata drop `__nw_sim' `__nw_names'
 

@@ -35,10 +35,10 @@ program nwimport, rclass
 	
 	if "`name'" == "" {
 		local fname_temp =  lower(subinstr(`"`fname'"', char(34), "", .))
+		// the name of the file is what follows the last separator of either kind (a Windows path can hold both)
+		local fname_temp = subinstr(`"`fname_temp'"', char(92), "/", .)
 		local fnamerev = strreverse(`"`fname_temp'"')
-		local bslash = strpos(`"`fnamerev'"', "/")
-		local fslash = strpos(`"`fnamerev'"', "\")
-		local slash = max(`bslash', `fslash')
+		local slash = strpos(`"`fnamerev'"', "/")
 		local slash = cond(`slash'== 0, length(`"`fnamerev'"'), `=`slash' - 1')
 		local name = substr(`"`fname_temp'"', `=length(`"`fname_temp'"') - `slash' + 1', .)
 		local name = subinstr(`"`name'"',".net", "", .)
@@ -911,7 +911,24 @@ program _nwimport_text
 	else if `"`d'"' == "comma" local dopt `"delimiters(",")"'
 	else if `"`d'"' == "blank" | `"`d'"' == " " local dopt `"delimiters(" ", collapse)"'
 	else local dopt `"delimiters(`"`d'"')"'
-	import delimited using `anything', `dopt' varnames(nonames) stringcols(_all) clear
+	_nwimport_delimited using `anything', `dopt' varnames(nonames) stringcols(_all) clear
+end
+
+
+capture program drop _nwimport_delimited
+program _nwimport_delimited
+	// import delimited, which guesses the encoding. For short files it can take plain 8-bit text (often one with
+	// Windows line ends) for UTF-16 and read nonsense. UTF-16 text holds zero bytes: without any, the file is
+	// read again with the encoding it can have.
+	import delimited `0'
+	local enc = upper("`r(encoding)'")
+	if !inlist(substr("`enc'", 1, 5), "UTF-1", "UTF-3") exit
+	gettoken file rest : 0, parse(" ,")
+	if `"`file'"' == "using" gettoken file : rest, parse(" ,")
+	mata: st_local("enc", nwimp_textenc(st_local("file")))
+	if "`enc'" != "" {
+		import delimited `0' encoding("`enc'")
+	}
 end
 
 
@@ -1225,6 +1242,15 @@ program _nwimport_edgelist
 	local pot_delimiters_length : word count `pot_delimiters'
 	local i = 1
 
+	// insheet takes the bytes of a file as they are: a file with a byte-order mark, in UTF-16 or in an 8-bit
+	// encoding is read from a copy in plain UTF-8
+	if strpos(lower(`"`anything'"'), ".xls") == 0 {
+		tempfile __nwi_u8
+		gettoken __nwi_file : anything
+		mata: st_local("__nwi_conv", strofreal(nwimp_utf8copy(st_local("__nwi_file"), st_local("__nwi_u8"))))
+		if `__nwi_conv' local anything `""`__nwi_u8'""'
+	}
+
 	// Excel file detected
 	if (strpos(lower(`"`anything'"'), ".xls") != 0 ){
 		local excel = 1
@@ -1325,7 +1351,7 @@ program _nwimport_edgelist
 		if "`eventtime'" != "" local __nwi_opt "eventtime(`__nwi_t1')"
 		if "`time'" != "" local __nwi_opt "time(`__nwi_t1')"
 		if "`interval'" != "" local __nwi_opt "interval(`__nwi_t1' `__nwi_t2')"
-		nwset `ego' `alter' `value', `__nwi_opt' name(`name') `directed' `undirected' `xvars'
+		nwset `ego' `alter' `value', `__nwi_opt' name(`name') `directed' `undirected' `xvars' dropvars
 		exit
 	}
 	if `c(k)' == 5 {
@@ -1414,7 +1440,7 @@ program _nwimport_compressed
 	clear
 	
 	local anyting "compressed_example.txt"
-	import delimited `anything', delimiter(`delimiter') varnames(noname) clear
+	_nwimport_delimited `anything', delimiter(`delimiter') varnames(noname) clear
 	rename v1 ego
 	capture replace v2 = ego if v2 == ""
 	capture replace v2 = ego if v2 == .
@@ -1931,8 +1957,12 @@ capture mata: mata drop nwimp_cleanvars()
 capture mata: mata drop nwimp_dlline()
 capture mata: mata drop nwimp_dlrect()
 capture mata: mata drop nwimp_pajeklines()
+capture mata: mata drop nwimp_nobom()
+capture mata: mata drop nwimp_lines()
 capture mata: mata drop nwimp_pajekline()
 capture mata: mata drop nwimp_notabs()
+capture mata: mata drop nwimp_textenc()
+capture mata: mata drop nwimp_utf8copy()
 capture mata: mata drop nwimp_squareblankdiag()
 capture mata: mata drop nwimp_dlrename()
 capture mata: mata drop nwimp_dljoin()
@@ -1958,6 +1988,23 @@ real scalar nwimp_maskapos(string scalar fn, string scalar out)
 	for (i = 1; i <= n; i++) fput(fh, subinstr(L[i], char(34) + char(39), char(34) + "__nwapos__"))
 	fclose(fh)
 	return(1)
+}
+
+// the lines of a text that ends with a line break; empty lines are left out
+string rowvector nwimp_lines(string scalar text)
+{
+	transmorphic t
+
+	t = tokeninit(char(10), "", "")
+	tokenset(t, text)
+	return(tokengetall(t))
+}
+
+// a line without a UTF-8 byte-order mark
+string scalar nwimp_nobom(string scalar c)
+{
+	if (substr(c, 1, 3) == char((239, 187, 191))) return(substr(c, 4, .))
+	return(c)
 }
 
 // node names that the library can hold: no comma (the lists of names are comma separated), no double quote and no
@@ -2127,15 +2174,127 @@ string rowvector nwimp_dlrect(string scalar fn, real scalar nr, real scalar nc)
 	return(names)
 }
 
-// a copy of a file with every tab replaced by a blank
+// the encoding of a text file without zero bytes: "utf-8" if all of it is valid UTF-8, else "windows-1252"; empty if
+// the file holds zero bytes (as UTF-16 text does) or cannot be read here
+string scalar nwimp_textenc(string scalar fname)
+{
+	real scalar fh, k, utf8
+	string scalar fn, buf, carry
+	string matrix piece
+
+	fn = fname
+	if (!fileexists(fn) & fileexists(fn + ".csv")) fn = fn + ".csv"
+	fh = _fopen(fn, "r")
+	if (fh < 0) return("")
+	utf8 = 1
+	carry = ""
+	while (1) {
+		piece = fread(fh, 65536)
+		if (piece == J(0, 0, "")) break
+		if (strpos(piece, char(0))) {
+			fclose(fh)
+			return("")
+		}
+		buf = carry + piece
+		// a character of several bytes is not cut apart: the last one waits for the next chunk
+		k = strlen(buf)
+		while (k > 1 & k > strlen(buf) - 3 & ascii(substr(buf, k, 1))[1] >= 128 & ascii(substr(buf, k, 1))[1] < 192) k--
+		if (ustrinvalidcnt(substr(buf, 1, k - 1))) utf8 = 0
+		carry = substr(buf, k, .)
+	}
+	fclose(fh)
+	if (ustrinvalidcnt(carry)) utf8 = 0
+	return(utf8 ? "utf-8" : "windows-1252")
+}
+
+// writes a copy of a text file in UTF-8 without byte-order mark and returns 1; returns 0, and writes nothing, if the
+// file is such a text already or cannot be read here. Without a byte-order mark, text that is not valid UTF-8 is taken
+// to be in Windows-1252
+real scalar nwimp_utf8copy(string scalar fname, string scalar to)
+{
+	real scalar fi, fo, bom, k
+	string scalar fn, head, all, enc, bom8, le, be
+	string matrix piece
+
+	// no file name is empty or holds a double quote (_fopen() stops at such a name): insheet then says what it says
+	if (fname == "" | strpos(fname, char(34))) return(0)
+	fn = fname
+	if (!fileexists(fn) & fileexists(fn + ".raw")) fn = fn + ".raw"
+	fi = _fopen(fn, "r")
+	if (fi < 0) return(0)
+	piece = fread(fi, 3)
+	head = (piece == J(0, 0, "") ? "" : piece)
+	bom8 = char((239, 187, 191))
+	le = char((255, 254))
+	be = char((254, 255))
+	if (substr(head, 1, 2) == le | substr(head, 1, 2) == be) {
+		fseek(fi, 2, -1)
+		all = ""
+		while ((piece = fread(fi, 1048576)) != J(0, 0, "")) all = all + piece
+		fclose(fi)
+		fo = fopen(to, "rw")
+		all = ustrfrom(all, substr(head, 1, 2) == le ? "UTF-16LE" : "UTF-16BE", 1)
+		if (strlen(all)) fwrite(fo, all)
+		fclose(fo)
+		return(1)
+	}
+	fclose(fi)
+	bom = (head == bom8)
+	// empty for a file with zero bytes (UTF-16 without byte-order mark, or no text): it is left as it is
+	enc = nwimp_textenc(fn)
+	if (enc == "" | (enc == "utf-8" & !bom)) return(0)
+	fi = fopen(fn, "r")
+	fo = fopen(to, "rw")
+	if (bom) fseek(fi, 3, -1)
+	k = (!bom & enc == "windows-1252")
+	while ((piece = fread(fi, 65536)) != J(0, 0, "")) {
+		// one byte is one character in Windows-1252, so each chunk can be converted by itself
+		if (k) fwrite(fo, ustrfrom(piece, "windows-1252", 1))
+		else fwrite(fo, piece)
+	}
+	fclose(fi)
+	fclose(fo)
+	return(1)
+}
+
+// a copy of a UCINET DL file for the readers: tabs replaced by blanks, no byte-order mark, no blank lines
 void nwimp_notabs(string scalar from, string scalar to)
 {
-	real scalar fi, fo
+	real scalar fi, fo, k, last, first
+	string scalar buf, text, eol
 	string matrix piece
+	string rowvector L
 
 	fi = fopen(from, "r")
 	fo = fopen(to, "rw")
-	while ((piece = fread(fi, 65536)) != J(0, 0, "")) fwrite(fo, subinstr(piece, char(9), " "))
+	buf = ""
+	last = 0
+	first = 1
+	eol = char(10)
+	while (!last) {
+		piece = fread(fi, 65536)
+		last = (piece == J(0, 0, ""))
+		if (!last) buf = buf + subinstr(subinstr(subinstr(piece, char((13, 10)), eol), char(13), eol), char(9), " ")
+		else buf = buf + char(10)
+		// the complete lines of a chunk are cleaned and written together (one write per line is much slower)
+		k = strrpos(buf, char(10))
+		if (k == 0) continue
+		if (first) {
+			buf = nwimp_nobom(buf)
+			k = strrpos(buf, char(10))
+			first = 0
+		}
+		text = substr(buf, 1, k)
+		buf = substr(buf, k + 1, .)
+		// without an empty line or a line that ends in a blank there is nothing to leave out
+		if (substr(text, 1, 1) != eol & !strpos(text, eol + eol) & !strpos(text, " " + eol)) {
+			fwrite(fo, text)
+			continue
+		}
+		L = nwimp_lines(text)
+		if (cols(L)) L = select(L, strtrim(L) :!= "")
+		if (cols(L)) fwrite(fo, invtokens(L, eol) + eol)
+	}
 	fclose(fi)
 	fclose(fo)
 }
@@ -2145,7 +2304,10 @@ void nwimp_pajekline(real scalar fo, string scalar c)
 	string scalar t
 	string rowvector l
 
-	t = strtrim(subinstr(c, char(9), " "))
+	// the reader splits lines at blanks: tabs become blanks (a tie list with tabs would otherwise be read as no ties); a
+	// byte-order mark in front of the first line is removed
+	c = nwimp_nobom(subinstr(c, char(9), " "))
+	t = strtrim(c)
 	if (t == "") return
 	if (substr(t, 1, 1) == "%") {
 		l = tokens(t)
@@ -2159,9 +2321,10 @@ void nwimp_pajekline(real scalar fo, string scalar c)
 // network, written by nwexport, is kept. Lines of any length.
 void nwimp_pajeklines(string scalar from, string scalar to)
 {
-	real scalar fi, fo, i, last
+	real scalar fi, fo, i, k, last
 	string scalar buf
 	string matrix piece
+	string rowvector L
 
 	fi = fopen(from, "r")
 	fo = fopen(to, "rw")
@@ -2172,9 +2335,13 @@ void nwimp_pajeklines(string scalar from, string scalar to)
 		last = (piece == J(0, 0, ""))
 		if (!last) buf = buf + subinstr(piece, char(13), char(10))
 		else buf = buf + char(10)
-		while ((i = strpos(buf, char(10))) > 0) {
-			nwimp_pajekline(fo, substr(buf, 1, i - 1))
-			buf = substr(buf, i + 1, .)
+		// the complete lines are split in one step (cutting them off one by one copies the rest of the chunk each time)
+		k = strrpos(buf, char(10))
+		if (k == 0) continue
+		L = nwimp_lines(substr(buf, 1, k))
+		buf = substr(buf, k + 1, .)
+		for (i = 1; i <= cols(L); i++) {
+			nwimp_pajekline(fo, L[i])
 		}
 	}
 	fclose(fi)

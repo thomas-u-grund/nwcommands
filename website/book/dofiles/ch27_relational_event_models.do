@@ -72,6 +72,7 @@ keep if t < 14
 generate long seq = _n
 sort t seq
 by t: replace t = t + (_n - 1)/1e6
+drop seq
 nwset sender receiver, eventtime(t) name(mailw)
 nwrem mailw, nodsnd nidrec interval
 estat time

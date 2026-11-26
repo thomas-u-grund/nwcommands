@@ -109,4 +109,4 @@ The recode is applied to the distinct tie values and then to the stored ties, so
 
 ---
 
-*nwcommands version 3.38.0, 26 November 2026* ([check your installed version](nwversion))
+*nwcommands version 3.39.0, 26 November 2026* ([check your installed version](nwversion))

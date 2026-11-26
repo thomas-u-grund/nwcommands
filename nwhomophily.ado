@@ -82,6 +82,10 @@ program def nwhomophily
 		mata: mata drop `__temp'
 	}
 	mata: `__temp0' = exp(`__temp0')
+	if !(`density' >= 0 & `density' <= 1) {
+		di "{err}density() is a share of the dyads: give a number between 0 and 1."
+		exit 198
+	}
 	nwdyadprob , mat(`__temp0') density(`density') name(`name') `undirected' `xvars' ntimes(`ntimes')
 	local __nwh_list `r(netlist)'
 	mata: mata drop `__temp0'

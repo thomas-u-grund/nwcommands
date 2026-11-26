@@ -6,6 +6,12 @@ program nwconstraint
 	// only 4 of its locals) - this file's own syntax line has no option
 	// named the same as any of _nwsyntax's other exports, so calling it
 	// directly is a safe, direct simplification.
+	local __nwc_d : list posof "directed" in options
+	local __nwc_u : list posof "undirected" in options
+	if `__nwc_d' & `__nwc_u' {
+		di "{err}Options {bf:directed} and {bf:undirected} cannot be combined."
+		exit 198
+	}
 	_nwsyntax `netname'
 
 	// A network held as stored ties (large networks) gets the constraint network from the list of its non-zero cells
