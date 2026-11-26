@@ -47,6 +47,11 @@ display "`r(fname)'"
 
 * 2. (In the browser: drag, recolour, move the sliders, Save nodes, Save edges.
 * The two files below were saved in such a session.)
+* This downloads them unless they are already in the working directory.
+foreach f in lazega_saved_nodes.csv lazega_saved_edges.csv {
+	capture confirm file "`f'"
+	if _rc copy "https://nwcommands.org/tutorials/05-visualization/`f'" "`f'"
+}
 * 3. Bring the edits back.  No nodefactor() is given: the size slider is
 * scaled so that the static plot has the proportions of the view.
 nwplot lazega_adv, nodexy(x y) importcoords("lazega_saved_nodes.csv") edgeimport("lazega_saved_edges.csv") color(office, colorpalette(navy dkorange gs12)) symbol(practice) size(indeg) label(_nwnode) scheme(s1mono) labelopt(mlabsize(tiny)) export("plot_lazega_bringback.svg") replace
