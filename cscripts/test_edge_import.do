@@ -456,6 +456,11 @@ foreach kind in ascii latin1 {
 	nwimport "`file'", type(matrix) nwclear
 	ei_net c5_`kind' 2 false "(0,1 \ 1,0)" "`want'"
 }
+* nwimport.ado can be run again while its Mata functions are in memory
+qui findfile nwimport.ado
+local ado "`r(fn)'"
+qui run "`ado'"
+qui run "`ado'"
 di "PASS 7 commas"
 
 * ---- Pajek *Matrix
