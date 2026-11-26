@@ -1,9 +1,8 @@
 . * Tutorial 9: Two-mode networks
-. * The two data sets are loaded from the data folder of the repository here;
-. * once the release is installed, nwwebuse davis and nwwebuse ftdirectors_se do the same.
+. * nwwebuse downloads the two data sets (internet connection needed).
 . 
 . * Southern women: 18 women, 14 social events
-. nwuse ../../../data/davis, nwclear
+. nwwebuse davis, nwclear
 
 . nwsummarize davis
 --------------------------------------------------
@@ -357,7 +356,7 @@ one-mode graph.
 
 . 
 . * Company directors in Sweden: 5,092 directors, 455 companies
-. nwuse ../../../data/ftdirectors_se, nwclear
+. nwwebuse ftdirectors_se, nwclear
 
 . nwsummarize ftdirectors_se
 --------------------------------------------------

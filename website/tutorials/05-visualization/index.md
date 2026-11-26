@@ -223,7 +223,15 @@ Export coordinates...
 
 The page this call writes is on its own page, [Interactive demo: the Lazega advice network](../../book/interactive/lazega/).
 Two CSV files saved in such a session (one node dragged, the Providence lawyers recolored, the size
-slider at 1.85) are in the folder of this tutorial; they bring the edits back like this:
+slider at 1.85) are in the folder of this tutorial. To follow along, download them into the working
+directory:
+
+```stata
+copy "https://nwcommands.org/tutorials/05-visualization/lazega_saved_nodes.csv" "lazega_saved_nodes.csv"
+copy "https://nwcommands.org/tutorials/05-visualization/lazega_saved_edges.csv" "lazega_saved_edges.csv"
+```
+
+They bring the edits back like this:
 
 ```stata
 . nwplot lazega_adv, nodexy(x y) importcoords("lazega_saved_nodes.csv") edgeimport("lazega_saved_edges.csv") color(office, colorpalette(navy dkorange gs12)) symbol(practice) size(indeg) label(_nwnode) scheme(s1mono) labelopt(mlabsize(tiny)) export("plot_lazega_bringback.svg") replace
