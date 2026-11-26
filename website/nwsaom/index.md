@@ -19,8 +19,6 @@ change over time.
 [Manual](https://doi.org/10.5281/zenodo.23623807){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [nwsaom on GitHub](https://github.com/thomas-u-grund/nwsaom){: .btn .fs-5 .mb-4 .mb-md-0 }
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23623807.svg)](https://doi.org/10.5281/zenodo.23623807)
-
 ## What nwsaom is
 
 `nwsaom` fits stochastic actor-oriented models (Snijders 2001) to networks that were observed at two
@@ -68,7 +66,7 @@ errors in `nwsaom` are the author's.
 ## Links
 
 - Source code and releases: [github.com/thomas-u-grund/nwsaom](https://github.com/thomas-u-grund/nwsaom)
-- The manual (PDF), archived at Zenodo: [doi:10.5281/zenodo.23623807](https://doi.org/10.5281/zenodo.23623807); also in the [GitHub repository](https://github.com/thomas-u-grund/nwsaom/blob/main/manual/nwsaom_manual.pdf)
+- [Manual](manual/): the reference, as a PDF.
 - Stata's own documentation: `help nwsaom`, `help nwsaom_estat`, `help nwsaom_remarks`; or the
   [`nwsaom` reference page](../reference/nwsaom)
 - The paper on `nwsaom` is under review; the current version is on the [literature page](../literature/).
