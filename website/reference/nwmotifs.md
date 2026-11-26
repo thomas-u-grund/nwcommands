@@ -69,8 +69,9 @@ Classified by (edge count, sorted degree sequence) alone - a COMPLETE invariant 
 
 `nwmotifs` reports a plain census with no significance test of its own - it needs none: because every count is published as an ordinary `r()` scalar, [nwcug](nwcug)'s existing `stat()`/`rname()` template machinery already works against it unmodified, the same "compose with existing infrastructure" pattern [nwlambda](nwlambda) uses with [nwhierarchy](nwhierarchy). To test whether a shape is over- or under-represented relative to a random graph of the same size and density:
 
-- `. nwcug mynet, stat(nwmotifs ##net##, silent) rname(cycle) condition(density)`
-
+```stata
+. nwcug mynet, stat(nwmotifs ##net##, silent) rname(cycle) condition(density)
+```
 substituting **path**/**star**/**cycle**/**paw**/**diamond**/**k4** for whichever shape's prevalence is of interest, and `condition(census)` for a directed network to hold the mutual/asymmetric/null dyad counts fixed instead of just density (see [nwcug](nwcug) for the full set of conditioning/tail/reps options this test supports).
 
 `plot` draws a bar chart of the 7 category counts, via this package's own established preserve/rebuild-a-plotting-dataset/restore convention - the same one [nwcug](nwcug)'s own `plot` option and [nwtriads](nwtriads)'s own `plot` option (its 3-node analogue) use. Grayscale by design, matching every other plot this package produces.
@@ -95,7 +96,9 @@ The census is not obtained by listing the *n*(*n*-1)(*n*-2)(*n*-3)/24 four-node 
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
 
-- `. nwmotifs flomarriage, plot export(motifs.png, width(1200))`
+```stata
+. nwmotifs flomarriage, plot export(motifs.png, width(1200))
+```
 
 ## Stored results
 

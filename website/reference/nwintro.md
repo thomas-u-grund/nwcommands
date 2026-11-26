@@ -10,17 +10,14 @@ search_exclude: false
 
 ## Contents
 
-**SectionDescription**
-
-- hline 46
-- [**[NW-1.1]****Introduction**](nwintro)
-- [**[NW-1.2]****Required software**](nwintro)
-- [**[NW-1.3]****Network concepts similar to Stata**](nwintro)
-- [**[NW-1.4]****Network commands similar to Stata**](nwintro)
-- [**[NW-1.5]****Statistical network models**](nwintro)
-- [**[NW-1.6]****Questions, bugs and getting involved**](nwintro)
-- [**[NW-1.7]****Citation**](nwintro)
-- [**[NW-1.8]****Network size and speed**](nwintro)
+- [NW-1.1] [Introduction](#introduction)
+- [NW-1.2] [Required software](#required-software)
+- [NW-1.3] [Network concepts similar to Stata](#network-concepts-similar-to-stata)
+- [NW-1.4] [Network commands similar to Stata](#network-commands-similar-to-stata)
+- [NW-1.5] [Statistical network models](#statistical-network-models)
+- [NW-1.6] [Questions, bugs and getting involved](#questions-bugs-and-getting-involved)
+- [NW-1.7] [Citation](#citation)
+- [NW-1.8] [Network size and speed](#network-size-and-speed)
 
 ## Introduction
 

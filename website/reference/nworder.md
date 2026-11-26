@@ -48,28 +48,44 @@ The command works the same for every network type (see [nwnetworktypes](nwnetwor
 
 **Setup**
 
-- `. nwwebuse florentine, nwclear`
+```stata
+. nwwebuse florentine, nwclear
+```
+Describe the networks
 
-- Describe the networks
-- `. nwds`
+```stata
+. nwds
+```
+Move `flobusiness` to the beginning of the dataset
 
-- Move `flobusiness` to the beginning of the dataset
-- `. nworder flobusiness`
+```stata
+. nworder flobusiness
+```
+Describe the networks
 
-- Describe the networks
-- `. nwds`
+```stata
+. nwds
+```
+Make `flobusiness` the last network in the dataset
 
-- Make `flobusiness` the last network in the dataset
-- `. nworder flobusiness, last`
+```stata
+. nworder flobusiness, last
+```
+Describe the networks
 
-- Describe the networks
-- `. nwds`
+```stata
+. nwds
+```
+Alphabetize the networks
 
-- Alphabetize the networks
-- `. nworder flomarriage flobusiness, alphabetic`
+```stata
+. nworder flomarriage flobusiness, alphabetic
+```
+Describe the networks
 
-- Describe the networks
-- `. nwds`
+```stata
+. nwds
+```
 
 ## See also
 

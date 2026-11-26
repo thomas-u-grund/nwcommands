@@ -33,49 +33,32 @@ The command can be used to generate Stata variables with some function *netfcn1*
 
 *netfcn1* is one of:
 
-- `between(netname)` [, `sym` `nosym`]
-- Calculate the betweenness centrality of network nodes (see [nwbetween](nwbetween)). A directed network is analysed as it is; `sym` symmetrizes it first; `nosym` is accepted and is the default.
-
-- `closeness(netname)` [, `unconnected(integer)` `sym` `nosym`]
-- Calculate the closeness centrality of network nodes (see [nwcloseness](nwcloseness)). A directed network is analysed as it is; `sym` symmetrizes it first; `nosym` is accepted and is the default.
-
-- `clustering(netname)`
-- Calculate the clustering coefficient of network nodes (see [nwclustering](nwclustering)).
-
-- `components(netname)`
-- Return the component membership of nodes (see [nwcomponents](nwcomponents)).
-
-- `context(netname)``,`
-- `attribute`(`varname`)
-- [`stat`([statistic](nwcontext))
-- `mode`([context](nwcontext))
-- `mat`(string)
-- `noweight`]
-- Generate a context variable based on attributes of a node's neighbors (see [nwcontext](nwcontext)).
-
-- `degree(netname)`
-- Calculate the degree centrality of network nodes. When the network is directed, the total degree (outdegree plus indegree) is returned (see [nwdegree](nwdegree)).
-
-- `evcent(netname)`
-- Calculate the eigenvector centrality of network nodes (see [nwevcent](nwevcent)).
-
-- `farness(netname)`
-- Calculate the farness of network nodes (see [nwcloseness](nwcloseness)).
-
-- `indegree(netname)`
-- Return the indegree of network nodes. When the network is undirected, the degree is returned (see [nwdegree](nwdegree)).
-
-- `isolates(netname)`
-- Returns the isolates of a network (see [nwdegree](nwdegree)).
-
-- `lgc(netname)`
-- Calculate membership to largest component as variable (see [nwcomponents](nwcomponents)).
-
-- `nearness(netname)`
-- Calculate the nearness of network nodes (see [nwcloseness](nwcloseness)).
-
-- `outdegree(netname)`
-- Return the outdegree of network nodes. When the network is undirected, the degree is returned (see [nwdegree](nwdegree)).
+- `between(netname)` [, `sym` `nosym`]<br>
+  Calculate the betweenness centrality of network nodes (see [nwbetween](nwbetween)). A directed network is analysed as it is; `sym` symmetrizes it first; `nosym` is accepted and is the default.
+- `closeness(netname)` [, `unconnected(integer)` `sym` `nosym`]<br>
+  Calculate the closeness centrality of network nodes (see [nwcloseness](nwcloseness)). A directed network is analysed as it is; `sym` symmetrizes it first; `nosym` is accepted and is the default.
+- `clustering(netname)`<br>
+  Calculate the clustering coefficient of network nodes (see [nwclustering](nwclustering)).
+- `components(netname)`<br>
+  Return the component membership of nodes (see [nwcomponents](nwcomponents)).
+- `context(netname),` `attribute`(`varname`) [`stat`([statistic](nwcontext)) `mode`([context](nwcontext)) `mat`(string) `noweight`]<br>
+  Generate a context variable based on attributes of a node's neighbors (see [nwcontext](nwcontext)).
+- `degree(netname)`<br>
+  Calculate the degree centrality of network nodes. When the network is directed, the total degree (outdegree plus indegree) is returned (see [nwdegree](nwdegree)).
+- `evcent(netname)`<br>
+  Calculate the eigenvector centrality of network nodes (see [nwevcent](nwevcent)).
+- `farness(netname)`<br>
+  Calculate the farness of network nodes (see [nwcloseness](nwcloseness)).
+- `indegree(netname)`<br>
+  Return the indegree of network nodes. When the network is undirected, the degree is returned (see [nwdegree](nwdegree)).
+- `isolates(netname)`<br>
+  Returns the isolates of a network (see [nwdegree](nwdegree)).
+- `lgc(netname)`<br>
+  Calculate membership to largest component as variable (see [nwcomponents](nwcomponents)).
+- `nearness(netname)`<br>
+  Calculate the nearness of network nodes (see [nwcloseness](nwcloseness)).
+- `outdegree(netname)`<br>
+  Return the outdegree of network nodes. When the network is undirected, the degree is returned (see [nwdegree](nwdegree)).
 
 The number of an observation `_n` in `newvar` corresponds to the [nodeid](nodeid) of a node in a network.
 
@@ -91,53 +74,34 @@ The command can also be used to generate networks. There are two ways to do this
 
 *netfcn2* is one of:
 
-- `duplicate(netname)`
-- Duplicate a network (see [nwduplicate](nwduplicate)).
-
-- `dyadprob(netname)` , `density(float)` [`undirected` `xvars`]
-- Generate a network based on tie probabilities (see [nwdyadprob](nwdyadprob)).
-
-- `geodesic(netname)` [`,`
-- `unconnected(integer)`
-- `sym`
-- `xvars`]
-- Generate a network of shortest paths between nodes (see [nwgeodesic](nwgeodesic)).
-
-- `homophily(varname)`, `homophily(float)` `density(float)` [...]
-- Generate a homophily network (see [nwhomophily](nwhomophily)).
-
-- `lattice`(*`rows cols`*) [, `undirected` `xwrap` `ywrap` `xvars`]
-- Generate a lattice network (see [nwlattice](nwlattice)).
-
-- `large(netname)`
-- Extract the largest component as a network.
-
-- `path(netname)`, `ego(nodeid)` `alter(nodeid)` [`length(int)` `sym` `xvars`]
-- Not currently implemented as a shortcut - [nwpath](nwpath) can produce zero, one, or several
-- output networks (one per shortest path found), which does not fit this command's own "exactly one
-- network per call" form. Use [nwpath](nwpath) directly - its own `generate()` option names one
-- network per path found.
-
-- `permute(netname)` [, `xvars`]
-- Random permutation of a network (see [nwpermute](nwpermute)).
-
-- `pref`(`nodes`) [, `m0(int)` `m(int)` `prob(float)` `undirected` `xvars`]
-- Generate a preferential attachment a network (see [nwpref](nwpref)).
-
-- `random`(`nodes`) [, `prob(float)` `density(float)` `undirected` `xvars`]
-- Generate a random network (see [nwrandom](nwrandom)).
-
-- `reach(netname)` [, `sym` `xvars`]
-- Generate a reachability network (see [nwreach](nwreach)).
-
-- `ring`(`nodes`) , `k(int)` [`undirected` `xvars`]
-- Generate a ring lattice (see [nwring](nwring)).
-
-- `small`(`nodes`) , `k(int)` [`prob(float)` `shortcuts(int)` `undirected` `xvars`]
-- Generate a small-world network (see [nwsmall](nwsmall)).
-
-- `transpose(netname)`
-- Transpose a network (see [nwtranspose](nwtranspose)).
+- `duplicate(netname)`<br>
+  Duplicate a network (see [nwduplicate](nwduplicate)).
+- `dyadprob(netname)` , `density(float)` [`undirected` `xvars`]<br>
+  Generate a network based on tie probabilities (see [nwdyadprob](nwdyadprob)).
+- `geodesic(netname)` [`,` `unconnected(integer)` `sym` `xvars`]<br>
+  Generate a network of shortest paths between nodes (see [nwgeodesic](nwgeodesic)).
+- `homophily(varname)`, `homophily(float)` `density(float)` [...]<br>
+  Generate a homophily network (see [nwhomophily](nwhomophily)).
+- `lattice`(*`rows cols`*) [, `undirected` `xwrap` `ywrap` `xvars`]<br>
+  Generate a lattice network (see [nwlattice](nwlattice)).
+- `large(netname)`<br>
+  Extract the largest component as a network.
+- `path(netname)`, `ego(nodeid)` `alter(nodeid)` [`length(int)` `sym` `xvars`]<br>
+  Not currently implemented as a shortcut - [nwpath](nwpath) can produce zero, one, or several output networks (one per shortest path found), which does not fit this command's own "exactly one network per call" form. Use [nwpath](nwpath) directly - its own `generate()` option names one network per path found.
+- `permute(netname)` [, `xvars`]<br>
+  Random permutation of a network (see [nwpermute](nwpermute)).
+- `pref`(`nodes`) [, `m0(int)` `m(int)` `prob(float)` `undirected` `xvars`]<br>
+  Generate a preferential attachment a network (see [nwpref](nwpref)).
+- `random`(`nodes`) [, `prob(float)` `density(float)` `undirected` `xvars`]<br>
+  Generate a random network (see [nwrandom](nwrandom)).
+- `reach(netname)` [, `sym` `xvars`]<br>
+  Generate a reachability network (see [nwreach](nwreach)).
+- `ring`(`nodes`) , `k(int)` [`undirected` `xvars`]<br>
+  Generate a ring lattice (see [nwring](nwring)).
+- `small`(`nodes`) , `k(int)` [`prob(float)` `shortcuts(int)` `undirected` `xvars`]<br>
+  Generate a small-world network (see [nwsmall](nwsmall)).
+- `transpose(netname)`<br>
+  Transpose a network (see [nwtranspose](nwtranspose)).
 
 ## Network types
 

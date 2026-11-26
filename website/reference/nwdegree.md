@@ -84,7 +84,7 @@ The stored results **r(dg_central)** (undirected), **r(indg_central)** and **r(o
 
 ## Examples
 
-- This is the example used in Opsahl et al. (2010, Table 1):
+This is the example used in Opsahl et al. (2010, Table 1):
 
 ```stata
 . nwclear
@@ -131,8 +131,10 @@ The next example saves the out- and indegree centrality in the variables *myout*
 
 `plot` draws the distribution of the variable(s) just generated, over the nodes of the network: a histogram of the fraction of nodes at each degree (whole degrees get one bar each), or, with `ccdf`, the share of nodes with degree at least k on log-log axes (nodes of degree 0 are not on a log axis; their number is in the note). A directed network gives two panels, outdegree and indegree. `standardize` is respected: the variables are then the degrees divided by N - 1. `name()` names the graph in memory, `saving()` writes a `.gph` file and `export()` writes it with `graph export` (the file extension sets the format; `width()` and the other `graph export` options follow a comma). With `plot`, the options that are not listed here are options of `twoway` (of `graph combine` for a directed network) and come last; without `plot` they are the options of the table, as always, and `name()`, `saving()`, `export()` and `ccdf` give an error. `plot` needs one network: a two-mode network (use `histogram` of the variable of [nw2degree](nw2degree)), a valued network whose degree is the strength (use `binary` or `alpha(0)`) and a list of networks stop with error 198.
 
-- `. nwdegree glasgow1, generate(myout myin) replace plot export(degree.png, width(1000))`
-- `. nwdegree glasgow1, generate(myout myin) replace plot ccdf name(ccdf)`
+```stata
+. nwdegree glasgow1, generate(myout myin) replace plot export(degree.png, width(1000))
+. nwdegree glasgow1, generate(myout myin) replace plot ccdf name(ccdf)
+```
 
 ## Stored results
 

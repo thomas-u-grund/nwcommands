@@ -187,8 +187,10 @@ There is hardly any correlation. Similarity on doing sports does not seem to mat
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. `noplot` switches the plot off; `name()` (with two networks), `saving()` and `export()` need the plot.
 
-- `. nwwebuse florentine, nwclear`
-- `. nwcorrelate flomarriage flobusiness, permutations(500) export(corr.png, width(1200))`
+```stata
+. nwwebuse florentine, nwclear
+. nwcorrelate flomarriage flobusiness, permutations(500) export(corr.png, width(1200))
+```
 
 ## Network types
 

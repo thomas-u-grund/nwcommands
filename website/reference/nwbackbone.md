@@ -38,13 +38,8 @@ nwbackbone [netname] , m:ethod(method) [options]
 
 Two kinds of input are handled.
 
-- **A valued one-mode network** (tie values other than 0 and 1; directed or undirected). The methods
-- `disparity`, `lans` and `mlf` test every tie against a null model of the ties of the same nodes;
-- `global` keeps ties above a value.
-- **A binary two-mode network**, say persons by events. The weighted projection onto one mode counts the
-- shared affiliations of every pair of nodes; the methods `sdsm`, `fdsm`, `fixedrow`,
-- `fixedcol` and `fixedfill` test each count against a null model of random two-mode networks.
-- The backbone is a one-mode network of the nodes of the mode chosen with `project()`.
+- **A valued one-mode network** (tie values other than 0 and 1; directed or undirected). The methods `disparity`, `lans` and `mlf` test every tie against a null model of the ties of the same nodes; `global` keeps ties above a value.
+- **A binary two-mode network**, say persons by events. The weighted projection onto one mode counts the shared affiliations of every pair of nodes; the methods `sdsm`, `fdsm`, `fixedrow`, `fixedcol` and `fixedfill` test each count against a null model of random two-mode networks. The backbone is a one-mode network of the nodes of the mode chosen with `project()`.
 
 ## Methods
 
@@ -92,21 +87,32 @@ Two kinds of input are handled.
 
 ## Examples
 
-- Disparity filter of a valued network, with a Holm correction
-- `. nwset, mat((0,9,1,1\9,0,1,2\1,1,0,8\1,2,8,0)) name(w) undirected`
-- `. nwbackbone w, method(disparity) alpha(0.2) mtc(holm) generate(wb)`
+Disparity filter of a valued network, with a Holm correction
 
-- Keep the ties of a valued network with a value above 3, with their values
-- `. nwbackbone w, method(global) threshold(3) keepvalues generate(wg)`
+```stata
+. nwset, mat((0,9,1,1\9,0,1,2\1,1,0,8\1,2,8,0)) name(w) undirected
+. nwbackbone w, method(disparity) alpha(0.2) mtc(holm) generate(wb)
+```
+Keep the ties of a valued network with a value above 3, with their values
 
-- Load a two-mode network (women by social events)
-- `. nwwebuse davis, nwclear`
+```stata
+. nwbackbone w, method(global) threshold(3) keepvalues generate(wg)
+```
+Load a two-mode network (women by social events)
 
-- Backbone of the projection of a two-mode network (persons by events) onto the persons
-- `. nwbackbone davis, method(sdsm) alpha(0.05) mtc(BH) project(1) generate(persons)`
+```stata
+. nwwebuse davis, nwclear
+```
+Backbone of the projection of a two-mode network (persons by events) onto the persons
 
-- Fixed degree sequence model with 2,000 random networks
-- `. nwbackbone davis, method(fdsm) trials(2000) seed(1) generate(persons_fdsm)`
+```stata
+. nwbackbone davis, method(sdsm) alpha(0.05) mtc(BH) project(1) generate(persons)
+```
+Fixed degree sequence model with 2,000 random networks
+
+```stata
+. nwbackbone davis, method(fdsm) trials(2000) seed(1) generate(persons_fdsm)
+```
 
 ## Stored results
 

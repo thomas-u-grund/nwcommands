@@ -52,17 +52,17 @@ With `graph`, `nwcompare` adds a graph of the coefficients (point estimates with
 
 ## Examples
 
-- `. nwergm flomarriage, edges`
-- `. estimates store m0`
-- `. nwergm flomarriage, edges gwesp(.5)`
-- `. estimates store m1`
-- `. nwcompare m0 m1, sort(bic)`
-
-- `. nwcompare m0 m1, graph coefopts(eform)`
-- `. nwcompare m0 m1, graph export(compare.png, width(1200))`
-
-- `. nwsbm flomarriage, maxblocks(4) seed(1)`
-- `. nwcompare m0 m1 .`
+```stata
+. nwergm flomarriage, edges
+. estimates store m0
+. nwergm flomarriage, edges gwesp(.5)
+. estimates store m1
+. nwcompare m0 m1, sort(bic)
+. nwcompare m0 m1, graph coefopts(eform)
+. nwcompare m0 m1, graph export(compare.png, width(1200))
+. nwsbm flomarriage, maxblocks(4) seed(1)
+. nwcompare m0 m1 .
+```
 
 ## Stored results
 

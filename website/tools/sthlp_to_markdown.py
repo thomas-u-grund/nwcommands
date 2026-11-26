@@ -310,6 +310,33 @@ def get_section(text, name):
     return m.group(1).strip("\n") if m else None
 
 
+# a paragraph marker with its text on the same line ({phang2}{opth x(y)}, {pmore2}Text ...)
+_INLINE_PARA = re.compile(
+    r"\{(phang[23]?|pmore[23]?|pstd|psee|pin2?)\}(?:\{\.\.\.\})?\s*(?=\S)")
+
+
+# the two-column table of contents of the overview help files: a list of
+# jump links to the page's own sections
+_TOC_ROW = re.compile(
+    r"^\{help \w+##\w+:\{col \d+\}\{bf:(\[[^\]]+\])\}\{col \d+\}\{bf:([^{}]+)\}\}(?:\{p_end\})?[ \t]*$",
+    re.M)
+
+
+def contents_list(raw: str) -> str:
+    raw = re.sub(r"(\{bf:\[[^\]]+\]\})\{\.\.\.\}", r"\1", raw)
+    if not _TOC_ROW.search(raw):
+        return raw
+    raw = re.sub(r"^\{col \d+\}(?:Section\{col \d+\}Description|\{hline \d+\})[^\n]*\n", "", raw, flags=re.M)
+
+    def row(m):
+        title = m.group(2).strip()
+        anchor = re.sub(r"[^a-z0-9_ -]", "", title.lower()).replace(" ", "-")
+        return f"{{phang}}{m.group(1)} {{contentslink:{anchor}:{title}}}{{p_end}}"
+
+    raw = _TOC_ROW.sub(row, raw)
+    return re.sub(r"(\{contentslink:[^\n]*\n)\n+(?=\{phang\}\[)", r"\1", raw)
+
+
 def paragraphs_to_md(raw: str) -> str:
     """Convert a section's raw SMCL body into markdown paragraphs, pulling
     out {cmd:. ...}-style example lines into fenced code blocks.
@@ -323,6 +350,10 @@ def paragraphs_to_md(raw: str) -> str:
     description lines, no {p_end} per line; (2) {p2col:label}desc{p_end}
     bullet/definition blocks (used for both plain bullets, {p2col: o}..., and
     labeled lists), bracketed by {p2colset ...}/{p2colreset}."""
+    raw = contents_list(raw)
+    # clickable example commands ({p 8 8 2}{stata "x":. x}{p_end}) are examples
+    raw = re.sub(r'^\{(?:p[ \d]*|phang2?)\}\{stata\s+"[^"]*":(\. [^{}]*)\}\{p_end\}[ \t]*$',
+                 r"{phang2}{cmd:\1}{p_end}", raw, flags=re.M)
     lines = raw.split("\n")
     out = []
     code_buf = []
@@ -367,7 +398,8 @@ def paragraphs_to_md(raw: str) -> str:
                     rendered.append(f"**{t}**")
                     rendered.append("")
                 else:
-                    rendered.append(f"- {t}")
+                    t = re.sub(r"^(?:o|-) (?=\S)", "", t)
+                    rendered.append(t if re.match(r"\d+\. ", t) else f"- {t}")
             if rendered:
                 out.extend(rendered)
                 out.append("")
@@ -379,7 +411,48 @@ def paragraphs_to_md(raw: str) -> str:
             out.append("")
             list_buf.clear()
 
+    block = None  # (marker, [line, ...]) of an open inline-marker paragraph
+    item_end = None  # len(out) right after a list item that a {pmore} may continue
+
+    def flush_block():
+        nonlocal block, item_end
+        if block is None:
+            return
+        marker, parts = block
+        block = None
+        txt = inline(" ".join(x.strip() for x in parts if x.strip()))
+        txt = re.sub(r"[ \t]+", " ", txt).replace("`` ", "` ").replace("``,`", ",`")
+        if not txt:
+            return
+        own = re.match(r"(?:o |- )(?=\S)", txt)  # a list marker typed in the text
+        if own:
+            marker, txt = "phang", txt[own.end():]
+        elif txt.startswith("[- "):  # a typed marker inside a link
+            marker, txt = "phang", "[" + txt[3:]
+        if txt in ("Setup", "Scalars", "Macros", "Matrices", "Functions"):
+            out.extend([f"**{txt}**", ""])
+        elif re.match(r"\d+\. ", txt):
+            out.extend([txt, ""])
+        elif marker.startswith("phang"):
+            # a hanging-indent paragraph: one list item
+            if item_end == len(out) and out and out[-1] == "":
+                out.pop()
+            out.extend([f"- {txt}", ""])
+            item_end = len(out)
+        elif marker.startswith("pmore") and item_end == len(out):
+            # indented text below a list item belongs to that item
+            out.pop()
+            if "<br>" in out[-1] or out[-1].startswith("  "):
+                out.extend(["", f"  {txt}", ""])
+            else:
+                out[-1] += "<br>"
+                out.extend([f"  {txt}", ""])
+            item_end = len(out)
+        else:
+            out.extend([txt, ""])
+
     def flush_all():
+        flush_block()
         flush_code()
         flush_para()
         flush_verbatim()
@@ -419,6 +492,31 @@ def paragraphs_to_md(raw: str) -> str:
             else:
                 desc_parts.append(line)
                 continue
+        cmd_m = _INLINE_PARA.match(stripped)
+        if cmd_m and stripped[cmd_m.end():].startswith("{cmd:. "):
+            rest = stripped[cmd_m.end():].replace("{p_end}", "").rstrip()
+            _, after = read_balanced(rest, 0)
+            if not rest[after:].strip():  # nothing but the command
+                if not (code_buf and all(x.startswith("{cmd:. ") for x in code_buf)):
+                    flush_all()
+                code_buf.append(rest)
+                pending_blank.clear()
+                mode = None
+                continue
+        # the open inline-marker paragraph runs to {p_end}, a blank line or
+        # the next block-level element, and is reflowed as Stata shows it
+        if block is not None:
+            if (stripped == "" or _INLINE_PARA.match(stripped)
+                    or is_code_start(line)
+                    or stripped.startswith("{cmd:. ")
+                    or re.match(r"\{(?:p2col|synopt|p |p(?:std|more[23]?|hang[23]?|see|in2?)\})", stripped)):
+                flush_block()  # and handle this line below
+            else:
+                end = line.find("{p_end}")
+                block[1].append(line if end == -1 else line[:end])
+                if end != -1:
+                    flush_block()
+                continue
         # example block (Stata input and output as shown in a log): starts at
         # a line with a colour tag / {hline N} / {c |} / {cmd:. ...} (outside a
         # {pstd} paragraph, apart from {cmd:. ...}); continues over
@@ -442,6 +540,19 @@ def paragraphs_to_md(raw: str) -> str:
             flush_all()
             code_buf.append(line)
             continue
+        para_m = _INLINE_PARA.match(stripped)
+        if para_m:
+            rest = stripped[para_m.end():]
+            # a command followed by other text is left to the code below
+            if not rest.startswith("{cmd:. "):
+                flush_all()
+                mode = None
+                end = rest.find("{p_end}")
+                if rest != "{p_end}":
+                    block = (para_m.group(1), [rest if end == -1 else rest[:end]])
+                    if end != -1:
+                        flush_block()
+                continue
         # paragraph-indent directive lines, alone on a line: start a
         # reflowable prose paragraph.
         if re.fullmatch(r"\{p(?:std|more2?|hang2?)\}(?:\{\.\.\.\})?", stripped):
@@ -514,6 +625,7 @@ def paragraphs_to_md(raw: str) -> str:
     flush_all()
     # collapse extra blank lines
     md = "\n".join(out)
+    md = re.sub(r"contentslink:([a-z0-9_-]*):([^\n]+)", r"[\2](#\1)", md)
     md = re.sub(r"\n{3,}", "\n\n", md)
     return md.strip()
 

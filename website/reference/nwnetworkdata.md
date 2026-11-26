@@ -129,14 +129,14 @@ Name of Rscript, if it is not found
 
 ## Stored results
 
-- `nwnetworkdata load` stores in `r()`:
+`nwnetworkdata load` stores in `r()`:
 
 - **`r(n_loaded)`** --- number of networks loaded
 - **`r(net)`** --- name of the last network loaded (the current network)
 - **`r(nets)`** --- names of all networks loaded
 - **`r(obj)`** --- name of the data set
 
-- `nwnetworkdata list` stores `r(n_objects)` and `r(n_networks)`.
+`nwnetworkdata list` stores `r(n_objects)` and `r(n_networks)`.
 
 ## See also
 

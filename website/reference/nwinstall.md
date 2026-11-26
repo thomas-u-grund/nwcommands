@@ -85,17 +85,12 @@ The commands `nwsaom` (stochastic actor-oriented models), `nwergm` (exponential 
 
 `gui` (and therefore `all` and `everything`, unless you add `nogui`) puts the single line `nwinstall, usermenu` into your **profile.do**, so that Stata builds the *Network Analysis* menu in the *User* menu each time it starts. The line is never written twice, however often you run `nwinstall`:
 
-- o Other spellings of the line (`nwinstall, downloadoff`, extra spaces, a `quietly` in front) count as the same line; extra copies are dropped, and the rest of your **profile.do** is
-- kept as it was.
-- o If **profile.do** (or another **profile.do** Stata reads, in your PERSONAL, SITE or home folder or the current folder) already starts a *Network Analysis* menu in some other way, for
-- example with a `window menu` line of your own, no second menu is added; `nwinstall` names the line and the file in a message. Lines it cannot identify with certainty are never deleted.
-- o Within one session the menu is rebuilt from an empty *User* menu, so typing the command twice shows every entry once. Note that this clears all other menu entries you added to the
-- *User* menu in that session.
-- o The menu entries of the model packages `nwsaom` and `nwergm` appear only when the package's dialog boxes are installed. There is one entry for each package under
-- *Statistical Models*, *Stochastic actor-oriented model (nwsaom)* and *Exponential random graph model (nwergm)*. The other dialogs of a package (Bayesian estimation, several networks,
-- postestimation, simulation and so on) open from buttons inside its main dialog.
-- o If the menu cannot be built (a Stata without menus, a batch run), you get a note and the installation goes on; nothing fails.
-- o `nwinstall, remove` takes the menu, the `nwinstall, usermenu` line and the nwcommands files away again.
+- Other spellings of the line (`nwinstall, downloadoff`, extra spaces, a `quietly` in front) count as the same line; extra copies are dropped, and the rest of your **profile.do** is kept as it was.
+- If **profile.do** (or another **profile.do** Stata reads, in your PERSONAL, SITE or home folder or the current folder) already starts a *Network Analysis* menu in some other way, for example with a `window menu` line of your own, no second menu is added; `nwinstall` names the line and the file in a message. Lines it cannot identify with certainty are never deleted.
+- Within one session the menu is rebuilt from an empty *User* menu, so typing the command twice shows every entry once. Note that this clears all other menu entries you added to the *User* menu in that session.
+- The menu entries of the model packages `nwsaom` and `nwergm` appear only when the package's dialog boxes are installed. There is one entry for each package under *Statistical Models*, *Stochastic actor-oriented model (nwsaom)* and *Exponential random graph model (nwergm)*. The other dialogs of a package (Bayesian estimation, several networks, postestimation, simulation and so on) open from buttons inside its main dialog.
+- If the menu cannot be built (a Stata without menus, a batch run), you get a note and the installation goes on; nothing fails.
+- `nwinstall, remove` takes the menu, the `nwinstall, usermenu` line and the nwcommands files away again.
 
 `dupcheck` lists dialog files that exist in more than one folder of the ado path (for example an old copy in your PERSONAL folder next to the installed one). Stata uses the first copy it finds; `nwinstall` tells you which one that is and deletes nothing. `nwinstall, all` runs this check at the end.
 
@@ -103,9 +98,10 @@ The commands `nwsaom` (stochastic actor-oriented models), `nwergm` (exponential 
 
 `nwinstall` installs compiled plugins for macOS, Linux and Windows. If the plugin of your platform is missing, older than the `.ado` files, or does not load on your computer (for example a Linux system with an older C library), you can compile it yourself:
 
-- `. nwinstall, buildplugin(nwsaom)`
-- `. nwinstall, buildplugin(all)`
-
+```stata
+. nwinstall, buildplugin(nwsaom)
+. nwinstall, buildplugin(all)
+```
 The command copies the C source of the package from its GitHub repository (the same source that `net get` <package> copies), compiles it with the compiler of your computer and puts the plugin where `net install` puts it, in the folder of the PLUS directory; an existing plugin is kept as a file with the extension `.prev`. Restart Stata afterwards, because a plugin that is already loaded is not replaced in a running session. The plugin does not depend on the version or the flavour of Stata (BE, SE, MP; the plugin interface is the same), only on the operating system and the processor, so a plugin built on your computer works in every Stata of that computer.
 
 You need a C compiler, installed once: on macOS the command line tools of Xcode (type `xcode-select --install` in the Terminal), on Linux `gcc` and `make` (for example the package `build-essential`), on Windows Microsoft's free [Build Tools for Visual Studio](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the workload **Desktop development with C++** (or Visual Studio with that workload). If the compiler is missing, the command says what to install and stops; nothing is changed. On Windows the compiler is found automatically; nothing has to be set up. `buildplugin()` with nothing in the parentheses builds all plugins. `buildfrom()` points to a local copy of the repositories instead of GitHub, and `release()` to a tagged release.
@@ -114,9 +110,10 @@ You need a C compiler, installed once: on macOS the command line tools of Xcode 
 
 The Mata libraries (`lnwcommands.mlib`, `lnwsaom1.mlib`, `lnwsaom2.mlib`, `lnwergm.mlib`, `lnwdynam.mlib`, `lnwrem.mlib`, `lnwalaam.mlib`) are built with Stata 17. A library built by an *older* Stata loads in every later Stata, but a library built by a *newer* Stata is silently ignored by an older one (the message is "compiled by Stata 18, is too new to be run by this version of Stata and so was ignored"), and every Mata function is then "not found", r(3499). If that happens, or if the shipped libraries do not load for another reason, build them with your own Stata:
 
-- `. nwinstall, buildmata(all)`
-- `. nwinstall, buildmata(nwsaom)`
-
+```stata
+. nwinstall, buildmata(all)
+. nwinstall, buildmata(nwsaom)
+```
 The command copies the Mata source of each package from its GitHub repository, compiles it with the Stata that is running, and puts the libraries where Stata finds the current ones (normally the folder of the PLUS directory); an existing library is kept as a file with the extension `.prev`. `buildmata(all)` builds the core and every installed model package. Restart Stata afterwards.
 
 Three things to know. First, the build **clears the data and the Mata objects in memory**, including loaded networks; the command stops with error 4 if there is data in memory, so save your work first. Second, the libraries of nwsaom and nwergm are compiled against the core library and are only accepted by exactly that core library (error 3021 otherwise). Rebuilding the core therefore always rebuilds the installed nwsaom and nwergm libraries as well, in the right order, and `buildmata(nwsaom)` alone compiles against the core library that is installed. Third, a build takes a few minutes (the core source has more than 13,000 lines), needs the internet unless `buildfrom()` points to a local copy, and uses the source of the current release: update the packages first (`nwinstall, all`, `nwinstall, models`) and then rebuild. `buildfrom()` points to a local copy of the repositories, `release()` to a tagged release, and `dest()` puts the libraries into another folder. The shipped libraries are the better choice when they load: a build with your own Stata is the fallback and the repair.
@@ -162,15 +159,17 @@ Step by step:
 
 2. In Stata, `cd` to that folder (or note its full path) and run:
 
-- `. cd "C:\path\to\nwcommands_2016"`
-- `. nwinstall, localcopy all`
-
+```stata
+. cd "C:\path\to\nwcommands_2016"
+. nwinstall, localcopy all
+```
 This copies every `.ado`/`.sthlp`/`.dlg`/`.idlg` file (and the compiled `lnwcommands.mlib`) into your **PERSONAL** ado directory - already on Stata's default ado path, the same one plain `sysdir` lists, and always somewhere in your own user profile, so it needs no admin rights on any platform. Nothing further needs to be set for this default case: `nwset`, `nwdegree`, and the rest are immediately available, and so are the dialog boxes (e.g. `db nwplot`).
 
 3. To also get the "Network Analysis" menu:
 
-- `. nwinstall, gui`
-
+```stata
+. nwinstall, gui
+```
 This is the same `gui` step used after a normal install (step 3 does not depend on `localcopy` at all - it only edits your local `profile.do`).
 
 If even your PERSONAL ado directory is not writable (rare, but possible on some managed machines), point `dest()` at any folder you can write to instead, e.g. a folder on a network drive or an external disk:

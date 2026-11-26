@@ -42,7 +42,7 @@ Computed via a direct max-flow (Edmonds-Karp) between every pair of nodes on the
 
 `nwlambda` itself reports the raw connectivity matrix, not a discrete partition into lambda sets - deliberately, since the extraction step is already exactly what [nwhierarchy](nwhierarchy) does: lambda sets are recoverable as SINGLE-LINKAGE hierarchical clustering on the lambda matrix (a real graph-theoretic fact, not a heuristic: the Gomory-Hu tree of a graph represents every pairwise min-cut/edge-connectivity value as a single tree, and cutting that tree at successive thresholds is exactly single-linkage clustering on the full pairwise matrix). [nwhierarchy](nwhierarchy) already accepts an arbitrary dissimilarity network via its own `disnet()` option, so no new clustering code is needed - only a similarity-to-dissimilarity flip (lambda is a SIMILARITY: higher means MORE connected) and restoring a proper zero diagonal (a fresh network defaults to a missing, not zero, diagonal - `set_selfloop(1)` is needed before writing a real 0 there):
 
-- Worked example - two triangles **A,B,C**/**D,E,F** joined by a single bridge tie **C-D**:
+Worked example - two triangles **A,B,C**/**D,E,F** joined by a single bridge tie **C-D**:
 
 ```stata
 . nwset, mat((0,1,1,0,0,0\1,0,1,0,0,0\1,1,0,1,0,0\0,0,1,0,1,1\0,0,0,1,0,1\0,0,0,1,1,0)) name(bridge) labs(A,B,C,D,E,F)

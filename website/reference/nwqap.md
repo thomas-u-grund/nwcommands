@@ -57,7 +57,9 @@ MR-QAP is a multiple regression procedure used to assess the impact of independe
 
 `nwqap` reshapes a network to a dataset of edges/arcs. For example, a directed network with 10 nodes is transformed in a dataset with 90 dyads (selfloops are not permitted).
 
-The dependent variable is *y_ij*, indicating the network relationship between nodes *i* and *j*.  Independent variables can be other [networks](netname) or normal `variables`. Normal variables are expanded to networks of the same size as the dependent network using [nwexpand](nwexpand). The default **mode** is **"same"** (see [here](nwexpand) for other modes. When more than one `varname` is specified as independent variable, different modes can be selected for each variable, e.g. **mode(same dist invdist)** chooses mode **"dist"** for the second `varname` that appears as independent variable.
+The dependent variable is *y_ij*, indicating the network relationship between nodes *i* and *j*.
+
+Independent variables can be other [networks](netname) or normal `variables`. Normal variables are expanded to networks of the same size as the dependent network using [nwexpand](nwexpand). The default **mode** is **"same"** (see [here](nwexpand) for other modes. When more than one `varname` is specified as independent variable, different modes can be selected for each variable, e.g. **mode(same dist invdist)** chooses mode **"dist"** for the second `varname` that appears as independent variable.
 
 `nwqap` performs the regression specified in **type()**, by default `logit` regression is choosen. But notice that any other type of regression can be used (e.g. `probit`, `xtmixed`). Furthermore, options are passed on to the selected regression command with **typeoptions()**. This gives a lot of flexibility to perform dyad-level regression. For example instead of logistic regression one can use probit regression with option *asis*:
 
@@ -129,8 +131,10 @@ This example shows that two individuals are more likely to be friends at time2 (
 
 `name()` names the graph in memory, `gsaving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. Other options go to `twoway` and come last, so they replace the defaults.
 
-- `. nwwebuse glasgow, nwclear`
-- `. nwqap glasgow2 glasgow1 smoke1 sport1, plot export(qap.png, width(1200))`
+```stata
+. nwwebuse glasgow, nwclear
+. nwqap glasgow2 glasgow1 smoke1 sport1, plot export(qap.png, width(1200))
+```
 
 ## Stored results
 

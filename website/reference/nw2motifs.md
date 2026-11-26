@@ -33,9 +33,9 @@ nw2motifs [netname] [, six:node gen:erate(stub) replace mat:rix(name) norm:alise
 
 `nw2motifs` counts the bipartite motifs of a two-mode network: the small connected patterns of ties between two sets of nodes that make up the building blocks of species-by-site, plant-pollinator and membership networks (Baker et al. 2015; Simmons et al. 2019, *Methods in Ecology and Evolution*). There are 17 motifs of two to five nodes and 27 more of six nodes (44 in all), and each motif has one or more *positions* (46 for the five-node set, 148 with six nodes): the nodes of a motif that are not equivalent, such as the end and the middle of a path. The command gives two things.
 
-- 1. The **motif table**, the number of times each motif occurs in the network (what `bmotif::mcount` returns), shown on screen and returned in `r(motifs)`.
-- 2. The **node position counts**, for every node the number of times it holds each position (what `bmotif::node_positions` returns), stored in variables with `generate()` or in a
-- matrix with `matrix()`. They quantify the structural role of a node, for example in a plant-pollinator network.
+1. The **motif table**, the number of times each motif occurs in the network (what `bmotif::mcount` returns), shown on screen and returned in `r(motifs)`.
+
+2. The **node position counts**, for every node the number of times it holds each position (what `bmotif::node_positions` returns), stored in variables with `generate()` or in a matrix with `matrix()`. They quantify the structural role of a node, for example in a plant-pollinator network.
 
 A motif occurrence is a set of nodes whose subgraph, with *all* the ties between them, is connected and has the shape of the motif; an occurrence is counted once however many ways it can be read (the motifs are induced subgraphs, so a path of two rows and two columns and a four-cycle are two different motifs, and a set of four nodes is exactly one of them). The first mode of the network (mode 1) forms the *rows* of the biadjacency matrix of `bmotif` and the second mode the *columns*; the numbering of the motifs and of the positions is the one of `bmotif` (Simmons et al.), listed in the table below. The motif table equals `bmotif::mcount` and the position counts `bmotif::node_positions` (bmotif 2.0.2) exactly, on a toy network, the Southern women, the Swedish directors, a subsample of them and 34 random networks.
 
@@ -119,36 +119,40 @@ Examples: motif 1 is a single tie (positions 2 for the row and 1 for the column)
 
 ## Examples
 
-- A toy network of 6 persons (mode 1, the rows) and 4 groups (mode 2, the columns):
+A toy network of 6 persons (mode 1, the rows) and 4 groups (mode 2, the columns):
 
-- `. clear`
-- `. input str3 p str3 g`
-- `. "p1" "g1"`
-- `. "p1" "g2"`
-- `. "p2" "g1"`
-- `. "p2" "g2"`
-- `. "p2" "g3"`
-- `. "p3" "g2"`
-- `. "p3" "g3"`
-- `. "p4" "g3"`
-- `. "p4" "g4"`
-- `. "p5" "g4"`
-- `. "p6" "g4"`
-- `. "p6" "g1"`
-- `. end`
-- `. nw2fromedge p g, name(toy)`
-- `. nw2motifs toy, normalise`
+```stata
+. clear
+. input str3 p str3 g
+. "p1" "g1"
+. "p1" "g2"
+. "p2" "g1"
+. "p2" "g2"
+. "p2" "g3"
+. "p3" "g2"
+. "p3" "g3"
+. "p4" "g3"
+. "p4" "g4"
+. "p5" "g4"
+. "p6" "g4"
+. "p6" "g1"
+. end
+. nw2fromedge p g, name(toy)
+. nw2motifs toy, normalise
+```
+All 44 motifs of the toy network, with the position counts in a matrix:
 
-- All 44 motifs of the toy network, with the position counts in a matrix:
+```stata
+. nw2motifs toy, sixnode matrix(P) silent
+. matrix list r(motifs)
+```
+Node positions of the Southern women and events, with the shares of each woman's positions among the positions of motifs of the same size:
 
-- `. nw2motifs toy, sixnode matrix(P) silent`
-- `. matrix list r(motifs)`
-
-- Node positions of the Southern women and events, with the shares of each woman's positions among the positions of motifs of the same size:
-
-- `. nwwebuse davis, nwclear`
-- `. nw2motifs davis, generate(np) posnorm(sizeclass) silent`
-- `. summarize np1-np6`
+```stata
+. nwwebuse davis, nwclear
+. nw2motifs davis, generate(np) posnorm(sizeclass) silent
+. summarize np1-np6
+```
 
 ## Stored results
 

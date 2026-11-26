@@ -10,17 +10,14 @@ search_exclude: false
 
 ## Contents
 
-**SectionDescription**
-
-- hline 46
-- [**[NW-5.1]****A first network command**](nwprogramming)
-- [**[NW-5.2]****A command that creates a network**](nwprogramming)
-- [**[NW-5.3]****How networks are stored**](nwprogramming)
-- [**[NW-5.4]****Entering a network: _nwsyntax**](nwprogramming)
-- [**[NW-5.5]****Reading the ties**](nwprogramming)
-- [**[NW-5.6]****Conventions**](nwprogramming)
-- [**[NW-5.7]****Pitfalls**](nwprogramming)
-- [**[NW-5.8]****Stable Mata functions: nwapi**](nwprogramming)
+- [NW-5.1] [A first network command](#a-first-network-command)
+- [NW-5.2] [A command that creates a network](#a-command-that-creates-a-network)
+- [NW-5.3] [How networks are stored](#how-networks-are-stored)
+- [NW-5.4] [Entering a network: _nwsyntax](#entering-a-network-_nwsyntax)
+- [NW-5.5] [Reading the ties](#reading-the-ties)
+- [NW-5.6] [Conventions](#conventions)
+- [NW-5.7] [Pitfalls](#pitfalls)
+- [NW-5.8] [Stable Mata functions: nwapi](#stable-mata-functions-nwapi)
 
 ## A first network command
 

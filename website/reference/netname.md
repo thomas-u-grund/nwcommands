@@ -45,10 +45,12 @@ For most network commands a netname is optional. When no netname is explicitly s
 
 ## Examples
 
-- `. nwwebuse florentine, nwclear`
-- `. nwset`
-- `. nwdegree flobusiness, generate(deg)`
-- `. nwcomponents *marriage, generate(comp)`
+```stata
+. nwwebuse florentine, nwclear
+. nwset
+. nwdegree flobusiness, generate(deg)
+. nwcomponents *marriage, generate(comp)
+```
 
 ---
 

@@ -13,7 +13,7 @@ Example network data sets
 
 ## Example networks
 
-- The datasets listed are in [Stata network file-format](nwsave) and hosted on the package's website (nwcommands.org/examples; the GitHub repository is the fallback); `describe` shows the variables of a data set without loading it.
+The datasets listed are in [Stata network file-format](nwsave) and hosted on the package's website (nwcommands.org/examples; the GitHub repository is the fallback); `describe` shows the variables of a data set without loading it.
 
 - *Longitudinal social networks*
   - [glasgow](netexample)`use` | `describe`
@@ -387,15 +387,17 @@ These files are a derived subset, adapted by Thomas U. Grund: only the Senates o
 
 **Loaded as:** a plain (not pre-declared) Stata dataset, unlike the ready-made networks above. `nwwebuse manufacturing` loads three variables, *sender*, *receiver* and *t*, one row per email, 50,233 rows sorted by time. Declare the event network with [`nwset`](nwset):
 
-- `. nwwebuse manufacturing, nwclear`
-- `. nwset sender receiver, eventtime(t) directed name(mail)`
-
+```stata
+. nwwebuse manufacturing, nwclear
+. nwset sender receiver, eventtime(t) directed name(mail)
+```
 **Vertex attributes:** a companion dataset, `manufacturing_nodes.dta` (`nwwebuse` `manufacturing_nodes`), holds *label*, *supervisor*, *level* and *division* for the 154 employees (144 of them send or receive an email in the data). *supervisor* is the direct supervisor (empty for the CEO, E86), *level* the number of steps to the CEO in the reporting hierarchy (0 = CEO) and *division* the branch of the CEO that the employee belongs to. After `nwset` the node-level dataset carries each employee's label in `_nwnode`; rename it to `label`, merge, then rename back:
 
-- `. rename _nwnode label`
-- `. merge 1:1 label using manufacturing_nodes, keep(master match) nogen`
-- `. rename label _nwnode`
-
+```stata
+. rename _nwnode label
+. merge 1:1 label using manufacturing_nodes, keep(master match) nogen
+. rename label _nwnode
+```
 The emails were sent in a mid-sized manufacturing company between January and 30 September 2010 (*t* is the time in days since 1 January 2010, 00:00). Only the metadata are given (who wrote to whom and when), no content. This is a derived subset of the original data: only emails with exactly one recipient, and only the 154 employees whose supervisor is known, were kept; emails to oneself were removed and the employee identifiers were prefixed with *E*. The file is a large event history (144 actors); for a small subset, for example to try `nwrem` or `nwdynam`, keep the first two weeks with `keep if t < 14`: 2,738 emails among 129 employees.
 
 **Source**

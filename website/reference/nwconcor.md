@@ -62,7 +62,7 @@ Every iteration correlates the complete node-by-node matrix, so the work grows w
 . nwdropnodes flomarriage, nodes(pucci) generate(flomarriage2)
 . nwconcor flomarriage2, generate(_concor)
 ```
-- The adjacency matrix with the nodes ordered by block ([nwplotmatrix](nwplotmatrix)):
+The adjacency matrix with the nodes ordered by block ([nwplotmatrix](nwplotmatrix)):
 
 ```stata
 . nwplotmatrix flomarriage2, sortby(_concor) group(_concor)

@@ -82,7 +82,9 @@ Only a single network is accepted: the Fiedler vector of each network is a full 
 
 `plot` draws the Laplacian eigenvalues in ascending order, the values of **r(eigenvalues)**; the second one, the algebraic connectivity, is marked. A gap after the first eigenvalues points to few well separated groups, and the number of eigenvalues at 0 is the number of components. `embedding` adds a second panel with the second and third eigenvectors, one marker per node. `name()` names the graph in memory, `saving()` writes a `.gph` file and `export()` writes it with `graph export`. Other options go to `twoway` (`graph combine` with `embedding`) and come last; without `plot` they give an error. `plot` stops with error 198 for a two-mode network; a directed network follows the rule for `sym` above.
 
-- `. nwspectral flomarriage, generate(_fiedler) replace plot embedding export(spectrum.png, width(1100))`
+```stata
+. nwspectral flomarriage, generate(_fiedler) replace plot embedding export(spectrum.png, width(1100))
+```
 
 ## Stored results
 

@@ -116,7 +116,7 @@ Use `capture` to catch them: `capture mata: nwapi_nodes("friends")` followed by 
 
 ## Examples
 
-- Use the functions in a Mata block, here the Florentine marriage network
+Use the functions in a Mata block, here the Florentine marriage network
 
 ```stata
 . nwwebuse florentine, nwclear
@@ -126,7 +126,7 @@ Use `capture` to catch them: `capture mata: nwapi_nodes("friends")` followed by 
 : nwapi_directed("flomarriage")
 : end
 ```
-- Neighbors and degree of a family by label
+Neighbors and degree of a family by label
 
 ```stata
 . mata:
@@ -137,7 +137,7 @@ Use `capture` to catch them: `capture mata: nwapi_nodes("friends")` followed by 
 : deg[nwapi_nodeid("flomarriage", "medici")]
 : end
 ```
-- The density of a network, and the number of triangles from the matrix
+The density of a network, and the number of triangles from the matrix
 
 ```stata
 . mata:
@@ -147,7 +147,7 @@ Use `capture` to catch them: `capture mata: nwapi_nodes("friends")` followed by 
 : trace(A*A*A) / 6
 : end
 ```
-- Catch an error
+Catch an error
 
 ```stata
 . capture mata: nwapi_nodes("nonetwork")

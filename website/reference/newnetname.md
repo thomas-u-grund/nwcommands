@@ -26,8 +26,10 @@ A *newnetname* is the name of a network that does not exist yet. A *newnetname* 
 
 ## Examples
 
-- `. nwclear`
-- `. nwrandom 10, prob(.2) name(mynet)`
+```stata
+. nwclear
+. nwrandom 10, prob(.2) name(mynet)
+```
 
 ## See also
 

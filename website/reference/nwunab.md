@@ -25,11 +25,8 @@ This is the network version of `unab`. `nwunab` expands and unabbreviates a [net
 
 ## Options
 
-- `min(`*#*`)` specifies the minimum number of networks
-- allowed. The default is hi:min(1).
-
-- `max(`*#*`)` specifies the maximum number of networks
-- allowed. By default the limit of `unab` applies.
+- `min(`*#*`)` specifies the minimum number of networks allowed. The default is hi:min(1).
+- `max(`*#*`)` specifies the maximum number of networks allowed. By default the limit of `unab` applies.
 
 ## Network types
 

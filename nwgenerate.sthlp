@@ -30,7 +30,7 @@
 {title:Description}
 
 {pstd}
-The command generates a network. It can be used either with a) some function {bf:{it:netfnc}} or b) with a network expression {bf:{it:netexp}}. 
+The command generates a network. It can be used either with a) some function {bf:{it:netfcn}} or b) with a network expression {bf:{it:netexp}}. 
 
 
 {pstd}
@@ -77,7 +77,7 @@ network per path found.
 
 {phang2}{opt pref}({help int:nodes}) [, {opth m0(int)} {opth m(int)} {opth prob(float)} {opt undirected} {opt xvars}] 
 {p_end}
-{pmore2}Generate a preferential attachment a network (see {help nwpref}).
+{pmore2}Generate a preferential attachment network (see {help nwpref}).
 
 {phang2}{opt random}({help int:nodes}) [, {opth prob(float)} {opth density(float)} {opt undirected} {opt xvars}] 
 {p_end}

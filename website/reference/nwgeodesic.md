@@ -84,9 +84,11 @@ which is essentially what Newman (2001) and Brandes (2001) suggested. This simpl
 
 `save()` writes a Stata data set with one observation per network (also for one network), in the order of the list, with the variables **name** (network name), **directed** and **valued** (0 or 1), **nodes**, **numpaths**, **unconnected** (the number of unconnected pairs), **avgpath**, **diameter**, **radius**, **alpha**, **connected** (the share of pairs that are connected), **avgpath_connected** and **diameter_connected** (over the connected pairs). **avgpath**, **diameter** and **radius** are missing for a network in which not every pair is connected (the single call stores -1 in **r()**); **avgpath_connected** and **diameter_connected** are missing when `unconnected()` replaced the distances of the unconnected pairs. All numeric variables are stored as `double`.
 
-- `. nwrandom 30, prob(.12) undirected name(draw) ntimes(20)`
-- `. nwgeodesic draw_*, save(draws)`
-- `. use draws, clear`
+```stata
+. nwrandom 30, prob(.12) undirected name(draw) ntimes(20)
+. nwgeodesic draw_*, save(draws)
+. use draws, clear
+```
 
 ## Network types
 
@@ -143,7 +145,9 @@ In this first example, the average shortest path length is not defined because t
 
 `plot` draws, for the pairs of distinct nodes, how many are at distance 1, 2, 3, ... steps (the whole numbers are on the x axis). In an undirected network each pair counts once, in a directed network each ordered pair. Pairs without a path are not distances: their number is in a note under the graph, and `unconnected()` does not enter the histogram. `average` adds the mean distance of the connected pairs, the same number as **r(avgpath)** (or **r(avgpath_connected)** when pairs are unconnected). The network of distances and the displayed table are the same as without `plot`. `gname()` names the graph in memory (`name()` is the distance network), `saving()` writes a `.gph` file and `export()` writes it with `graph export`. Other options go to `twoway` and come last; without `plot` they give an error. `plot` stops with error 198 for a two-mode network and for a valued network whose distances are sums of 1/value^alpha, not step counts (`binary` or `alpha(0)` count steps).
 
-- `. nwgeodesic flomarriage, plot average export(distances.png, width(1000))`
+```stata
+. nwgeodesic flomarriage, plot average export(distances.png, width(1000))
+```
 
 ## Stored results
 

@@ -72,9 +72,11 @@ For all commands at network sizes of 1,000 to 100,000 nodes see the web page [Ho
 
 `save()` writes a Stata data set with one observation per network (also for one network), in the order of the list, with the variables **name** (network name), **directed**, **valued** and **twomode** (0 or 1), **nodes**, **measure** (the measure used, as **r(measure)**), **level** (the mode of a two-mode network, missing for a one-mode network), **cluster_global** and **cluster_avg** (for a two-mode network the global coefficient of Opsahl (2013) and the mean of the coefficients of the `level()` mode, **r(C_global)** and **r(C_avg)** of the single call) and **nmissing** (the number of missing ties, treated as 0). All numeric variables are stored as `double`.
 
-- `. nwsmall 30, k(4) prob(.1) undirected name(sw) ntimes(20)`
-- `. nwclustering sw_*, save(clust)`
-- `. use clust, clear`
+```stata
+. nwsmall 30, k(4) prob(.1) undirected name(sw) ntimes(20)
+. nwclustering sw_*, save(clust)
+. use clust, clear
+```
 
 ## Stored results
 

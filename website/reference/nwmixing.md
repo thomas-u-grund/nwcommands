@@ -56,8 +56,10 @@ With `permutations()` greater than 1 (the default, 100), `nwmixing` also runs a 
 
 `name()` names the graph in memory, `saving()` writes it to a `.gph` file and `export()` writes it with `graph export`: the file extension sets the format, and `width()` and the other `graph export` options follow a comma. A graph or file of the same name is replaced; a trailing `, replace` is accepted and ignored. `plotoptions()` and `eiplotoptions()` remain the way to pass options to the two graphs (`twoway_options` cannot be used here: other options go to `tabulate`).
 
-- `. nwwebuse florentine, nwclear`
-- `. nwmixing flomarriage, attribute(priorates) plot eiplot name(mix) export(mix.png, width(1200))`
+```stata
+. nwwebuse florentine, nwclear
+. nwmixing flomarriage, attribute(priorates) plot eiplot name(mix) export(mix.png, width(1200))
+```
 
 ## Remarks on plot
 
