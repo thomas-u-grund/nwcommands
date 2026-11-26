@@ -37,6 +37,11 @@ start from a plain-language explanation, then run a real command and read the re
 to replace `ergm`. R's `ergm` is the reference implementation and the more complete program, and the page
 [nwergm and R's ergm](rergm/) says exactly what `nwergm` has and what it lacks.
 
+**Speed is a good reason to use it.** In our benchmark of eight ERGMs (30 to 1,000 nodes), `nwergm` was faster
+than R's `ergm` on every model, 2.1 to 4.0 times by the median of seven fits, with the same algorithm and default
+settings (`nwergm` 1.5.2, `ergm` 4.12.0, one Mac laptop). On very small models the gain can be smaller. The
+[speed page](speed/) has the times, the method and the cases where `nwergm` is not faster.
+
 ## Key facts
 
 | | |

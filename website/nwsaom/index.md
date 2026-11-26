@@ -39,6 +39,11 @@ implementation and the more complete program, and the page [nwsaom and RSiena](r
 `nwsaom` has and what it lacks. `nwsaom` is not affiliated with or endorsed by the authors of RSiena;
 errors in `nwsaom` are the author's.
 
+**Speed is a good reason to use it.** On one thread, `nwsaom` was faster than RSiena in all 27 models of our
+benchmark: 3.8 times in the median, from 1.9 to 11.5 times (`nwsaom` 1.5.7, RSiena 1.6.14, one Mac laptop). With
+several cores the lead can be smaller: on 200 actors, ten threads were 2.0 to 4.2 times as fast as RSiena's best
+multi-process setting. The [speed page](speed/) has the times and the method.
+
 ## Key facts
 
 | | |
