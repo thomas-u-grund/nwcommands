@@ -19,6 +19,8 @@ versions follow [Semantic Versioning](https://semver.org/). The model families h
 
 ### Fixed
 - Pajek and UCINET DL files with a byte-order mark, and DL files with blank lines, are imported.
+- `nwimport` without `name()`: on Windows, a path with both kinds of separator gave a network name that included
+  folder names; the name now comes from the file name.
 - `nwfromedge` warns when identifiers that differ only in blanks at the ends become one node.
 - `nwrecode`, `nwdichotomize`, `nwsimilar` and `nwdissimilar` say under which name a result is stored when the requested
   name is in use; `nwdichotomize` refuses a name given twice in `generate()`.

@@ -35,10 +35,10 @@ program nwimport, rclass
 	
 	if "`name'" == "" {
 		local fname_temp =  lower(subinstr(`"`fname'"', char(34), "", .))
+		// the name of the file is what follows the last separator of either kind (a Windows path can hold both)
+		local fname_temp = subinstr(`"`fname_temp'"', char(92), "/", .)
 		local fnamerev = strreverse(`"`fname_temp'"')
-		local bslash = strpos(`"`fnamerev'"', "/")
-		local fslash = strpos(`"`fnamerev'"', "\")
-		local slash = max(`bslash', `fslash')
+		local slash = strpos(`"`fnamerev'"', "/")
 		local slash = cond(`slash'== 0, length(`"`fnamerev'"'), `=`slash' - 1')
 		local name = substr(`"`fname_temp'"', `=length(`"`fname_temp'"') - `slash' + 1', .)
 		local name = subinstr(`"`name'"',".net", "", .)
